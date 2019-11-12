@@ -59,8 +59,8 @@ p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
 p.training = 0; % if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
-p.iti_on = 1; % if one will do an intertrial interval with fixation
-p.feedback = 0; % if 0, no feedback, if 1 then trialwise feedback, if 2 then blockwise feedbackq
+p.iti_on = 0; % if one will do an intertrial interval with fixation
+p.feedback = 2; % if 0, no feedback, if 1 then trialwise feedback, if 2 then blockwise feedbackq
 
 % directory mapping
 addpath(genpath(fullfile(rootdir, 'tools'))); % add tools folder to path (includes moving_dots function which is required for dot motion, as well as an external copy of subfunctions for backwards compatibility with MATLAB)
@@ -333,10 +333,10 @@ try
             
             % take a break
             if t.takeabreak == 1
-                DrawFormattedText(p.win, sprintf('\n take a little break\n\n we are on block %u of %u\n',block, p.act_block_num'), 'center', 'center', p.text_colour);
+                DrawFormattedText(p.win, sprintf('\n take a little break\n\n we are on block %u of %u\n',block, p.act_block_num), 'center', 'center', p.text_colour);
                 Screen('Flip', p.win);
                 WaitSecs(p.break_inform_time);
-                DrawFormattedText(p.win,sprintf('\n take a little break\n\n we are on block %u of %u\n\n experimenter will continue',block, p.act_block_num'), 'center', 'center', p.text_colour);
+                DrawFormattedText(p.win,sprintf('\n take a little break\n\n we are on block %u of %u\n\n experimenter will continue',block, p.act_block_num), 'center', 'center', p.text_colour);
                 Screen('Flip', p.win);
                 t.waiting = []; % wait for user input
                 while isempty(t.waiting)
@@ -483,7 +483,7 @@ try
                 t.feedback = 'no valid input';
             end % end check correct
             
-            % display some feedback
+            % display some feedback if trialwise feedback on
             if p.feedback == 1
                 DrawFormattedText(p.win, t.feedback, 'center', 'center', p.text_colour); %display feedback
                 Screen('Flip', p.win);
@@ -512,6 +512,17 @@ try
             save(save_file); % save all data in '.mat' format
             
         end % trial loop
+        
+        % display some feedback if blockwise feedback on
+        if p.feedback == 2
+            t.block_pc = sum(d.correct(block,:)==1)/numel(d.correct(block,:));
+            t.blockfeedback = round(100*t.block_pc);
+            sprintf('\n %u percent correct\n',t.blockfeedback)
+            DrawFormattedText(p.win, sprintf('\n well done!\n\n you got %u percent correct\n',t.blockfeedback), 'center', 'center', p.text_colour); %display feedback
+            Screen('Flip', p.win);
+            WaitSecs(p.feedback_time);
+            Screen('Flip', p.win);
+        end
         
     end % end block loop
     
