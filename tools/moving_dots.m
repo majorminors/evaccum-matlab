@@ -204,8 +204,8 @@ for frame_num = 1:total_frames
     end
     
     % first establish 3 box sizes (one for each element in the fixation) using screen coords
-    sz(1) = angle2pix(p,p.fixation.size/2); % size for inner circle
-    sz(2) = angle2pix(p,p.fixation.size/4); % size for outer circle
+    sz(1) = angle2pix(p,p.fixation.size/2); % size for outer circle
+    sz(2) = angle2pix(p,p.fixation.size/4); % size for inner circle
     sz(3) = angle2pix(p,p.fixation.mask/2); % size for mask
     
     % establish 3 rectangles (one for each element in the fixation) based on the boxes using screen coords [l,t,r,b]

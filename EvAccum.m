@@ -177,6 +177,7 @@ p.visual_angle_dots = 0.15; % visual angle of the dots expressed as a decimal - 
 
 % timing info
 p.min_cue_time = 1; % minimum period to display cue (participants can't continue during this time)
+p.iti_time = 0.5; % inter trial inteval time
 p.dots_duration = 2; % seconds for the dot cloud to be displayed
 p.min_resp_mapping_time = 1; % minimum period to display response mapping (participants can't continue during this time)
 p.feedback_time = 0.5; % period to display feedback after response
@@ -484,6 +485,18 @@ try
             DrawFormattedText(p.win,t.feedback, 'center', 'center', p.text_colour); %display feedback
             Screen('Flip', p.win);
             WaitSecs(p.feedback_time);
+            Screen('Flip', p.win);
+            
+            % intertrial period - display fixation
+            t.centre = p.resolution/2;
+            t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
+            t.iti_rect = [-t.sz_l+t.centre(1),-t.sz_l+t.centre(2),t.sz_l+t.centre(1),t.sz_l+t.centre(2)];
+            t.sz_s = angle2pix(p,0.5/4); % this value (0.5/4) comes from p.fixation.size specified in movingdots.m
+            t.iti_rect_sml = [-t.sz_s+t.centre(1),-t.sz_s+t.centre(2),t.sz_s+t.centre(1),t.sz_s+t.centre(2)];
+            Screen('FillOval', p.win, [255,255,255],t.iti_rect);
+            Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
+            Screen('Flip', p.win);
+            WaitSecs(p.iti_time);
             Screen('Flip', p.win);
             
             %% post trial clean up
