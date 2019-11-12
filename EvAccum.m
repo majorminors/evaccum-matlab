@@ -58,10 +58,10 @@ rootdir = 'C:\Users\doria\Google Drive\04 Research\05 Evidence Accumulation\01 E
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
-p.training = 0; % if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
+p.training = 0; % if 0 (or any other than 1) will do nothign, if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
 p.fixed_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
-p.iti_on = 1; % if 1 will do an intertrial interval with fixation,
-p.feedback = 2; % if 0, no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
+p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anything other than 1) will not do iti
+p.feedback = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
 
 % check set up
 if ~ismember(p.fullscreen,[0,1]); error('invalid value for p.fullscreen'); end % check if valid or error
@@ -109,7 +109,7 @@ t.prompt = {'enter participant number:',... % prompt a dialog to enter subject i
     'enter hard matching threshold (between 0 and 90 degrees from cued direction)'};%',...
     % 'enter easy matching threshold (between 0 and 90 degrees from cued direction)',...
     % 'enter hard matching threshold (between 0 and 90 degrees from cued direction)'};
-t.prompt_defaultans = {num2str(99), num2str(0.75), num2str(0.25), num2str(10)}; %, num2str(80)}; % default answers corresponding to prompts
+t.prompt_defaultans = {num2str(99), num2str(0.75), num2str(0.25), num2str(80)}; % default answers corresponding to prompts
 t.prompt_rsp = inputdlg(t.prompt, 'enter participant info', 1, t.prompt_defaultans); % save dialog responses
 d.participant_id = str2double(t.prompt_rsp{1}); % add subject number to 'd'
 d.easy_coherence = str2double(t.prompt_rsp{2}); % add participant coherence thresholds to 'd'
@@ -206,6 +206,25 @@ p.matching_cue_2 = 'ORANGE'; % variable used to indicate response keys - this th
 p.cue_directions = 45:90:315; % *p.stim_mat* - refers to the direction of the upward arrow of the doublesided arrow cue in stimdir
 p.dot_motion_directions = union([p.cue_directions+d.easy_rule],[p.cue_directions+d.hard_rule]); % *p.stim_mat* - adds easy rule and hard rule to each cue, then puts them in a vector sorted low to high
 
+% lets check all those parameters
+t.viewp = struct2table(p, 'AsArray', true);
+disp(t.viewp);
+warning('happy with all this? (y/n)\n %s.mat', save_file);
+while 1 % loop forever until y or n
+    ListenChar(2);
+    [secs,keyCode] = KbWait; % wait for response
+    key_name = KbName(keyCode); % find out name of key that was pressed
+    if strcmp(key_name, 'y')
+        fprintf('happy with parameters\n continuing with %s\n', mfilename)
+        ListenChar(0);
+        clear secs keyCode key_name
+        break % break the loop and continue
+    elseif strcmp(key_name, 'n')
+        ListenChar(0);
+        clear secs keyCode key_name
+        error('not happy with parameters\n aborting %s\n', mfilename); % error out
+    end
+end % end response loop
 %% define stimuli parameters
 
 fprintf('defining stimuli params for %s\n', mfilename);
