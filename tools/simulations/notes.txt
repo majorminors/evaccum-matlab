@@ -1,0 +1,1 @@
+idealObserver uses 'points' from simulatecurve
