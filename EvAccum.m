@@ -59,8 +59,17 @@ p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
 p.training = 0; % if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
-p.iti_on = 0; % if one will do an intertrial interval with fixation
-p.feedback = 2; % if 0, no feedback, if 1 then trialwise feedback, if 2 then blockwise feedbackq
+p.fixed_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
+p.iti_on = 1; % if 1 will do an intertrial interval with fixation,
+p.feedback = 2; % if 0, no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
+
+% check set up
+if ~ismember(p.fullscreen,[0,1]); error('invalid value for p.fullscreen'); end % check if valid or error
+if ~ismember(p.testing,[0,1]); error('invalid value for p.testing'); end % check p.testing is a valid number, or error
+if ~ismember(p.training,[0,1]); error('invalid value for p.training'); end % check if valid or error
+if ~ismember(p.fixed_trial_time,[0,1]); error('invalid value for p.fixed_trial_time'); end % check if valid or error
+if ~ismember(p.iti_on,[0,1]); error('invalid value for p.fixed_trial_time'); end % check if valid or error
+if ~ismember(p.feedback,[0,1,2]); error('invalid value for p.fixed_trial_time'); end % check if valid or error
 
 % directory mapping
 addpath(genpath(fullfile(rootdir, 'tools'))); % add tools folder to path (includes moving_dots function which is required for dot motion, as well as an external copy of subfunctions for backwards compatibility with MATLAB)
@@ -87,7 +96,6 @@ elseif p.testing == 0
 end
 Screen('Preference', 'SkipSyncTests', p.PTBsynctests);
 Screen('Preference', 'Verbosity', p.PTBverbosity);
-if p.testing > 1; error('invalid value for p.testing'); end % check p.testing is a valid number, or error
 
 % psychtoolbox setup
 AssertOpenGL; % check Psychtoolbox (on OpenGL) and Screen() is working
