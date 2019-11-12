@@ -59,6 +59,8 @@ p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
 p.training = 0; % if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
+p.iti_on = 1; % if one will do an intertrial interval with fixation
+p.feedback = 0; % if 0, no feedback, if 1 then trialwise feedback, if 2 then blockwise feedbackq
 
 % directory mapping
 addpath(genpath(fullfile(rootdir, 'tools'))); % add tools folder to path (includes moving_dots function which is required for dot motion, as well as an external copy of subfunctions for backwards compatibility with MATLAB)
@@ -482,22 +484,26 @@ try
             end % end check correct
             
             % display some feedback
-            DrawFormattedText(p.win,t.feedback, 'center', 'center', p.text_colour); %display feedback
-            Screen('Flip', p.win);
-            WaitSecs(p.feedback_time);
-            Screen('Flip', p.win);
+            if p.feedback == 1
+                DrawFormattedText(p.win, t.feedback, 'center', 'center', p.text_colour); %display feedback
+                Screen('Flip', p.win);
+                WaitSecs(p.feedback_time);
+                Screen('Flip', p.win);
+            end
             
             % intertrial period - display fixation
-            t.centre = p.resolution/2;
-            t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
-            t.iti_rect = [-t.sz_l+t.centre(1),-t.sz_l+t.centre(2),t.sz_l+t.centre(1),t.sz_l+t.centre(2)];
-            t.sz_s = angle2pix(p,0.5/4); % this value (0.5/4) comes from p.fixation.size specified in movingdots.m
-            t.iti_rect_sml = [-t.sz_s+t.centre(1),-t.sz_s+t.centre(2),t.sz_s+t.centre(1),t.sz_s+t.centre(2)];
-            Screen('FillOval', p.win, [255,255,255],t.iti_rect);
-            Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
-            Screen('Flip', p.win);
-            WaitSecs(p.iti_time);
-            Screen('Flip', p.win);
+            if p.iti_on == 1
+                t.centre = p.resolution/2;
+                t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
+                t.iti_rect = [-t.sz_l+t.centre(1),-t.sz_l+t.centre(2),t.sz_l+t.centre(1),t.sz_l+t.centre(2)];
+                t.sz_s = angle2pix(p,0.5/4); % this value (0.5/4) comes from p.fixation.size specified in movingdots.m
+                t.iti_rect_sml = [-t.sz_s+t.centre(1),-t.sz_s+t.centre(2),t.sz_s+t.centre(1),t.sz_s+t.centre(2)];
+                Screen('FillOval', p.win, [255,255,255],t.iti_rect);
+                Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
+                Screen('Flip', p.win);
+                WaitSecs(p.iti_time);
+                Screen('Flip', p.win);
+            end
             
             %% post trial clean up
             KbQueueRelease();
