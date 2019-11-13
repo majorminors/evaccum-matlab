@@ -186,10 +186,9 @@ p.visual_angle_cue = 15; % visual angle of the cue expressed as a decimal - dete
 p.visual_angle_dots = 0.15; % visual angle of the dots expressed as a decimal - determines size
 
 % timing info
-p.min_cue_time = 1; % minimum period to display cue (participants can't continue during this time)
-p.iti_time = 0.5; % inter trial inteval time
-p.dots_duration = 2; % seconds for the dot cloud to be displayed
-p.min_resp_mapping_time = 1; % minimum period to display response mapping (participants can't continue during this time)
+p.min_cue_time = 0.5; % minimum period to display cue (participants can't continue during this time)
+p.iti_time = 0.2; % inter trial inteval time
+p.dots_duration = 1.5; % seconds for the dot cloud to be displayed
 p.feedback_time = 0.5; % period to display feedback after response
 p.keyswap_inform_time = 1; % minumum period to display keyswap notification
 p.break_inform_time = 1; % minumum period to display break notification (stop participants from accidentally continuing)
