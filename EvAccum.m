@@ -187,7 +187,7 @@ p.visual_angle_dots = 0.15; % visual angle of the dots expressed as a decimal - 
 
 % timing info
 p.min_cue_time = 0.5; % minimum period to display cue (participants can't continue during this time)
-p.iti_time = 0.2; % inter trial inteval time
+p.iti_time = 0.3; % inter trial inteval time
 p.dots_duration = 1.5; % seconds for the dot cloud to be displayed
 p.feedback_time = 0.5; % period to display feedback after response
 p.keyswap_inform_time = 1; % minumum period to display keyswap notification
@@ -544,7 +544,7 @@ try
             t.block_pc = sum(d.correct(block,:)==1)/numel(d.correct(block,:));
             t.blockfeedback = round(100*t.block_pc);
             sprintf('\n %u percent correct\n',t.blockfeedback)
-            DrawFormattedText(p.win, sprintf('\n well done!\n\n you got %u percent correct\n',t.blockfeedback), 'center', 'center', p.text_colour); %display feedback
+            DrawFormattedText(p.win, sprintf('\n you got %u percent correct\n',t.blockfeedback), 'center', 'center', p.text_colour); %display feedback
             Screen('Flip', p.win);
             WaitSecs(p.feedback_time);
             Screen('Flip', p.win);
