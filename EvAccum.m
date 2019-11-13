@@ -54,7 +54,7 @@ d = struct(); % est structure for trial data
 t = struct(); % another structure for untidy trial specific floating variables that we might want to interrogate later if we mess up
 
 % set up variables
-rootdir = 'C:\Users\doria\Google Drive\04 Research\05 Evidence Accumulation\01 EvAccum Code'; % root directory - used to inform directory mappings
+rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum'; % root directory - used to inform directory mappings
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
