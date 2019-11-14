@@ -4,12 +4,7 @@ clc;
 
 % trial settings (*p.stim_mat* = parameter required to calculate stimulus condition matrix)
 p.num_trials_per_block = 160; % *p.stim_mat* - must be divisible by p.num_cues && >= 15*p.num_points
-p.num_blocks = 2; % if set to 1, keys will swap halfway through trials in each test
 p.num_cues = 4; % *p.stim_mat*
-p.start_coherence = 1; % starting coherence for the coherence test for training trials (0-1 - 1 is 100% coherence)
-p.start_distance = 0; % start distance in degrees from the cue direction for the matching test for training trials
-p.matching_cue_1 = 'BLUE'; % variable used to indicate response keys - this the upward arrow of the doublesided arrow cue in stimdir
-p.matching_cue_2 = 'ORANGE'; % variable used to indicate response keys - this the downward arrow of the doublesided arrow cue in stimdir
 p.cue_directions = 45:90:315; % *p.stim_mat* - refers to the direction of the upward arrow of the doublesided arrow cue in stimdir
 p.num_points = 10; % *p.stim_mat* - number of points to test participants on for each test
 p.rule_points = union([0:5:20],[70:5:90]); % *p.stim_mat* - length(p.rule_points) must == p.num_points

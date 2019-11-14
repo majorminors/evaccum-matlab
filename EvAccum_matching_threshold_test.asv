@@ -10,6 +10,8 @@
 %           than p.training_trials_per_level when you start assessing the
 %           percent correct
 %
+%           also, maybe suppress 'first with easy dots' during training
+
 
 % data related information saved in 'd'
 %   d.stim_mat_all contains trial condition matrices for each block
@@ -21,10 +23,13 @@
 %       block 1 tests using easy coherence threshold.
 %       block 2 tests using hard coherence threshold.
 
+
 % other trial specific variables are in 't' in case something goes wrong
 %   and we want to see them
 
-% note: response keys for the trial based off whether participant id is odd or even
+% note: response key is swapped halfway through each block, and again at
+%       the commencement of the subsequent block(s). this is not
+%       counterbalanced within blocks, merely done as a training tool
 
 % note: block 1 tests using easy coherence threshold.
 %       block 2 tests using hard coherence threshold.
@@ -63,15 +68,13 @@ rootdir = 'C:\Users\doria\Google Drive\04 Research\05 Evidence Accumulation\01 E
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
-p.training_enabled = 0; % if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below. will also suppress pre-block information about whether it's a hard or easy test
-p.fix_trial_time = 0; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
+p.training_enabled = 0; % if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
 p.num_blocks = 2; % each block currently feeds the two coherence values (block 1 is easy, block 2 is hard)
 
 % check set up
 if ~ismember(p.fullscreen_enabled,[0,1]); error('invalid value for p.fullscreen_enabled'); end % check if valid or error
 if ~ismember(p.testing_enabled,[0,1]); error('invalid value for p.testing_enabled'); end % check p.testing_enabled is a valid number, or error
 if ~ismember(p.training_enabled,[0,1]); error('invalid value for p.training_enabled'); end % check if valid or error
-if ~ismember(p.fix_trial_time,[0,1]); error('invalid value for p.fix_trial_time'); end % check if valid or error
 if p.num_blocks ~= 2; error('currently only two blocks are interpretable - check p.num_blocks'); end % check if valid or error
 
 % directory mapping
@@ -299,13 +302,13 @@ try
         % pick up trial condition order for this block
         p.stim_mat = d.stim_mat_all(:,:,block);
         
-        % tell participant whether hard or easy test if training not enabled
-        if block == 1 && p.training_enabled == 0
+        % tell participant whether hard or easy test
+        if block == 1
             DrawFormattedText(p.win,'first with easy dots', 'center', 'center', p.text_colour); %display feedback
             Screen('Flip', p.win);
             WaitSecs(1);
             Screen('Flip', p.win);
-        elseif block == 2 && p.training_enabled == 0
+        elseif block == 2
             DrawFormattedText(p.win,'now with harder dots', 'center', 'center', p.text_colour); %display feedback
             Screen('Flip', p.win);
             WaitSecs(1);

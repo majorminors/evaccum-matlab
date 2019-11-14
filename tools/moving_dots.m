@@ -37,7 +37,7 @@ function [dots_onset_time, pressed, firstPress] = moving_dots(p,dots)
 %
 %
 % requires from 'p':
-%    p.fixed_trial_time       if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
+%    p.fix_trial_time       if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 %    p.dots_duration          seconds for the dot cloud to be displayed
 %    p.screen_width           width of the screen in cm
 %    p.screen_distance        distance from the screen in cm
@@ -233,7 +233,7 @@ for frame_num = 1:total_frames
     
     % check for keypress and if pressed, break the frame-loop which will
     % end the function
-    if p.fixed_trial_time == 0
+    if p.fix_trial_time == 0
         [pressed,firstPress] = KbQueueCheck();
         if any(pressed)
             break
@@ -242,7 +242,7 @@ for frame_num = 1:total_frames
 
 end
 
-if p.fixed_trial_time == 1
+if p.fix_trial_time == 1
     [pressed,firstPress] = KbQueueCheck();
 end
 

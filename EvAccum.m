@@ -17,6 +17,8 @@
 % other trial specific variables are in 't' in case something goes wrong
 %   and we want to see them
 
+% note: response keys for the trial based off whether participant id is odd or even
+
 % note: will swap response keys according to p.keyswap
 
 % note: will provide breaks before blocks specified in p.breakblocks
@@ -56,20 +58,23 @@ t = struct(); % another structure for untidy trial specific floating variables t
 % set up variables
 rootdir = 'C:\Users\doria\Google Drive\04 Research\05 Evidence Accumulation\01 EvAccum Code'; % root directory - used to inform directory mappings
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
-p.fullscreen = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
-p.testing = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
-p.training = 0; % if 0 (or any other than 1) will do nothing, if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
-p.fixed_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
+p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
+p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
+p.training_enabled = 0; % if 0 (or any other than 1) will do nothing, if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
+p.fix_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anything other than 1) will not do iti
-p.feedback = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
+p.feedback_type = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
+p.num_blocks = 20;
+p.breakblocks = 0; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
+t.takeabreak = 0; % will use this variable to mark a break event (code currently at commencement of block loop)
 
 % check set up
-if ~ismember(p.fullscreen,[0,1]); error('invalid value for p.fullscreen'); end % check if valid or error
-if ~ismember(p.testing,[0,1]); error('invalid value for p.testing'); end % check p.testing is a valid number, or error
-if ~ismember(p.training,[0,1]); error('invalid value for p.training'); end % check if valid or error
-if ~ismember(p.fixed_trial_time,[0,1]); error('invalid value for p.fixed_trial_time'); end % check if valid or error
-if ~ismember(p.iti_on,[0,1]); error('invalid value for p.fixed_trial_time'); end % check if valid or error
-if ~ismember(p.feedback,[0,1,2]); error('invalid value for p.fixed_trial_time'); end % check if valid or error
+if ~ismember(p.fullscreen_enabled,[0,1]); error('invalid value for p.fullscreen_enabled'); end % check if valid or error
+if ~ismember(p.testing_enabled,[0,1]); error('invalid value for p.testing_enabled'); end % check p.testing_enabled is a valid number, or error
+if ~ismember(p.training_enabled,[0,1]); error('invalid value for p.training_enabled'); end % check if valid or error
+if ~ismember(p.fix_trial_time,[0,1]); error('invalid value for p.fix_trial_time'); end % check if valid or error
+if ~ismember(p.iti_on,[0,1]); error('invalid value for p.iti_on'); end % check if valid or error
+if ~ismember(p.feedback_type,[0,1,2]); error('invalid value for p.feedback_type'); end % check if valid or error
 
 % directory mapping
 addpath(genpath(fullfile(rootdir, 'tools'))); % add tools folder to path (includes moving_dots function which is required for dot motion, as well as an external copy of subfunctions for backwards compatibility with MATLAB)
@@ -87,10 +92,10 @@ p.training_interval = 2; % how many trials should we train on before reducing th
 % test variables
 p.num_test_trials = 2;
 p.num_test_blocks = 4;
-if p.testing == 1
+if p.testing_enabled == 1
     p.PTBsynctests = 1; % PTB will skip synctests if 1
     p.PTBverbosity = 1; % PTB will only display critical warnings with 1
-elseif p.testing == 0
+elseif p.testing_enabled == 0
     p.PTBsynctests = 0;
     p.PTBverbosity = 3; % default verbosity for PTB
 end
@@ -107,8 +112,8 @@ t.prompt = {'enter participant number:',... % prompt a dialog to enter subject i
     'enter easy coherence threshold(fm 0-1, higher is easier)',...
     'enter hard coherence threshold (fm 0-1, lower is harder)',...
     'enter hard matching threshold (between 0 and 90 degrees from cued direction)'};%',...
-    % 'enter easy matching threshold (between 0 and 90 degrees from cued direction)',...
-    % 'enter hard matching threshold (between 0 and 90 degrees from cued direction)'};
+% 'enter easy matching threshold (between 0 and 90 degrees from cued direction)',...
+% 'enter hard matching threshold (between 0 and 90 degrees from cued direction)'};
 t.prompt_defaultans = {num2str(99), num2str(0.75), num2str(0.25), num2str(80)}; % default answers corresponding to prompts
 t.prompt_rsp = inputdlg(t.prompt, 'enter participant info', 1, t.prompt_defaultans); % save dialog responses
 d.participant_id = str2double(t.prompt_rsp{1}); % add subject number to 'd'
@@ -128,7 +133,7 @@ elseif isnan(d.hard_coherence) || d.hard_coherence > 1 || d.easy_coherence < 0
     error('invalid participant coherence threshold (hard)')
 elseif isnan(d.easy_rule) || d.easy_rule > 90 || d.easy_rule < 0
     error('invalid participant matching threshold (easy)');
-elseif isnan(d.hard_rule) || d.hard_rule > 90 || d.easy_rule < 0
+elseif isnan(d.hard_rule) || d.hard_rule > 90 || d.hard_rule < 0
     error('invalid participant matching threshold (hard)')
 end
 
@@ -175,10 +180,12 @@ end
 % define display info
 p.bg_colour = [0 0 0]; % needs to be the same as the cue stimuli background colour (unless transparent)
 p.text_colour = [255 255 255]; % colour of instructional text
+p.matching_cue_1 = 'BLUE'; % variable used to indicate response keys - this the upward arrow of the doublesided arrow cue in stimdir
+p.matching_cue_2 = 'ORANGE'; % variable used to indicate response keys - this the downward arrow of the doublesided arrow cue in stimdir
 p.cue_colour_blue = [121 181 240]; % colour of cue, for text formatting
 p.cue_colour_orange = [240 181 121]; % colour of cue, for text formatting
 p.text_size = 40; % size of text
-p.window_size = [0 0 1200 800]; % size of window when ~p.fullscreen
+p.window_size = [0 0 1200 800]; % size of window when ~p.fullscreen_enabled
 p.screen_width = 35;   % Screen width in cm
 p.screen_height = 50;    % Screen height in cm
 p.screen_distance = 50; % Screen distance from participant in cm
@@ -194,20 +201,15 @@ p.keyswap_inform_time = 1; % minumum period to display keyswap notification
 p.break_inform_time = 1; % minumum period to display break notification (stop participants from accidentally continuing)
 
 % trial settings (*p.stim_mat* = parameter required to calculate stimulus condition matrix)
-p.num_blocks = 20;
-p.breakblocks = 0; %p.num_blocks/2+1; % after which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
-t.takeabreak = 0; % will use this variable to mark a break event (code currently at commencement of block loop)
-p.num_trials_per_block = 64; % *p.stim_mat*
+p.num_trials_per_block = 64; % *p.stim_mat* - as many as unique conditions
 p.num_cues = 4; % *p.stim_mat*
 p.num_motion_coherence = 8; % *p.stim_mat* - number of coherent directions
-p.matching_cue_1 = 'BLUE'; % variable used to indicate response keys - this the upward arrow of the doublesided arrow cue in stimdir
-p.matching_cue_2 = 'ORANGE'; % variable used to indicate response keys - this the downward arrow of the doublesided arrow cue in stimdir
 p.cue_directions = 45:90:315; % *p.stim_mat* - refers to the direction of the upward arrow of the doublesided arrow cue in stimdir
 p.dot_motion_directions = union([p.cue_directions+d.easy_rule],[p.cue_directions+d.hard_rule]); % *p.stim_mat* - adds easy rule and hard rule to each cue, then puts them in a vector sorted low to high
 
 % lets check all those parameters
-t.viewp = struct2table(p, 'AsArray', true);
-disp(t.viewp);
+t.view_p = struct2table(p, 'AsArray', true);
+disp(t.view_p);
 warning('happy with all this? (y/n)\n %s.mat', save_file);
 while 1 % loop forever until y or n
     ListenChar(2);
@@ -293,7 +295,7 @@ fprintf('running experiment %s\n', mfilename);
 try
     
     % open screen
-    if p.fullscreen % zero out p.window_size if p.fullscreen = 1
+    if p.fullscreen_enabled % zero out p.window_size if p.fullscreen_enabled = 1
         p.window_size=[];
     end
     [p.win,p.rect] = Screen('OpenWindow',p.screen_num,p.bg_colour,p.window_size);
@@ -308,9 +310,9 @@ try
     %% block start
     
     % changes number of blocks to testing amount if testing
-    if p.testing == 1
+    if p.testing_enabled == 1
         p.act_block_num = p.num_test_blocks;
-        fprintf('testing (p.testing set to 1) - will run %u blocks\n', p.num_test_blocks);
+        fprintf('testing (p.testing_enabled set to 1) - will run %u blocks\n', p.num_test_blocks);
     else
         p.act_block_num = p.num_blocks;
     end
@@ -324,9 +326,9 @@ try
         
         % initiate break if block is a break block
         %t.breakblock = ismember(block,p.breakblocks);
-            if ismember(block,p.breakblocks)
-                t.takeabreak = 1; % break initiated (tells a screen to pop up)
-            end
+        if ismember(block,p.breakblocks)
+            t.takeabreak = 1; % break initiated (tells a screen to pop up)
+        end
         
         % swap response keys halfway through blocks (rounded to nearest integer)
         if block == round(p.act_block_num/p.keyswap)+1
@@ -337,9 +339,9 @@ try
         %% trials start
         
         % changes number of trials to testing amount for trial loop if testing
-        if p.testing == 1
+        if p.testing_enabled == 1
             p.act_trial_num = p.num_test_trials;
-            fprintf('testing (p.testing set to 1) - will only run %u trials\n', p.num_test_trials);
+            fprintf('testing (p.testing_enabled set to 1) - will only run %u trials\n', p.num_test_trials);
         else
             p.act_trial_num = p.num_trials_per_block;
         end
@@ -457,9 +459,9 @@ try
             end
             
             % initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval')
-            if p.training == 1
+            if p.training_enabled == 1
                 if block == 1 && i == 1
-                    fprintf('training (p.training set to 1) - will reduce dots presentation from p.training_dots_duration (%u secs) to p.dots_duration (%u secs) trial by trial\n', p.training_dots_duration, p.dots_duration);
+                    fprintf('training (p.training_enabled set to 1) - will reduce dots presentation from p.training_dots_duration (%u secs) to p.dots_duration (%u secs) trial by trial\n', p.training_dots_duration, p.dots_duration);
                     t.orig_dots_duration = p.dots_duration; % save experimental dots duration for later
                     p.dots_duration = p.training_dots_duration; % set dots duration to training value to start
                 end
@@ -510,7 +512,7 @@ try
             end % end check correct
             
             % display some feedback if trialwise feedback on
-            if p.feedback == 1
+            if p.feedback_type == 1
                 DrawFormattedText(p.win, t.feedback, 'center', 'center', p.text_colour); %display feedback
                 Screen('Flip', p.win);
                 WaitSecs(p.feedback_time);
@@ -540,7 +542,7 @@ try
         end % trial loop
         
         % display some feedback if blockwise feedback on
-        if p.feedback == 2
+        if p.feedback_type == 2
             t.block_pc = sum(d.correct(block,:)==1)/numel(d.correct(block,:));
             t.blockfeedback = round(100*t.block_pc);
             sprintf('\n %u percent correct\n',t.blockfeedback)

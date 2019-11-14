@@ -1,4 +1,4 @@
-%% Find matching threshold values for evidence accumulation task
+%% Find coherence threshold values for evidence accumulation task
 % Dorian Minors
 % Created: JUL19
 % Last Edit: 13SEP19
@@ -9,7 +9,6 @@
 %           makes things messier - have to set the minimum number of trials in the training protocol to be higher
 %           than p.training_trials_per_level when you start assessing the
 %           percent correct
-%
 
 % data related information saved in 'd'
 %   d.stim_mat_all contains trial condition matrices for each block
@@ -17,18 +16,15 @@
 %   rows indicate trials
 %   columns are explained when we define the matrix in 'define stimulus
 %       parameters', below
-%   in this script, the two blocks are two tests:
-%       block 1 tests using easy coherence threshold.
-%       block 2 tests using hard coherence threshold.
+%   currently only utilises 1 block, but can do more
 
 % other trial specific variables are in 't' in case something goes wrong
 %   and we want to see them
 
-% note: response keys for the trial based off whether participant id is odd or even
-
-% note: block 1 tests using easy coherence threshold.
-%       block 2 tests using hard coherence threshold.
-%       stored as d.stim_mat_all(:,:,[block number])
+% note: response key is shuffled at the start, and swapped halfway through
+%       block. this is not counterbalanced within blocks, merely done as a
+%       training tool. if more than 1 block, response key will also swap at
+%       the start and halfway through each subsequent block.
 
 % note: for backwards compatibility (to 2016), subfunctions are disabled
 %       in scripts (although functions can have subfunctions and scripts
@@ -63,16 +59,9 @@ rootdir = 'C:\Users\doria\Google Drive\04 Research\05 Evidence Accumulation\01 E
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
-p.training_enabled = 0; % if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below. will also suppress pre-block information about whether it's a hard or easy test
-p.fix_trial_time = 0; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
-p.num_blocks = 2; % each block currently feeds the two coherence values (block 1 is easy, block 2 is hard)
-
-% check set up
-if ~ismember(p.fullscreen_enabled,[0,1]); error('invalid value for p.fullscreen_enabled'); end % check if valid or error
-if ~ismember(p.testing_enabled,[0,1]); error('invalid value for p.testing_enabled'); end % check p.testing_enabled is a valid number, or error
-if ~ismember(p.training_enabled,[0,1]); error('invalid value for p.training_enabled'); end % check if valid or error
-if ~ismember(p.fix_trial_time,[0,1]); error('invalid value for p.fix_trial_time'); end % check if valid or error
-if p.num_blocks ~= 2; error('currently only two blocks are interpretable - check p.num_blocks'); end % check if valid or error
+p.training_enabled = 0; % if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
+p.coherence_spread = 1; % 1 is an even spread, 2 clusters more around lower intensities - see trial settings
+p.num_blocks = 1;
 
 % directory mapping
 addpath(genpath(fullfile(rootdir, 'tools'))); % add tools folder to path (includes moving_dots function which is required for dot motion, as well as an external copy of subfunctions for backwards compatibility with MATLAB)
@@ -86,15 +75,15 @@ end
 p.training_dots_duration = 5; % duration (secs) dot stimulus presented for for training trials (will reduce trial by trial to p.dots_duration)
 p.training_reduction = 1; % by how much do we reduce the duration during training (seconds)
 p.training_interval = 2; % how many trials should we train on before reducing the dots presentation time
-p.training_trials_per_level = 8; % how many trials to run each training level at (currently 3 levels - levels 1 and 2 will wait for p.training_percent_correct/p.training_trials_per_level while other levels will just do three and move on)
+p.training_trials_per_level = 8; % how many trials to run each training level at (currently 3 levels- levels 1 and 2 will wait for p.training_percent_correct/p.training_trials_per_level while other levels will just do three and move on)
 p.training_percent_correct = 0.75; % percent of correct trials requred to move on
-p.training_rule_lvl_easy = 10; % what matching rule level for easy (training level 1)
-p.training_rule_lvl_mid = 45; % what matching rule level for mid (training level 2)
-p.training_rule_lvl_hard = 75; % what matching rule level for hard (training level 3)
+p.training_coh_lvl_easy = 0.85; % what coherence level for easy (training level 1)
+p.training_coh_lvl_mid = 0.60; % what coherence level for mid (training level 2)
+p.training_coh_lvl_hard = 0.20; % what coherence level for hard (training level 3)
 
 % test variables
-p.num_test_trials = 4;
-p.num_test_blocks = 2;
+p.num_test_trials = 5;
+p.num_test_blocks = 1;
 if p.testing_enabled == 1
     p.PTBsynctests = 1; % PTB will skip synctests if 1
     p.PTBverbosity = 1; % PTB will only display critical warnings with 1
@@ -112,20 +101,14 @@ KbName('UnifyKeyNames'); % makes key mappings compatible (mac/win)
 rng('shuffle'); % seed rng using date and time
 
 % set up participant info and save
-t.prompt = {'enter participant number:','enter easy coherence threshold (fm 0-1, higher is easier)','enter hard coherence threshold (fm 0-1, lower is harder)'}; % prompt a dialog to enter subject info
-t.prompt_defaultans = {num2str(99), num2str(0.75), num2str(0.25)}; % default answers corresponding to prompts
+t.prompt = {'enter participant number:'}; % prompt a dialog to enter subject info
+t.prompt_defaultans = {num2str(99)}; % default answers corresponding to prompts
 t.prompt_rsp = inputdlg(t.prompt, 'enter participant info', 1, t.prompt_defaultans); % save dialog responses
 d.participant_id = str2double(t.prompt_rsp{1}); % add subject number to 'd'
-d.easy_coherence = str2double(t.prompt_rsp{2}); % add participant coherence thresholds to 'd'
-d.hard_coherence = str2double(t.prompt_rsp{3}); % add participant coherence thresholds to 'd'
 
 % check participant info has been entered correctly for the script
 if isnan(d.participant_id)
     error('no participant number entered');
-elseif isnan(d.easy_coherence) || d.easy_coherence > 1
-    error('invalid participant coherence threshold (easy)');
-elseif isnan(d.hard_coherence) || d.hard_coherence > 1
-    error('invalid participant coherence threshold (hard)')
 end
 
 % create a save file
@@ -187,12 +170,19 @@ p.min_resp_mapping_time = 1; % minimum period to display response mapping (parti
 p.feedback_time = 0.5; % period to display feedback after response
 
 % trial settings (*p.stim_mat* = parameter required to calculate stimulus condition matrix)
-p.num_trials_per_block = 160; % *p.stim_mat* - must be divisible by p.num_cues && >= 15*p.num_points
+p.num_trials_per_block = 160; % *p.stim_mat* - must be divisible by p.num_cues && >=15*p.num_points
 p.num_cues = 4; % *p.stim_mat*
 p.cue_directions = 45:90:315; % *p.stim_mat* - refers to the direction of the upward arrow of the doublesided arrow cue in stimdir
 p.num_points = 10; % *p.stim_mat* - number of points to test participants on for each test
-p.rule_points = 0:10:90; %union([0:5:20],[70:5:90]); % *p.stim_mat* - length(p.rule_points) must == p.num_points
-if length(p.rule_points) ~= p.num_points; error('number of coherence points is not equal to the number of testing points you specified'); end % check length(p.rule_points) == p.num_points, or error
+% p.coh_points is a *p.stim_mat* variable and length(p.coh_points) must == p.num_points
+if p.coherence_spread == 1
+    p.coh_points = 0.05:0.1:0.95; % 0.05:0.1:0.95 gives us 10% spacing on points from 5% to 95%
+elseif p.coherence_spread == 2
+    p.coh_points = [0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.5 0.6 0.75]; % specified values currently cluster around 
+else
+    error
+end
+if length(p.coh_points) ~= p.num_points; error('number of coherence points is not equal to the number of testing points you specified'); end % check length(p.coh_points) == p.num_points, or error
 
 %% define stimuli parameters
 
@@ -207,40 +197,27 @@ p.cue = imread(fullfile(stimdir, 'arrows_cue_colours_with_line.png'));
 %        directions to trials in a similar manner to (1)
 %    3)  coherence condition (1 = match blue, 2 = match orange) - evenly allocates
 %        trials
-%    4)  point condition (1-10) - each repeated
+%    4)  coherence direction in degrees (in relation to cue) (either blue
+%        direction, or 180 degrees from blue
+%    5)  point condition (1-10) - each repeated
 %        p.num_trials_per_block/p.num_points times
-%    5)  matching points allocated to point conditions
-%    6)  whether trial should add or subtract degrees from cues test (1 =
-%        add, 2 = subtract) - currently 2 of each per cue (since four reps
-%        of point conditions per cue)
-%    7)  coherence direction from cued direction in degrees - calculated from cue direction and matching
-%        point
-%    8)  coherence direction in degrees incorporating blue match or orange match
+%    6)  coherence points allocated to point conditions
 
 % create matrix
-p.stim_mat = zeros(p.num_trials_per_block,8);
+p.stim_mat = zeros(p.num_trials_per_block,6);
 % create columns
 p.stim_mat(:,1) = sort(repmat(1:p.num_cues,[1,p.num_trials_per_block/p.num_cues]));
 p.stim_mat(:,2) = p.cue_directions(p.stim_mat(:,1));
 p.stim_mat(:,3) = repmat(sort(repmat(1:2,[1,p.num_trials_per_block/p.num_cues/2])),[1,p.num_cues]);
-p.stim_mat(:,4) = repmat(1:p.num_points,[1,p.num_trials_per_block/p.num_points]);
-p.stim_mat(:,5) = repmat(p.rule_points,[1,p.num_trials_per_block/p.num_points]);
-p.stim_mat(:,6) = repmat(sort(repmat(1:2,[1,p.num_trials_per_block/p.num_cues/4])),[1,p.num_cues*2]);
-add = (p.stim_mat(:,6)==1); % index all posns in (6) with 1s into 'add'
-subtract = (p.stim_mat(:,6)==2); % index all posns in (6) with 2s into 'subtract'
-p.stim_mat(add,7) = p.stim_mat(add,2)+p.stim_mat(add,5); % insert addition of matching point to cue direction into (7)
-p.stim_mat(subtract,7) = p.stim_mat(subtract,2)-p.stim_mat(subtract,5); % insert subtraction of matching point to cue direction into (7)
-temp = p.stim_mat(:,7)>360; % get all places where (7) > 360 degrees
-p.stim_mat(temp,7) = p.stim_mat(temp,7)-360; % make any in (7) over 360 wrap around from 0 again
-temp = p.stim_mat(:,7)<0; % get all places where (7) < 0 degrees
-p.stim_mat(temp,7) = p.stim_mat(temp,7)+360; % make any in (7) under 0 wrap around from 360 again
-temp = p.stim_mat(:,7)+180; % get 180 degrees on each cue
+temp = p.stim_mat(:,2)+180; % get 180 degrees on each cue
 temp(temp>360) = temp(temp>360)-360; % make any over 360 wrap around from 0 again
-p.stim_mat(:,8) = times(p.stim_mat(:,3)-1,temp); % make 1s and 2s from (3) into 0s and 1s, then times by temp (so becomes 0s and cue+180degs)
-temp = (p.stim_mat(:,8)==0); % index all posns in (8) with 0s into 'temp'
-p.stim_mat(temp,8) = p.stim_mat(temp,7); % insert coherence directions from (7) into (8) where there are 0s (using 'temp' index)
+p.stim_mat(:,4) = times(p.stim_mat(:,3)-1,temp); % make 1s and 2s from (4) into 0s and 1s, then times by temp (so becomes 0s and cue+180degs)
+temp = (p.stim_mat(:,4)==0); % index all posns in (5) with 0s into 'temp'
+p.stim_mat(temp,4) = p.stim_mat(temp,2); % insert cue directions from (2) into (5) where there are 0s (using 'temp' index)
+p.stim_mat(:,5) = repmat(1:p.num_points,[1,p.num_trials_per_block/p.num_points]);
+p.stim_mat(:,6) = repmat(p.coh_points,[1,p.num_trials_per_block/p.num_points]);
 % clear floating variables
-clear temp add subtract;
+clear temp;
 
 % shuffle the trial condition order for each block into 'd.stim_mat_all' then re-sort by cue
 for block=1:p.num_blocks
@@ -253,8 +230,7 @@ clear block;
 % dot cloud parameters for moving_dots function
 %   note that for the following required params for moving_dots:
 %       'dots.direction' is specified within the trial loop
-%       'dots.coherence' is also specified withing the trial loop using outputs
-%           from 'p.stim_mat' and 'd.easy_coherence'/'d.hard_coherence'
+%       'dots.coherence' is specified within the trial loop
 dots.aperture_size = [10,10]; % [width,height] in degrees of the rectangular aperture dots are displayed in
 dots.centre = [0,0]; % [x,y] centre of the dot cloud
 dots.num_dots = 100; % number of dots
@@ -265,7 +241,7 @@ dots.lifetime = 5; % number of frames dots live for
 
 %% test start
 
-fprintf('running matching threshold assessment (%s)\n', mfilename);
+fprintf('running coherence threshold assessment (%s)\n', mfilename);
 
 try
     
@@ -298,19 +274,6 @@ try
         
         % pick up trial condition order for this block
         p.stim_mat = d.stim_mat_all(:,:,block);
-        
-        % tell participant whether hard or easy test if training not enabled
-        if block == 1 && p.training_enabled == 0
-            DrawFormattedText(p.win,'first with easy dots', 'center', 'center', p.text_colour); %display feedback
-            Screen('Flip', p.win);
-            WaitSecs(1);
-            Screen('Flip', p.win);
-        elseif block == 2 && p.training_enabled == 0
-            DrawFormattedText(p.win,'now with harder dots', 'center', 'center', p.text_colour); %display feedback
-            Screen('Flip', p.win);
-            WaitSecs(1);
-            Screen('Flip', p.win);
-        end
         
         %% trials start
         
@@ -351,7 +314,6 @@ try
                 
                 % then display cue and response mapping
                 Screen('DrawTexture', p.win, p.cue_tex, [], t.rect, p.stim_mat(i,2)); % draws the cue in the orientation specified in column 2 of p.stim_mat for the current trial
-                % DrawFormattedText(p.win, sprintf('\n press %s for %s\n press %s for %s\n', p.resp_keys{1}, p.matching_cue_1, p.resp_keys{2}, p.matching_cue_2), 'center', t.rect(RectBottom)*1.01, p.text_colour);
                 if p.stim_mat(i,1) == 1
                     DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_blue);
                     DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_orange);
@@ -390,16 +352,12 @@ try
                 
                 KbQueueFlush(); % flush the response queue from the continue screen presses
             end
-            
-            %% present dots and collect response info
+                                              
+            %% present dots and collect response info (and initiate training protocol if specified)
             
             % first need some info about the dots based on the trial order from 'p.stim_mat'
-            dots.direction = p.stim_mat(i,8); % pulls direction in degrees from 'p.stim_mat' to give to moving_dots
-            if block == 1
-                dots.coherence = d.easy_coherence; % then give moving_dots value from 'd.easy_coherence'
-            elseif block == 2
-                dots.coherence = d.hard_coherence; % then give moving_dots value from 'd.hard_coherence'
-            end
+            dots.direction = p.stim_mat(i,4); % pulls direction in degrees from 'p.stim_mat' to give to moving_dots
+            dots.coherence = p.stim_mat(i,6); % pulls coherence values from 'p.stim_mat' to give to moving_dots
             
             % training protocol
             % 1) will reduce dots presentation time from
@@ -415,21 +373,21 @@ try
                     fprintf('training (p.training_enabled set to 1)\n will reduce dots presentation from p.training_dots_duration (%u secs) to p.dots_duration (%u secs) every %u trials\n', p.training_dots_duration, p.dots_duration, p.training_interval);
                     t.orig_dots_duration = p.dots_duration; % save experimental dots duration for later
                     p.dots_duration = p.training_dots_duration; % set dots duration to training value to start
-                    t.training_placeholder = p.training_rule_lvl_easy;
+                    t.training_placeholder = p.training_coh_lvl_easy;
                     t.training_level = 0; % counter variables
                     %d.correct = 0; % have to set this to a value for the first trial or the code will break (I think - I didn't
                 end
                 if ~mod(i,p.training_interval) && p.training_dots_duration > t.orig_dots_duration % if we've hit a trial that is divisible by the training interval and the current value of training dots duration is greater than our final dots duration
                     p.dots_duration = p.training_dots_duration-p.training_reduction; % reduce dots duration
                     p.training_dots_duration = p.training_dots_duration-p.training_reduction; % save that value for the next trial
-                    t.training_placeholder = p.training_rule_lvl_easy;
+                    t.training_placeholder = p.training_coh_lvl_easy;
                     fprintf('reducing p.training_dots_duration (%u secs) by p.training_reduction (%u secs)\n', p.training_dots_duration, p.training_reduction);
                 elseif ~mod(i,p.training_interval) && p.training_dots_duration <= t.orig_dots_duration % if we've hit a trial that is divisible by the training interval and the current value of training dots duration is less than or equal to our final dots duration
                     p.dots_duration = t.orig_dots_duration; % revert to the experimental dots duration
-                    fprintf('dots duration now stable at p.dots_duration (%u secs) - now exposing to angle changes\n', p.dots_duration);
+                    fprintf('dots duration now stable at p.dots_duration (%u secs) - now exposing to coherence changes\n', p.dots_duration);
                     if t.training_level == 0 && i >= 9
-                        fprintf('training level %u at easy angle - require %u (percent) correct to continue\n', t.training_level, p.training_percent_correct);
-                        t.training_placeholder = p.training_rule_lvl_easy;
+                        fprintf('training level %u at easy coherence - require %u (percent) correct to continue\n', t.training_level, p.training_percent_correct);
+                        t.training_placeholder = p.training_coh_lvl_easy;
                         t.training_correct_counter = sum(d.correct(block,i-p.training_trials_per_level:i-1)); % movsum(d.correct,[p.training_trials_per_level 0]);
                         if t.training_correct_counter >= p.training_trials_per_level*p.training_percent_correct
                             t.training_level = t.training_level+1;
@@ -437,8 +395,8 @@ try
                         end
                     end
                     if t.training_level == 1
-                        fprintf('training level %u at mid angle - require %u (percent) correct to continue\n', t.training_level, p.training_percent_correct); % fprintf('training level %u at mid angle - exposure for %u trials\n', t.training_level, p.training_trials_per_level);
-                        t.training_placeholder = p.training_rule_lvl_mid;
+                        fprintf('training level %u at easy coherence - require %u (percent) correct to continue\n', t.training_level, p.training_percent_correct);% fprintf('training level %u at mid coherence - exposure for %u trials\n', t.training_level, p.training_trials_per_level);
+                        t.training_placeholder = p.training_coh_lvl_mid;
                         t.training_correct_counter = sum(d.correct(block,i-p.training_trials_per_level:i-1)); % movsum(d.correct,[p.training_trials_per_level 0]);
                         if i == t.trialcounter+p.training_trials_per_level && t.training_correct_counter >= p.training_trials_per_level*p.training_percent_correct
                             t.training_level = t.training_level+1;
@@ -446,8 +404,8 @@ try
                         end
                     end
                     if t.training_level == 2
-                        fprintf('training level %u at hard angle - exposure for %u trials\n', t.training_level, p.training_trials_per_level);
-                        t.training_placeholder = p.training_rule_lvl_hard;
+                        fprintf('training level %u at hard coherence - exposure for %u trials\n', t.training_level, p.training_trials_per_level);
+                        t.training_placeholder = p.training_coh_lvl_hard;
                         if i == t.trialcounter+p.training_trials_per_level
                             t.training_level = t.training_level+1;
                         end
@@ -457,18 +415,7 @@ try
                         error('training complete for %s\n', mfilename);
                     end
                 end
-                if i == 1 || mod(i,2)
-                    t.trainer = p.stim_mat(i,2)+t.training_placeholder;
-                elseif ~mod(i,2)
-                    t.trainer = p.stim_mat(i,2)-t.training_placeholder;
-                end
-                if p.stim_mat(i,3) == 2
-                    t.trainer = t.trainer+180;
-                    if t.trainer > 360
-                        t.trainer = t.trainer-360;
-                    end
-                end
-                dots.direction = t.trainer;
+                dots.coherence = t.training_placeholder;
             end
             
             % now run moving_dots
@@ -478,7 +425,7 @@ try
             %% deal with response and provide feedback (or abort if 'p.quitkey' pressed)
             
             % code response info
-            d.resp_key_name{block,i} = KbName(t.firstPress); % get the name of the key used to respond - needs to be squiggly brackets or it wont work for no response
+            d.resp_key_name{block,i} = KbName(t.firstPress); % get the name of the key used to respond -  - needs to be squiggly brackets or it wont work for no response
             d.resp_key_time(block,i) = sum(t.firstPress); % get the timing info of the key used to respond
             d.rt(block,i) = d.resp_key_time(block,i) - d.dots_onset(block,i); % rt is the timing of key info - time of dots onset (if you get minus values something's wrong with how we deal with nil/early responses)
             
