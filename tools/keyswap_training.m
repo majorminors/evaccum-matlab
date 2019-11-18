@@ -1,4 +1,4 @@
-function f = keyswap_training(p,dots,d)
+function f = keyswap_training(p,dots,d,MEG)
 % keyswap_training(p,dots,d)
 %
 % will run some training on the EvAccum paradigm in a sandbox when called.
@@ -123,7 +123,7 @@ while i < f.max_trials
     
     % now run moving_dots
     KbQueueFlush(); % flush the response queue so any accidental presses recorded in the cue period won't affect responses in the dots period
-    [f.dots_onset(block,i), t.pressed, t.firstPress] = moving_dots(p,dots); % pull time of first flip for dots, as well as information from KBQueueCheck from moving_dots
+    [f.dots_onset(block,i), t.pressed, t.firstPress] = moving_dots(p,dots,MEG); % pull time of first flip for dots, as well as information from KBQueueCheck from moving_dots
     
     %% deal with response and provide feedback (or abort if 'p.quitkey' pressed)
     

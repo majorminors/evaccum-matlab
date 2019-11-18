@@ -10,8 +10,6 @@
 %           than p.training_trials_per_level when you start assessing the
 %           percent correct
 %
-%           also, maybe suppress 'first with easy dots' during training
-
 
 % data related information saved in 'd'
 %   d.stim_mat_all contains trial condition matrices for each block
@@ -23,13 +21,10 @@
 %       block 1 tests using easy coherence threshold.
 %       block 2 tests using hard coherence threshold.
 
-
 % other trial specific variables are in 't' in case something goes wrong
 %   and we want to see them
 
-% note: response key is swapped halfway through each block, and again at
-%       the commencement of the subsequent block(s). this is not
-%       counterbalanced within blocks, merely done as a training tool
+% note: response keys for the trial based off whether participant id is odd or even
 
 % note: block 1 tests using easy coherence threshold.
 %       block 2 tests using hard coherence threshold.
@@ -66,9 +61,18 @@ t = struct(); % another structure for untidy trial specific floating variables t
 % set up variables
 rootdir = 'C:\Users\doria\Google Drive\04 Research\05 Evidence Accumulation\01 EvAccum Code'; % root directory - used to inform directory mappings
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
-p.fullscreen = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
-p.testing = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
-p.training = 0; % if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
+p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
+p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
+p.training_enabled = 0; % if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below. will also suppress pre-block information about whether it's a hard or easy test
+p.fix_trial_time = 0; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
+p.num_blocks = 2; % each block currently feeds the two coherence values (block 1 is easy, block 2 is hard)
+
+% check set up
+if ~ismember(p.fullscreen_enabled,[0,1]); error('invalid value for p.fullscreen_enabled'); end % check if valid or error
+if ~ismember(p.testing_enabled,[0,1]); error('invalid value for p.testing_enabled'); end % check p.testing_enabled is a valid number, or error
+if ~ismember(p.training_enabled,[0,1]); error('invalid value for p.training_enabled'); end % check if valid or error
+if ~ismember(p.fix_trial_time,[0,1]); error('invalid value for p.fix_trial_time'); end % check if valid or error
+if p.num_blocks ~= 2; error('currently only two blocks are interpretable - check p.num_blocks'); end % check if valid or error
 
 % directory mapping
 addpath(genpath(fullfile(rootdir, 'tools'))); % add tools folder to path (includes moving_dots function which is required for dot motion, as well as an external copy of subfunctions for backwards compatibility with MATLAB)
@@ -91,16 +95,16 @@ p.training_rule_lvl_hard = 75; % what matching rule level for hard (training lev
 % test variables
 p.num_test_trials = 4;
 p.num_test_blocks = 2;
-if p.testing == 1
+if p.testing_enabled == 1
     p.PTBsynctests = 1; % PTB will skip synctests if 1
     p.PTBverbosity = 1; % PTB will only display critical warnings with 1
-elseif p.testing == 0
+elseif p.testing_enabled == 0
     p.PTBsynctests = 0;
     p.PTBverbosity = 3; % default verbosity for PTB
 end
 Screen('Preference', 'SkipSyncTests', p.PTBsynctests);
 Screen('Preference', 'Verbosity', p.PTBverbosity);
-if p.testing > 1; error('invalid value for p.testing'); end % check p.testing is a valid number, or error
+if p.testing_enabled > 1; error('invalid value for p.testing_enabled'); end % check p.testing_enabled is a valid number, or error
 
 % psychtoolbox setup
 AssertOpenGL; % check Psychtoolbox (on OpenGL) and Screen() is working
@@ -166,8 +170,10 @@ p.bg_colour = [0 0 0]; % needs to be the same as the cue stimuli background colo
 p.text_colour= [255 255 255]; % colour of instructional text
 p.cue_colour_blue = [121 181 240]; % colour of cue, for text formatting
 p.cue_colour_orange = [240 181 121]; % colour of cue, for text formatting
+p.matching_cue_1 = 'BLUE'; % variable used to indicate response keys - this the upward arrow of the doublesided arrow cue in stimdir
+p.matching_cue_2 = 'ORANGE'; % variable used to indicate response keys - this the downward arrow of the doublesided arrow cue in stimdir
 p.text_size = 40; % size of text
-p.window_size = [0 0 1200 800]; % size of window when ~p.fullscreen
+p.window_size = [0 0 1200 800]; % size of window when ~p.fullscreen_enabled
 p.screen_width = 35;   % Screen width in cm
 p.screen_height = 50;    % Screen height in cm
 p.screen_distance = 50; % Screen distance from participant in cm
@@ -182,12 +188,7 @@ p.feedback_time = 0.5; % period to display feedback after response
 
 % trial settings (*p.stim_mat* = parameter required to calculate stimulus condition matrix)
 p.num_trials_per_block = 160; % *p.stim_mat* - must be divisible by p.num_cues && >= 15*p.num_points
-p.num_blocks = 2; % if set to 1, keys will swap halfway through trials in each test
 p.num_cues = 4; % *p.stim_mat*
-p.start_coherence = 1; % starting coherence for the coherence test for training trials (0-1 - 1 is 100% coherence)
-p.start_distance = 0; % start distance in degrees from the cue direction for the matching test for training trials
-p.matching_cue_1 = 'BLUE'; % variable used to indicate response keys - this the upward arrow of the doublesided arrow cue in stimdir
-p.matching_cue_2 = 'ORANGE'; % variable used to indicate response keys - this the downward arrow of the doublesided arrow cue in stimdir
 p.cue_directions = 45:90:315; % *p.stim_mat* - refers to the direction of the upward arrow of the doublesided arrow cue in stimdir
 p.num_points = 10; % *p.stim_mat* - number of points to test participants on for each test
 p.rule_points = 0:10:90; %union([0:5:20],[70:5:90]); % *p.stim_mat* - length(p.rule_points) must == p.num_points
@@ -269,7 +270,7 @@ fprintf('running matching threshold assessment (%s)\n', mfilename);
 try
     
     % open screen
-    if p.fullscreen % zero out p.window_size if p.fullscreen = 1
+    if p.fullscreen_enabled % zero out p.window_size if p.fullscreen_enabled = 1
         p.window_size=[];
     end
     [p.win,p.rect] = Screen('OpenWindow',p.screen_num,p.bg_colour,p.window_size);
@@ -284,9 +285,9 @@ try
     %% block start
     
     % changes number of blocks to testing amount if testing
-    if p.testing == 1
+    if p.testing_enabled == 1
         p.act_block_num = p.num_test_blocks;
-        fprintf('testing (p.testing set to 1) - will run %u blocks\n', p.num_test_blocks);
+        fprintf('testing (p.testing_enabled set to 1) - will run %u blocks\n', p.num_test_blocks);
     else
         p.act_block_num = p.num_blocks;
     end
@@ -298,13 +299,13 @@ try
         % pick up trial condition order for this block
         p.stim_mat = d.stim_mat_all(:,:,block);
         
-        % tell participant whether hard or easy test
-        if block == 1
+        % tell participant whether hard or easy test if training not enabled
+        if block == 1 && p.training_enabled == 0
             DrawFormattedText(p.win,'first with easy dots', 'center', 'center', p.text_colour); %display feedback
             Screen('Flip', p.win);
             WaitSecs(1);
             Screen('Flip', p.win);
-        elseif block == 2
+        elseif block == 2 && p.training_enabled == 0
             DrawFormattedText(p.win,'now with harder dots', 'center', 'center', p.text_colour); %display feedback
             Screen('Flip', p.win);
             WaitSecs(1);
@@ -314,9 +315,9 @@ try
         %% trials start
         
         % changes number of trials to testing amount for trial loop if testing
-        if p.testing == 1
+        if p.testing_enabled == 1
             p.act_trial_num = p.num_test_trials;
-            fprintf('testing (p.testing set to 1) - will only run %u trials\n', p.num_test_trials);
+            fprintf('testing (p.testing_enabled set to 1) - will only run %u trials\n', p.num_test_trials);
         else
             p.act_trial_num = p.num_trials_per_block;
         end
@@ -326,14 +327,6 @@ try
         while i < p.act_trial_num
             i = i + 1;
             fprintf('trial %u of %u\n',i,p.act_trial_num); %report trial number to command window
-            
-            %             % establish response keys for the trial based off the cue
-            %             %   direction
-            %             if p.stim_mat(i,2)<180 % if the blue arrow points <180 degrees (i.e. to the right) associate it with the right most response key
-            %                 p.resp_keys = {p.resp_keys{2},p.resp_keys{1}};
-            %             elseif p.stim_mat(i,2)>180  % if the blue arrow points <180 degrees (i.e. to the left) associate it with the left most response key
-            %                 p.resp_keys = {p.resp_keys{1},p.resp_keys{2}};
-            %             end
             
             %set up a queue to collect response info
             t.queuekeys = [KbName(p.resp_keys{1}), KbName(p.resp_keys{2}), KbName(p.quitkey)]; % define the keys the queue cares about
@@ -417,9 +410,9 @@ try
             %    wait for 'p.training_percent_correct' out of the last p.training_trials_per_level before
             %    moving on - thereafter each level will just run the number
             %    of training trials regardless of correct/incorrect
-            if p.training == 1 % if initiated
+            if p.training_enabled == 1 % if initiated
                 if block == 1 && i == 1
-                    fprintf('training (p.training set to 1)\n will reduce dots presentation from p.training_dots_duration (%u secs) to p.dots_duration (%u secs) every %u trials\n', p.training_dots_duration, p.dots_duration, p.training_interval);
+                    fprintf('training (p.training_enabled set to 1)\n will reduce dots presentation from p.training_dots_duration (%u secs) to p.dots_duration (%u secs) every %u trials\n', p.training_dots_duration, p.dots_duration, p.training_interval);
                     t.orig_dots_duration = p.dots_duration; % save experimental dots duration for later
                     p.dots_duration = p.training_dots_duration; % set dots duration to training value to start
                     t.training_placeholder = p.training_rule_lvl_easy;
