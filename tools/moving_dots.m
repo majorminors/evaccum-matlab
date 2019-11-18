@@ -233,15 +233,17 @@ for frame_num = 1:total_frames
     
     % check for keypress and if pressed, break the frame-loop which will
     % end the function
-    if p.fix_trial_time == 0
+     if p.fix_trial_time == 0
         [pressed,firstPress] = KbQueueCheck();
         if any(pressed)
             break
         end
-    end
+     end
 
 end
 
+% check for keypress if you don't want to break the frame-loop (i.e. entire
+% dots duration)
 if p.fix_trial_time == 1
     [pressed,firstPress] = KbQueueCheck();
 end

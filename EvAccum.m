@@ -1,7 +1,7 @@
 %% Matching motion coherence to direction cue in MEG
 % Dorian Minors
 % Created: JUN19
-% Last Edit: 31OCT19
+% Last Edit: 18NOV19
 
 % trial settings all saved in 'p'
 
@@ -63,7 +63,7 @@ p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and s
 p.training_enabled = 0; % if 0 (or any other than 1) will do nothing, if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
 p.fix_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anything other than 1) will not do iti
-p.feedback_type = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
+p.feedback_type = 1; % if 0 (or anything other than 1 or 2) no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
 p.num_blocks = 20;
 p.breakblocks = 0; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
 t.takeabreak = 0; % will use this variable to mark a break event (code currently at commencement of block loop)
@@ -478,6 +478,8 @@ try
             % now run moving_dots
             KbQueueFlush(); % flush the response queue so any accidental presses recorded in the cue period won't affect responses in the dots period
             [d.dots_onset(block,i), t.pressed, t.firstPress] = moving_dots(p,dots); % pull time of first flip for dots, as well as information from KBQueueCheck from moving_dots
+            if nnz(t.firstPress) > 1 %(if number of non-zero elements is greater than 1 - i.e. if participant has responded more than once)
+            end
             
             %% deal with response and provide feedback (or abort if 'p.quitkey' pressed)
             
