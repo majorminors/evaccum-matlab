@@ -1,5 +1,8 @@
 %% matching threshold analysis
 
+% note: you're overwriting variables when you produce your plots. You
+%       should address this at some point.
+
 % produces:
 
 % 'overview', both for 'low_coh' and 'hi_coh' which is three rows:
@@ -32,6 +35,9 @@ clc;
 % enter filename
 data_file = 'S20_EvAccum_matching_threshold_test';
 vars = {'p','d'}; % which variables do you need
+% enter your thresholds
+low_threshold_pc = 0.6;
+high_threshold_pc = 0.8; % not using this currently, but we'll have it pop up anyway
 
 % directory mapping
 rootdir = 'C:\Users\doria\Google Drive\04 Research\05 Evidence Accumulation\01 EvAccum Code';
@@ -161,27 +167,54 @@ for i = 1:numel(p.rule_points) % for 1:number of matching angle points
 end
 %test2(:,1) = flip(test2(:,1)); % need to flip the points (lie to matlab) so the psychcurve tool works
 
-set(0,'DefaultFigureVisible','off'); % stop figures from popping up
-
 % make a sigmoid and put it on a figure
-psychcurve(test2);
+sigmoid_low = figure('visible','on');
+[plotresult, plotline, plotdata] = psychcurve(test2);
+hold on
+% find the x value for proportion correct:
+[~, low_threshold_idx] = min(abs(plotline.YData-low_threshold_pc(1))); % first find the index of the value closest to the threshold pc
+low_threshold = plotline.XData(low_threshold_idx); % then find the value using the index
+high_threshold = -90-low_threshold; % this is the inverse of the low_threshold value - currently I've flipped everything into negative so it is oriented correctly in the psignifit tools
+% add plot lines at the threshold value on y:
+plot([-90 -0], [low_threshold_pc low_threshold_pc], '-', 'Color',[1 0 0])
+[~, high_pc_idx] = min(abs(plotline.XData-high_threshold(1))); % then find the index of the value closest to the high_threshold
+high_threshold_pc = plotline.YData(high_pc_idx); % then find the value using the index and print that in the command window
+plot([-90 -0], [high_threshold_pc high_threshold_pc], '-', 'Color',[0 1 0])
+% add plot lines at the threshold value on x:
+plot([low_threshold low_threshold], [0.3 1], '-', 'Color',[1 0 0])
+plot([high_threshold high_threshold], [0.3 1], '-', 'Color',[0 1 0])
 savefig(fullfile(datadir, data_file, [data_file '_lowcohsigmoid']));
+hold off
 % diplay rts on a figure
+rts_low = figure('visible','off');
 plot(summary(2,:),summary(4,:),'ro:');
 savefig(fullfile(datadir, data_file, [data_file '_low_coh_rts']));
 % make a sigmoid and put it on a figure
-psychcurve(test1);
+sigmoid_hi = figure('visible','off');
+[plotresult, plotline, plotdata] = psychcurve(test1);
+hold on
+[~, low_pc_idx] = min(abs(plotline.XData-low_threshold(1))); % then find the index of the value closest to the high_threshold
+low_threshold_pc = plotline.YData(low_pc_idx); % then find the value using the index and print that in the command window
+[~, high_pc_idx] = min(abs(plotline.XData-high_threshold(1))); % then find the index of the value closest to the high_threshold
+high_threshold_pc = plotline.YData(high_pc_idx); % then find the value using the index and print that in the command window
+plot([-90 -0], [low_threshold_pc low_threshold_pc], '-', 'Color',[1 0 0])
+plot([-90 -0], [low_threshold_pc low_threshold_pc], '-', 'Color',[1 0 0])
+plot([low_threshold low_threshold], [0.3 1], '-', 'Color',[1 0 0])
+plot([high_threshold high_threshold], [0.3 1], '-', 'Color',[0 1 0])
 savefig(fullfile(datadir, data_file, [data_file '_hicohsigmoid']));
+hold off
 % diplay rts on a figure
+rts_hi = figure('visible','off');
 plot(summary(2,:),summary(6,:),'ro:');
 savefig(fullfile(datadir, data_file, [data_file '_hi_coh_rts']));
-% load those figures into variables
-sigmoid_low=hgload(fullfile(datadir, data_file, [data_file '_lowcohsigmoid.fig']));
-rts_low=hgload(fullfile(datadir, data_file, [data_file '_low_coh_rts.fig']));
-sigmoid_hi=hgload(fullfile(datadir, data_file, [data_file '_hicohsigmoid.fig']));
-rts_hi=hgload(fullfile(datadir, data_file, [data_file '_hi_coh_rts.fig']));
 
-set(0,'DefaultFigureVisible','on'); % allow figures to pop up again
+low_threshold = abs(low_threshold) % print that in the command window
+high_threshold = abs(high_threshold)
+% load those figures into variables
+% sigmoid_low=hgload(fullfile(datadir, data_file, [data_file '_lowcohsigmoid.fig']));
+% rts_low=hgload(fullfile(datadir, data_file, [data_file '_low_coh_rts.fig']));
+% sigmoid_hi=hgload(fullfile(datadir, data_file, [data_file '_hicohsigmoid.fig']));
+% rts_hi=hgload(fullfile(datadir, data_file, [data_file '_hi_coh_rts.fig']));
 
 % prepare subplots
 figure
