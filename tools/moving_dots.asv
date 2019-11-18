@@ -242,31 +242,26 @@ for frame_num = 1:total_frames
     if p.MEG_enabled == 1 && ~isempty(MEG.LastButtonPress) && ~button_pressed
         button_pressed = 1;
         MEG.SendTrigger(p.stim_mat(exp_trial,9)+64);
-        firstPress{1} = MEG.LastButtonPress;
-        firstPress{2} = MEG.TimeOfLastButtonPress;
-        pressed = NaN;
+        t.firstPress{1} = MEG.LastButtonPress;
+        t.firstPress{2} = MEG.Time
         pause(0.005);
         MEG.SendTrigger(0);
     end
     % check for keypress and if pressed, break the frame-loop which will
     % end the function
-    if p.MEG_enabled == 0
-        if p.fix_trial_time == 0
-            [pressed,firstPress] = KbQueueCheck();
-            if any(pressed)
-                break
-            end
+     if p.fix_trial_time == 0
+        [pressed,firstPress] = KbQueueCheck();
+        if any(pressed)
+            break
         end
-    end
+     end
 
 end
 
 % check for keypress if you don't want to break the frame-loop (i.e. entire
 % dots duration)
-if p.MEG_enabled == 0
-    if p.fix_trial_time == 1
-        [pressed,firstPress] = KbQueueCheck();
-    end
+if p.fix_trial_time == 1
+    [pressed,firstPress] = KbQueueCheck();
 end
 
 return

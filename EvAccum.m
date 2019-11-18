@@ -67,6 +67,7 @@ p.feedback_type = 1; % if 0 (or anything other than 1 or 2) no feedback, if 1 th
 p.num_blocks = 20;
 p.breakblocks = 0; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
 t.takeabreak = 0; % will use this variable to mark a break event (code currently at commencement of block loop)
+p.MEG_enabled = 0; % using MEG
 
 % check set up
 if ~ismember(p.fullscreen_enabled,[0,1]); error('invalid value for p.fullscreen_enabled'); end % check if valid or error
@@ -165,8 +166,13 @@ save(save_file); % save all data to a .mat file
 fprintf('defining exp params for %s\n', mfilename);
 
 % define keys
-p.quitkey = {'q'};
-p.resp_keys = {'a','s'}; % only accepts two response options
+if p.MEG_enabled == 0
+    p.quitkey = {'q'};
+    p.resp_keys = {'a','s'}; % only accepts two response options
+elseif p.MEG_enabled == 1 % what keys in the MEG
+    p.quitkey = {'q'};
+    p.resp_keys = {'RB','RY'}; % only accepts two response options
+end
 p.keyswap = 2; % 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
 t.keyswapper = 0; % will use this variable to mark a keyswap event (code currently at commencement of block loop)
 % establish response keys for the trial based off whether participant id is odd or even
@@ -288,6 +294,15 @@ end
 % clear floating variables
 clear block;
 
+%% set up MEG
+
+if p.MEG_enabled == 1
+    MEG = MEGSynchClass; % call MEG function
+    MEG.SendTrigger(0); % make sure all triggers are off
+elseif p.MEG_enabled == 0
+    MEG = 0;
+end
+
 %% exp start
 
 fprintf('running experiment %s\n', mfilename);
@@ -387,7 +402,7 @@ try
                 KbQueueFlush(); % flush the response queue from the continue screen presses
                 t.keyswapper = 2; % keyswap complete
                 fprintf('first we will run some practice on the new keys before we get into trial %u\n', i); % report that we're about to do some training
-                d.trainingdata = keyswap_training(p,dots,d); % run some training on the new keys
+                d.trainingdata = keyswap_training(p,dots,d,MEG); % run some training on the new keys
             end
             
             %% present cue and response mapping
@@ -477,16 +492,21 @@ try
             
             % now run moving_dots
             KbQueueFlush(); % flush the response queue so any accidental presses recorded in the cue period won't affect responses in the dots period
-            [d.dots_onset(block,i), t.pressed, t.firstPress] = moving_dots(p,dots); % pull time of first flip for dots, as well as information from KBQueueCheck from moving_dots
+            [d.dots_onset(block,i), t.pressed, t.firstPress] = moving_dots(p,dots,MEG,i); % pull time of first flip for dots, as well as information from KBQueueCheck from moving_dots
             if nnz(t.firstPress) > 1 %(if number of non-zero elements is greater than 1 - i.e. if participant has responded more than once)
             end
             
             %% deal with response and provide feedback (or abort if 'p.quitkey' pressed)
             
             % code response info
-            d.resp_key_name{block,i} = KbName(t.firstPress); % get the name of the key used to respond - needs to be squiggly brackets or it wont work for no response
-            d.resp_key_time(block,i) = sum(t.firstPress); % get the timing info of the key used to respond
-            d.rt(block,i) = d.resp_key_time(block,i) - d.dots_onset(block,i); % rt is the timing of key info - time of dots onset (if you get minus values something's wrong with how we deal with nil/early responses)
+            if p.MEG_enabled == 0
+                d.resp_key_name{block,i} = KbName(t.firstPress); % get the name of the key used to respond - needs to be squiggly brackets or it wont work for no response
+                d.resp_key_time(block,i) = sum(t.firstPress); % get the timing info of the key used to respond
+                d.rt(block,i) = d.resp_key_time(block,i) - d.dots_onset(block,i); % rt is the timing of key info - time of dots onset (if you get minus values something's wrong with how we deal with nil/early responses)
+            elseif p.MEG_enabled == 1
+                d.resp_key_name{block,i} = t.firstPress{1}; % get response key from array
+                d.rt(block,i) = t.firstPress{2}; % get response time from array
+            end
             
             % create variable for correct response
             if p.stim_mat(i,7) == 1 % if trial matches blue
@@ -567,6 +587,7 @@ try
     % close screen
     ShowCursor;
     KbQueueRelease(); %KbReleaseWait();
+    if p.MEG_enabled == 1; MEG.delete; end % stop MEG from limiting button presses
     clear block i ans; % clear specific indexes and stuff
     Screen('Close',p.win);
     
@@ -576,6 +597,7 @@ catch err
     save(save_file);
     ShowCursor;
     KbQueueRelease(); %KbReleaseWait();
+    if p.MEG_enabled == 1; MEG.delete; end % stop MEG from limiting button presses
     sca; %Screen('Close',p.win);
     rethrow(err);
 end
