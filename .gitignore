@@ -3,6 +3,4 @@
 /instructions/
 /stimuli/working files/
 /stimuli/old cues/
-/EvAccum.asv
-/EvAccum_coherence_threshold_test.asv
-/EvAccum_matching_threshold_test.asv
+*.asv

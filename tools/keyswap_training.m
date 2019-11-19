@@ -88,12 +88,8 @@ while i < f.max_trials
             DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_orange);
         end
         Screen('Flip', p.win);
-        t.waiting = []; % wait for user input
-        while isempty(t.waiting)
-            t.waiting = KbQueueWait();%([],3);
-        end
-        
-        KbQueueFlush(); % flush the response queue from the continue screen presses
+        response_waiter(p,MEG) % call response_waiter function
+        KbQueueFlush(); % flush the response queue from the response waiter
     end
     
     %% present dots
@@ -106,31 +102,24 @@ while i < f.max_trials
         dots.coherence = d.hard_coherence; % then instead give moving_dots value from 'd.hard_coherence'
     end
     
-    % training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval')
-    if block == 1 && i == 1
-        fprintf('training - will reduce dots presentation from p.training_dots_duration (%u secs) to p.dots_duration (%u secs) trial by trial\n', p.training_dots_duration, p.dots_duration);
-        t.orig_dots_duration = p.dots_duration; % save experimental dots duration for later
-        p.dots_duration = p.training_dots_duration; % set dots duration to training value to start
-    end
-    if ~mod(i,p.training_interval) && p.training_dots_duration > t.orig_dots_duration % if we've hit a trial that is divisible by the training interval and the current value of training dots duration is greater than our final dots duration
-        p.dots_duration = p.training_dots_duration-p.training_reduction; % reduce dots duration
-        p.training_dots_duration = p.training_dots_duration-p.training_reduction; % save that value for the next trial
-        fprintf('reducing p.training_dots_duration (%u secs) by p.training_reduction (%u secs)\n', p.training_dots_duration, p.training_reduction);
-    elseif ~mod(i,p.training_interval) && p.training_dots_duration <= t.orig_dots_duration % if we've hit a trial that is divisible by the training interval and the current value of training dots duration is less than or equal to our final dots duration
-        p.dots_duration = t.orig_dots_duration; % revert to the experimental dots duration
-        fprintf('dots duration now stable at p.dots_duration (%u secs)\n', p.dots_duration);
-    end
-    
     % now run moving_dots
     KbQueueFlush(); % flush the response queue so any accidental presses recorded in the cue period won't affect responses in the dots period
-    [f.dots_onset(block,i), t.pressed, t.firstPress] = moving_dots(p,dots,MEG); % pull time of first flip for dots, as well as information from KBQueueCheck from moving_dots
+    [f.dots_onset(block,i), t.pressed, t.firstPress] = moving_dots(p,dots,MEG,i); % pull time of first flip for dots, as well as information from KBQueueCheck from moving_dots
     
     %% deal with response and provide feedback (or abort if 'p.quitkey' pressed)
     
-    % code response info
-    f.resp_key_name{block,i} = KbName(t.firstPress); % get the name of the key used to respond - needs to be squiggly brackets or it wont work for no response
-    f.resp_key_time(block,i) = sum(t.firstPress); % get the timing info of the key used to respond
-    f.rt(block,i) = f.resp_key_time(block,i) - f.dots_onset(block,i); % rt is the timing of key info - time of dots onset (if you get minus values something's wrong with how we deal with nil/early responses)
+    % code response info (without saving multiple keypress information this time, since it's training)
+    if p.MEG_enabled == 0
+        if nnz(t.firstPress) > 1 % (if number of non-zero elements is greater than 1 - i.e. if participant has responded more than once)
+            t.firstPress(find(t.firstPress==max(t.firstPress))) = 0; % zero out the max value so only the first press is recorded in the matrix
+        end
+        f.resp_key_name{block,i} = KbName(t.firstPress); % get the name of the key used to respond - needs to be squiggly brackets or it wont work for no response
+        f.resp_key_time(block,i) = sum(t.firstPress); % get the timing info of the key used to respond
+        f.rt(block,i) = f.resp_key_time(block,i) - f.dots_onset(block,i); % rt is the timing of key info - time of dots onset (if you get minus values something's wrong with how we deal with nil/early responses)
+    elseif p.MEG_enabled == 1
+        d.resp_key_name{block,i} = t.firstPress{1}; % get response key from array
+        d.rt(block,i) = t.firstPress{2}; % get response time from array - don't need to minus dots onset here because we're using the MEG timing functions
+    end
     
     % create variable for correct response
     if p.stim_mat(i,7) == 1 % if trial matches blue
@@ -166,8 +155,12 @@ while i < f.max_trials
     %% post trial clean up
     KbQueueRelease();
     
-    %set up a queue to collect response info
-    t.queuekeys = [KbName(p.resp_keys{1}), KbName(p.resp_keys{2}), KbName(p.quitkey)]; % define the keys the queue cares about
+    %set up a queue to collect response info (or in the case of p.MEG_enabled, to watch for the quitkey)
+    if p.MEG_enabled == 0
+        t.queuekeys = [KbName(p.resp_keys{1}), KbName(p.resp_keys{2}), KbName(p.quitkey)]; % define the keys the queue cares about
+    elseif p.MEG_enabled == 1
+        t.queuekeys = KbName(p.quitkey); % define the keys the queue cares about
+    end
     t.queuekeylist = zeros(1,256); % create a list of all possible keys (all 'turned off' i.e. zeroes)
     t.queuekeylist(t.queuekeys) = 1; % 'turn on' the keys we care about in the list (make them ones)
     KbQueueCreate([], t.queuekeylist); % initialises queue to collect response information from the list we made (not listening for response yet)
@@ -182,9 +175,7 @@ WaitSecs(1);
 DrawFormattedText(p.win,'\n all done training!\n\n\n press either button to continue\n', 'center', 'center', p.text_colour);
 Screen('Flip', p.win);
 t.waiting = []; % wait for user input
-while isempty(t.waiting)
-    t.waiting = KbQueueWait();%([],3);
-end
-KbQueueFlush(); % flush the response queue from the continue screen presses
+response_waiter(p,MEG) % call response_waiter function
+KbQueueFlush(); % flush the response queue from the response waiter
 
 return

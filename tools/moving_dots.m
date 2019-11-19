@@ -1,5 +1,5 @@
 function [dots_onset_time, pressed, firstPress] = moving_dots(p,dots,MEG,exp_trial)
-% moving_dots(p,dots,MEG)
+% [dots_onset_time, pressed, firstPress] = moving_dots(p,dots,MEG,exp_trial)
 %
 % creates a cloud of moving dots, then creates a fixation by putting a small 
 % black square in a bigger white square, then flips the screen
@@ -14,6 +14,8 @@ function [dots_onset_time, pressed, firstPress] = moving_dots(p,dots,MEG,exp_tri
 % requires KBQueueStart() called prior to function (so may want to
 % call KBQueueFlush() prior to function), as well as information from 'dots'
 % structure and 'p' (i.e. experiment parameter) structure (see below)
+%
+% requires MEG, which is a series of functions for MRC CBU MEG scanner
 %
 % returns:
 %    dots_onset_time           time of first flip
@@ -37,7 +39,9 @@ function [dots_onset_time, pressed, firstPress] = moving_dots(p,dots,MEG,exp_tri
 %
 %
 % requires from 'p':
-%    p.fix_trial_time       if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
+%    p.MEG_enabled            a boolean (0 or 1) telling the script whether we should record responses with KbQueue or with MEG functions
+%    p.stim_mat               needs this to determine the unique MEG trigger to send for each trial condition
+%    p.fix_trial_time         if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 %    p.dots_duration          seconds for the dot cloud to be displayed
 %    p.screen_width           width of the screen in cm
 %    p.screen_distance        distance from the screen in cm
@@ -135,13 +139,15 @@ good_dots = false(size(num_dots));
 total_frames = secs2frames(p,p.dots_duration);
 
 %% loop through frames
+
+% if p.MEG_enabled then set up MEG for response recording
 if p.MEG_enabled == 1
-    MEG.SendTrigger(p.stim_mat(exp_trial,9));
-    MEG.ResetClock;
-    button_pressed = 0;
-    MEG.WaitForButtonPress;
-    pause(0.005);
-    MEG.SendTrigger(0);
+    MEG.SendTrigger(p.stim_mat(exp_trial,p.MEGtriggers.onsets)); % send a trigger for trial onset
+    MEG.ResetClock; % reset the timer
+    button_pressed = 0; % a counter to make sure we catch the first time a button was pressed
+    MEG.WaitForButtonPress; % listen for button press
+    pause(0.005); % quick pause before we reset triggers
+    MEG.SendTrigger(0); % reset triggers
 end
 
 for frame_num = 1:total_frames
@@ -239,33 +245,45 @@ for frame_num = 1:total_frames
         Screen('Flip',p.win);
     end
     
-    if p.MEG_enabled == 1 && ~isempty(MEG.LastButtonPress) && ~button_pressed
-        button_pressed = 1;
-        MEG.SendTrigger(p.stim_mat(exp_trial,9)+64);
-        firstPress{1} = MEG.LastButtonPress;
-        firstPress{2} = MEG.TimeOfLastButtonPress;
-        pressed = NaN;
-        pause(0.005);
-        MEG.SendTrigger(0);
-    end
-    % check for keypress and if pressed, break the frame-loop which will
-    % end the function
+    % keypress stuff within the frame loop
     if p.MEG_enabled == 0
         if p.fix_trial_time == 0
-            [pressed,firstPress] = KbQueueCheck();
+            [pressed,firstPress] = KbQueueCheck(); % check for keypress in the KbQueue every frame
             if any(pressed)
-                break
+                break % break the frame-loop which will end the function
             end
+        end
+    elseif p.MEG_enabled == 1
+        if ~isempty(MEG.LastButtonPress) && ~button_pressed % check for a keypress in the MEG key wait function every frame, if a key hasn't been pressed yet
+            button_pressed = 1; % record that a key has been pressed this trial
+            MEG.SendTrigger(p.stim_mat(exp_trial,p.MEGtriggers.responses)); % send a trigger
+            firstPress{1} = MEG.LastButtonPress; % record the key pressed
+            firstPress{2} = MEG.TimeOfLastButtonPress; % record the time of the key pressed
+            pressed = NaN; % just put something in here
+            pause(0.005); % quick pause before resetting
+            MEG.SendTrigger(0); % reset the triggers
+            if p.fix_trial_time == 0
+                break % break the frame-loop which will end the function
+            end
+        elseif ~isempty(MEG.LastButtonPress) && button_pressed > 0 % if it's not the first time a key has been pressed
+            button_pressed = 2; % record that another key has been pressed this trial
+            firstPress.multipress(frame_num,1) = MEG.LastButtonPress; % record the key pressed
+            firstPress.multipress(frame_num,2) = MEG.TimeOfLastButtonPress; % record the time of the key pressed
         end
     end
 
 end
 
-% check for keypress if you don't want to break the frame-loop (i.e. entire
-% dots duration)
+% keypress stuff outside the frame loop
 if p.MEG_enabled == 0
     if p.fix_trial_time == 1
-        [pressed,firstPress] = KbQueueCheck();
+        [pressed,firstPress] = KbQueueCheck(); % check for a keypress outside the frame loop before the function ends
+    end
+elseif p.MEG_enabled == 1
+    [~,checkquit] = KbQueueCheck(); % do a check to see if we quit, and if so error out
+    if strcmp(KbName(checkquit),p.quitkey)
+        fclose('all');
+        error('%s quit by user (p.quitkey pressed)\n', mfilename);
     end
 end
 
