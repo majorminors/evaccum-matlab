@@ -1,5 +1,6 @@
 function response_waiter(p,MEG)
 % response_waiter(p,MEG)
+% updated 18NOV19 - check function at bottom of script is same version
 %
 % will wait for button responses before continuing
 %
@@ -8,9 +9,12 @@ function response_waiter(p,MEG)
 %
 % requires from p:
 %   p.MEG_enabled (0 or 1)
-% requires from MEG (a series of functions for MRC CBU MEG scanner)
+% requires from MEG - a class of functions for the MEG interface with the National Instruments PCI 6503 card (MRC CBU)
 %   MEG.LastButtonPress
 %   MEG.WaitForButtonPress
+
+%% last edit D. Minors 18 November 2019
+%% start function
 
 if p.MEG_enabled == 0
     waiting = []; % wait for user input

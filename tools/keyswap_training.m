@@ -1,5 +1,5 @@
 function f = keyswap_training(p,dots,d,MEG)
-% keyswap_training(p,dots,d)
+% f = keyswap_training(p,dots,d,MEG)
 %
 % will run some training on the EvAccum paradigm in a sandbox when called.
 %
@@ -25,7 +25,26 @@ function f = keyswap_training(p,dots,d,MEG)
 %   all output as a structure 'f'
 %
 
-%% NOV 19 - function by Dorian Minors
+%% last edit D. Minors 18 November 2019
+%% subfunctions - can use these at bottom instead of external functions
+
+%% dots_onset_time, pressed, firstPress] = moving_dots(p,dots,MEG,exp_trial)
+% creates a cloud of moving dots, then creates a fixation by putting a small 
+% black square in a bigger white square, then flips the screen
+%% response_waiter(p,MEG)
+% will wait for button responses before continuing
+% updated 18NOV2018
+% since previous versions of MATLAB require functions to be external to
+% script, then if you're using this, check it's up to date with the
+% external one
+
+%% pix = angle2pix(p,ang)
+% calculates pixel size from visual angles, assuming isotropic (square) pixels
+
+% requires:
+% p.screen_distance           distance from screen in cm
+% p.screen_width              width of screen in cm
+% p.resolution                number of pixels of p in horizontal direction - this needs to be calculated after the window is opened for the dots
 %% start function
 
 p.stim_mat = d.stim_mat_all(:,:,1); % take the stimulus matrix from the first block to train on
@@ -178,4 +197,13 @@ t.waiting = []; % wait for user input
 response_waiter(p,MEG) % call response_waiter function
 KbQueueFlush(); % flush the response queue from the response waiter
 
+return
+
+%% subfunctions
+
+%% convert visual angles in degrees to pixels
+function pix = angle2pix(p,ang) 
+pixSize = p.screen_width/p.resolution(1);   % cm/pix
+sz = 2*p.screen_distance*tan(pi*ang/(2*180));  %cm
+pix = round(sz/pixSize);   % pix 
 return

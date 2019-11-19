@@ -15,13 +15,14 @@ function [dots_onset_time, pressed, firstPress] = moving_dots(p,dots,MEG,exp_tri
 % call KBQueueFlush() prior to function), as well as information from 'dots'
 % structure and 'p' (i.e. experiment parameter) structure (see below)
 %
-% requires MEG, which is a series of functions for MRC CBU MEG scanner
+% requires MEG, which is a class of functions for the MEG interface with the National Instruments PCI 6503 card (MRC CBU)
 %
 % returns:
 %    dots_onset_time           time of first flip
 %    pressed                   assuming 'KBQueueStart()' has been called prior
 %                              to moving_dots, will return whether a key has been
-%                              pressed (1) or not (2) 
+%                              pressed (1) or not (2)
+%
 %    firstPress                assuming 'KBQueueStart()' has been called
 %                              prior to moving_dots, will return an array 
 %                              with time and key info of first key pressed
@@ -59,7 +60,9 @@ function [dots_onset_time, pressed, firstPress] = moving_dots(p,dots,MEG,exp_tri
 %    will also use:
 %       p.bg_colour           background colour - will use for 'p.fixation.mask' around the fixation
 
-
+%% subclasses required
+%% MEGSynchClass
+% a class of functions for the MEG interface with the National Instruments PCI 6503 card (MRC CBU)
 %% subfunctions (at bottom of moving_dots):
 %% pix = angle2pix(p,ang)
 % calculates pixel size from visual angles, assuming isotropic (square) pixels
@@ -75,7 +78,8 @@ function [dots_onset_time, pressed, firstPress] = moving_dots(p,dots,MEG,exp_tri
 % requires:
 % p.frame_rate                this needs to be calculated after the window is opened for the dots
 
-%% JULY 19 - function and subfunctions adapted from G.M. Boynton (University of Washington) 
+%% adapted from G.M. Boynton (University of Washington) 
+%% last edit D. Minors 18 November 2019
 %% start function
 
 % calculate total number of dots across clouds
@@ -298,7 +302,9 @@ pixSize = p.screen_width/p.resolution(1);   % cm/pix
 sz = 2*p.screen_distance*tan(pi*ang/(2*180));  %cm
 pix = round(sz/pixSize);   % pix 
 return
+% adapted from G.M. Boynton (University of Washington) 
 
 %% convert time in seconds to frames
 function frames = secs2frames(p,secs)
 frames = round(secs*p.frame_rate);
+% adapted from G.M. Boynton (University of Washington) 

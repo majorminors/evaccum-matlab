@@ -35,15 +35,26 @@
 %       one argument - but from at least 2018, KbQueueWait can accept two,
 %       which is commented out next to any call to KbQueueWait here.
 
-%% subfunctions (at bottom):
+%% subclasses
+
+%% MEGSynchClass
+% a class of functions for the MEG interface with the National Instruments PCI 6503 card (MRC CBU)
+
+%% subfunctions - can use these at bottom instead of external functions from at least R2018a:
+
+%% dots_onset_time, pressed, firstPress] = moving_dots(p,dots,MEG,exp_trial)
+% creates a cloud of moving dots, then creates a fixation by putting a small 
+% black square in a bigger white square, then flips the screen
+%% response_waiter(p,MEG)
+% will wait for button responses before continuing
+% updated 18NOV2018
+% since previous versions of MATLAB require functions to be external to
+% script, then if you're using this, check it's up to date with the
+% external one
+%% f = keyswap_training(p,dots,d,MEG)
+% will run some training on the EvAccum paradigm in a sandbox when called
 %% pix = angle2pix(p,ang)
 % calculates pixel size from visual angles, assuming isotropic (square) pixels
-
-% requires:
-% p.screen_distance           distance from screen in cm
-% p.screen_width              width of screen in cm
-% p.resolution                number of pixels of p in horizontal direction - this needs to be calculated after the window is opened for the dots
-
 %% set up
 
 close all;
@@ -623,11 +634,4 @@ catch err
 end
 
 %% subfunctions
-
-%% convert visual angles in degrees to pixels
-% function pix = angle2pix(p,ang)
-% pixSize = p.screen_width/p.resolution(1);   % cm/pix
-% sz = 2*p.screen_distance*tan(pi*ang/(2*180));  %cm
-% pix = round(sz/pixSize);   % pix
-% return
-% end
+% can put subfunctions here if running MATLAB at least R2018a
