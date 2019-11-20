@@ -22,7 +22,7 @@ if p.MEG_enabled == 0
         waiting = KbQueueWait();%([],3) - this commented code is for later versions of MATLAB;
     end
 elseif p.MEG_enabled == 1
-    while isempty(MEG.LastButtonPress)
+    while ~strcmp(MEG.LastButtonPress,p.continue_key)% isempty(MEG.LastButtonPress)
         MEG.WaitForButtonPress; % wait for user input
         pressed = KbQueueCheck();
         if pressed == 1; break; end % assumes you are listening for a quit key on experimenter keyboard

@@ -269,10 +269,12 @@ for frame_num = 1:total_frames
             if p.fix_trial_time == 0
                 break % break the frame-loop which will end the function
             end
+            fpidx = 0;
         elseif ~isempty(MEG.LastButtonPress) && button_pressed > 0 % if it's not the first time a key has been pressed
             button_pressed = 2; % record that another key has been pressed this trial
-            firstPress.multipress(frame_num,1) = MEG.LastButtonPress; % record the key pressed
-            firstPress.multipress(frame_num,2) = MEG.TimeOfLastButtonPress; % record the time of the key pressed
+            fpidx = fpidx+1;
+            firstPress{3+fpidx} = MEG.LastButtonPress; % record the key pressed
+            firstPress{4+fpidx} = MEG.TimeOfLastButtonPress; % record the time of the key pressed
         end
     end
 

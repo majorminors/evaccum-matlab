@@ -69,7 +69,7 @@ t = struct(); % another structure for untidy trial specific floating variables t
 % set up variables
 rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum'; % root directory - used to inform directory mappings
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
-p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
+p.fullscreen_enabled = 0; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
 p.training_enabled = 0; % if 0 (or any other than 1) will do nothing, if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
 p.fix_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
@@ -78,7 +78,7 @@ p.feedback_type = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 th
 p.num_blocks = 20;
 p.breakblocks = 0; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
 p.keyswap = 2; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
-p.MEG_enabled = 0; % using MEG
+p.MEG_enabled = 1; % using MEG
 
 % check set up
 if ~ismember(p.fullscreen_enabled,[0,1]); error('invalid value for p.fullscreen_enabled'); end % check if valid or error
@@ -184,6 +184,7 @@ if p.MEG_enabled == 0
     p.resp_keys = {'a','s'}; % only accepts two response options
 elseif p.MEG_enabled == 1 % what keys in the MEG
     p.resp_keys = {'RB','RY'}; % only accepts two response options
+    p.continue_key = {'RR'};
 end
 p.quitkey = {'q'}; % this is watched by KbQueue regardless of p.MEG_enabled
 t.keyswapper = 0; % will use this variable to mark a keyswap event (code currently at commencement of block loop)
@@ -533,7 +534,7 @@ try
                 d.rt(block,i) = d.resp_key_time(block,i) - d.dots_onset(block,i); % rt is the timing of key info - time of dots onset (if you get minus values something's wrong with how we deal with nil/early responses)
             elseif p.MEG_enabled == 1
                 if exist('t.firstPress.multipress','var')
-                    d.multiple_keypresses(:,:,i,block) = t.firstPress.multipress;
+                    d.multiple_keypresses(i,:,block) = t.firstPress;
                 end
                 d.resp_key_name{block,i} = t.firstPress{1}; % get response key from array
                 d.rt(block,i) = t.firstPress{2}; % get response time from array - don't need to minus dots onset here because we're using the MEG timing functions
@@ -541,11 +542,11 @@ try
             
             % create variable for correct response
             if p.stim_mat(i,7) == 1 % if trial matches blue
-                d.correct_resp(block,i) = p.resp_keys{1};
-                d.incorrect_resp(block,i) = p.resp_keys{2};
+                d.correct_resp{block,i} = p.resp_keys{1};
+                d.incorrect_resp{block,i} = p.resp_keys{2};
             elseif p.stim_mat(i,7) == 2 % if trial matches orange
-                d.correct_resp(block,i) = p.resp_keys{2};
-                d.incorrect_resp(block,i) = p.resp_keys{1};
+                d.correct_resp{block,i} = p.resp_keys{2};
+                d.incorrect_resp{block,i} = p.resp_keys{1};
             end
             
             % score response
