@@ -33,14 +33,13 @@ clearvars;
 clc;
 
 % enter filename
-data_file = 'S20_EvAccum_matching_threshold_test';
+data_file = 'S04_EvAccum_matching_threshold_test';
 vars = {'p','d'}; % which variables do you need
 % enter your thresholds
 low_threshold_pc = 0.6;
-high_threshold_pc = 0.8; % not using this currently, but we'll have it pop up anyway
 
 % directory mapping
-rootdir = 'C:\Users\doria\Google Drive\04 Research\05 Evidence Accumulation\01 EvAccum Code';
+rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum';
 addpath(genpath(fullfile(rootdir, 'tools'))) % add sigm_fit tool to path for analysis
 datadir = fullfile(rootdir, 'data');
 backupdir = fullfile(datadir, 'backup');

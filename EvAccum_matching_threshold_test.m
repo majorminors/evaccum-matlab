@@ -59,13 +59,16 @@ d = struct(); % est structure for trial data
 t = struct(); % another structure for untidy trial specific floating variables that we might want to interrogate later if we mess up
 
 % set up variables
-rootdir = 'C:\Users\doria\Google Drive\04 Research\05 Evidence Accumulation\01 EvAccum Code'; % root directory - used to inform directory mappings
+rootdir = 'Z:\projects\EvAccum'; % root directory - used to inform directory mappings
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
 p.training_enabled = 0; % if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below. will also suppress pre-block information about whether it's a hard or easy test
 p.fix_trial_time = 0; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 p.num_blocks = 2; % each block currently feeds the two coherence values (block 1 is easy, block 2 is hard)
+
+p.MEG_enabled = 0;
+MEG = 0;
 
 % check set up
 if ~ismember(p.fullscreen_enabled,[0,1]); error('invalid value for p.fullscreen_enabled'); end % check if valid or error
