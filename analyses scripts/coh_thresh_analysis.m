@@ -29,7 +29,7 @@ clearvars;
 clc;
 
 % enter filename
-data_file = 'S04_EvAccum_coherence_threshold_test';
+data_file = 'S06_EvAccum_coherence_threshold_test';
 vars = {'p','d'}; % which variables do you need
 % enter your thresholds
 low_threshold_pc = 0.7;
