@@ -258,7 +258,7 @@ for frame_num = 1:total_frames
             end
         end
     elseif p.MEG_enabled == 1
-        if ~isempty(MEG.LastButtonPress) && ~button_pressed % check for a keypress in the MEG key wait function every frame, if a key hasn't been pressed yet
+        if strcmp(MEG.LastButtonPress,p.continue_key) && ~button_pressed % check for a keypress in the MEG key wait function every frame, if a key hasn't been pressed yet
             button_pressed = 1; % record that a key has been pressed this trial
             MEG.SendTrigger(p.stim_mat(exp_trial,p.MEGtriggers.responses)); % send a trigger
             firstPress{1} = MEG.LastButtonPress; % record the key pressed
@@ -270,7 +270,7 @@ for frame_num = 1:total_frames
                 break % break the frame-loop which will end the function
             end
             fpidx = 0;
-        elseif ~isempty(MEG.LastButtonPress) && button_pressed > 0 % if it's not the first time a key has been pressed
+        elseif ~strcmp(MEG.LastButtonPress,firstPress{1}) && button_pressed > 0 % if it's not the first time a key has been pressed
             button_pressed = 2; % record that another key has been pressed this trial
             fpidx = fpidx+1;
             firstPress{3+fpidx} = MEG.LastButtonPress; % record the key pressed
