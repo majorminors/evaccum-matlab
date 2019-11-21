@@ -42,6 +42,7 @@ try
     
     fprintf('entering megtest function\n');
     KbQueueFlush(); % flush the response queue so any accidental presses recorded in the cue period won't affect responses in the dots period
+    MEG.WaitForButtonPress(0); % reset button press
     [t.pressed, t.firstPress] = megtest_function(p,MEG); % pull time of first flip for dots, as well as information from KBQueueCheck from moving_dots
     
     MEG.LastButtonPress

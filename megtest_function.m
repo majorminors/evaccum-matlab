@@ -3,10 +3,9 @@ function [pressed, firstPress] = megtest_function(p,MEG)
 
 if p.MEG_enabled == 1
     MEG.SendTrigger(1); % send a trigger for trial onset
-    MEG.ResetClock; % reset the timer
     button_pressed = 0; % a counter to make sure we catch the first time a button was pressed
-    MEG.WaitForButtonPress; % listen for button press
     pause(0.005); % quick pause before we reset triggers
+    MEG.ResetClock; % reset the timer
     MEG.SendTrigger(0); % reset triggers
 end
 
@@ -15,16 +14,7 @@ fprintf('entering function response loop\n');
 for n = 1:10
 n
     
-    while 1
-        fprintf('waiting for response\n');
-        pressed = KbQueueCheck();
-        if pressed == 1; break; end % assumes you are listening for a quit key on experimenter keyboard
-        if strcmp(MEG.LastButtonPress,p.resp_keys{1})
-            break
-        elseif strcmp(MEG.LastButtonPress,p.resp_keys{2})
-            break
-        end
-    end
+
     
     fprintf('button coding block begins\n');
     if ~strcmp(MEG.LastButtonPress,p.continue_key) && ~button_pressed % check for a keypress in the MEG key wait function every frame, if a key hasn't been pressed yet

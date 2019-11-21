@@ -78,7 +78,7 @@ p.feedback_type = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 th
 p.num_blocks = 20;
 p.breakblocks = 0; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
 p.keyswap = 2; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
-p.MEG_enabled = 1; % using MEG
+p.MEG_enabled = 0; % using MEG
 
 % check set up
 if ~ismember(p.fullscreen_enabled,[0,1]); error('invalid value for p.fullscreen_enabled'); end % check if valid or error
@@ -184,7 +184,7 @@ if p.MEG_enabled == 0
     p.resp_keys = {'a','s'}; % only accepts two response options
 elseif p.MEG_enabled == 1 % what keys in the MEG
     p.resp_keys = {'RB','RY'}; % only accepts two response options
-    p.continue_key = {'RR'};
+    %p.continue_key = {'RR'};
 end
 p.quitkey = {'q'}; % this is watched by KbQueue regardless of p.MEG_enabled
 t.keyswapper = 0; % will use this variable to mark a keyswap event (code currently at commencement of block loop)
@@ -319,7 +319,7 @@ p.MEGtriggers.responses = 10; % what column p.stim_mat are you keeping your trig
 
 % invoke the MEG functions if p.MEG_enabled
 if p.MEG_enabled == 1
-    MEG = MEGSynchClass; % call MEG function
+    MEG = MEGSynchClass(1); % call MEG function
     MEG.SendTrigger(0); % make sure all triggers are off
 elseif p.MEG_enabled == 0
     MEG = 0; % just put something here so the switches and the functions we pass this to don't freak out
@@ -412,6 +412,7 @@ try
                 t.takeabreak = 2; % break event complete
             end
             
+            % do keyswap and training
             if t.keyswapper == 1
                 DrawFormattedText(p.win,'\n the response keys have swapped!\n\n\n we will do some practice\n\n\n ', 'center', 'center', p.text_colour);
                 Screen('Flip', p.win);
@@ -427,7 +428,9 @@ try
                     pause(0.005); % quick pause before we reset triggers
                     MEG.SendTrigger(0); % reset triggers
                 end
+                %% training function
                 d.trainingdata = keyswap_training(p,dots,d,MEG); % run some training on the new keys
+                %% training function ends
                 if p.MEG_enabled == 1
                     MEG.SendTrigger(p.MEGtriggers.training); % send a trigger to inform we're training
                     pause(0.005); % quick pause before we reset triggers
@@ -485,8 +488,13 @@ try
                     DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_orange);
                 end
                 Screen('Flip', p.win);
+                %% response waiter function
                 response_waiter(p,MEG) % call response_waiter function
+                %% response waiter function ends
                 KbQueueFlush(); % flush the response queue from the response waiter
+                if p.MEG_enabled == 1
+                    MEG.WaitForButtonPress(0); % reset MEG button press to empty
+                end
             end
             
             %% present dots
@@ -518,6 +526,10 @@ try
             
             % now run moving_dots
             KbQueueFlush(); % flush the response queue so any accidental presses recorded in the cue period won't affect responses in the dots period
+            if p.MEG_enabled == 1
+                MEG.WaitForButtonPress(0); % reset MEG button press to empty
+            end
+            %% moving dots function begins
             [d.dots_onset(block,i), t.pressed, t.firstPress] = moving_dots(p,dots,MEG,i); % pull time of first flip for dots, as well as information from KBQueueCheck from moving_dots
             
             %% deal with response and provide feedback (or abort if 'p.quitkey' pressed)
@@ -536,7 +548,7 @@ try
                 if exist('t.firstPress.multipress','var')
                     d.multiple_keypresses(i,:,block) = t.firstPress;
                 end
-                d.resp_key_name{block,i} = t.firstPress{1}; % get response key from array
+                d.resp_key_name(block,i) = t.firstPress{1}; % get response key from array
                 d.rt(block,i) = t.firstPress{2}; % get response time from array - don't need to minus dots onset here because we're using the MEG timing functions
             end
             

@@ -149,8 +149,8 @@ if p.MEG_enabled == 1
     MEG.SendTrigger(p.stim_mat(exp_trial,p.MEGtriggers.onsets)); % send a trigger for trial onset
     MEG.ResetClock; % reset the timer
     button_pressed = 0; % a counter to make sure we catch the first time a button was pressed
-    MEG.WaitForButtonPress; % listen for button press
     pause(0.005); % quick pause before we reset triggers
+    MEG.WaitForButtonPress(p.dots_duration); % listen for button press
     MEG.SendTrigger(0); % reset triggers
 end
 
@@ -258,23 +258,22 @@ for frame_num = 1:total_frames
             end
         end
     elseif p.MEG_enabled == 1
-        if strcmp(MEG.LastButtonPress,p.continue_key) && ~button_pressed % check for a keypress in the MEG key wait function every frame, if a key hasn't been pressed yet
+        if ~isempty(MEG.LastButtonPress) && ~button_pressed % check for a keypress in the MEG key wait function every frame, if a key hasn't been pressed yet
             button_pressed = 1; % record that a key has been pressed this trial
             MEG.SendTrigger(p.stim_mat(exp_trial,p.MEGtriggers.responses)); % send a trigger
             firstPress{1} = MEG.LastButtonPress; % record the key pressed
             firstPress{2} = MEG.TimeOfLastButtonPress; % record the time of the key pressed
-            pressed = NaN; % just put something in here
             pause(0.005); % quick pause before resetting
             MEG.SendTrigger(0); % reset the triggers
             if p.fix_trial_time == 0
                 break % break the frame-loop which will end the function
             end
-            fpidx = 0;
-        elseif ~strcmp(MEG.LastButtonPress,firstPress{1}) && button_pressed > 0 % if it's not the first time a key has been pressed
-            button_pressed = 2; % record that another key has been pressed this trial
-            fpidx = fpidx+1;
-            firstPress{3+fpidx} = MEG.LastButtonPress; % record the key pressed
-            firstPress{4+fpidx} = MEG.TimeOfLastButtonPress; % record the time of the key pressed
+%             fpidx = 0;
+%         elseif ~strcmp(MEG.LastButtonPress,firstPress{1}) && button_pressed > 0 % if it's not the first time a key has been pressed
+%             button_pressed = 2; % record that another key has been pressed this trial
+%             fpidx = fpidx+1;
+%             firstPress{3+fpidx} = MEG.LastButtonPress; % record the key pressed
+%             firstPress{4+fpidx} = MEG.TimeOfLastButtonPress; % record the time of the key pressed
         end
     end
 
@@ -286,6 +285,11 @@ if p.MEG_enabled == 0
         [pressed,firstPress] = KbQueueCheck(); % check for a keypress outside the frame loop before the function ends
     end
 elseif p.MEG_enabled == 1
+    pressed = 0; % just put something in here because its used in KbQueue and moving_dots expects an output
+    if isempty(MEG.LastButtonPress)
+        firstPress{1} = z; 
+        firstPress{2} = 0;
+    end
     [~,checkquit] = KbQueueCheck(); % do a check to see if we quit, and if so error out
     if strcmp(KbName(checkquit),p.quitkey)
         fclose('all');
