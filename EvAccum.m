@@ -43,7 +43,7 @@
 %% subfunctions - can use these at bottom instead of external functions from at least R2018a:
 
 %% dots_onset_time, pressed, firstPress] = moving_dots(p,dots,MEG,exp_trial)
-% creates a cloud of moving dots, then creates a fixation by putting a small 
+% creates a cloud of moving dots, then creates a fixation by putting a small
 % black square in a bigger white square, then flips the screen
 %% response_waiter(p,MEG)
 % will wait for button responses before continuing
@@ -78,7 +78,7 @@ p.feedback_type = 1; % if 0 (or anything other than 1 or 2) no feedback, if 1 th
 p.num_blocks = 20;
 p.breakblocks = 0; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
 p.keyswap = 2; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
-p.MEG_enabled = 1; % using MEG
+p.MEG_enabled = 0; % using MEG
 p.MEG_emulator_enabled = 1; % using the emulator - be aware we can't quit using the quitkey with emulator
 
 % check set up
@@ -90,9 +90,14 @@ if ~ismember(p.iti_on,[0,1]); error('invalid value for p.iti_on'); end % check i
 if ~ismember(p.feedback_type,[0,1,2]); error('invalid value for p.feedback_type'); end % check if valid or error
 if ~ismember(p.MEG_enabled,[0,1]); error('invalid value for p.MEG_enabled'); end % check if valid or error
 if ~ismember(p.MEG_emulator_enabled,[0,1]); error('invalid value for p.MEG_emulator_enabled'); end % check if valid or error
-if p.MEG_emulator_enabled == 1 && p.MEG_enabled == 0; error('you cannot emulate MEG without enabling MEG - check p.MEG_enabled and p.MEG_emulator_enabled'); end
 %if p.MEG_enabled == 1 && p.testing_enabled == 1; error('are you sure you want to be testing with MEG enabled? if so, comment out this line'); end
 if p.MEG_enabled == 1 && p.training_enabled == 1; error('you cannot train with MEG enabled currently'); end
+if p.MEG_emulator_enabled == 1 && p.MEG_enabled == 0
+    warning('you cannot emulate MEG without enabling MEG - turning off emulation\n');
+    WaitSecs(1);
+    p.MEG_emulator_enabled = 0;
+    fprintf('p.MEG_emulator_enabled is now off\n')
+end
 
 % directory mapping
 addpath(genpath(fullfile(rootdir, 'tools'))); % add tools folder to path (includes moving_dots function which is required for dot motion, as well as an external copy of subfunctions for backwards compatibility with MATLAB)
@@ -560,9 +565,9 @@ try
                 d.resp_key_time(block,i) = sum(t.firstPress); % get the timing info of the key used to respond
                 d.rt(block,i) = d.resp_key_time(block,i) - d.dots_onset(block,i); % rt is the timing of key info - time of dots onset (if you get minus values something's wrong with how we deal with nil/early responses)
             elseif p.MEG_enabled == 1
-%                 if exist('t.firstPress.multipress','var')
-%                     d.multiple_keypresses(i,:,block) = t.firstPress;
-%                 end
+                %                 if exist('t.firstPress.multipress','var')
+                %                     d.multiple_keypresses(i,:,block) = t.firstPress;
+                %                 end
                 d.resp_key_name(block,i) = t.firstPress{1}; % get response key from array
                 d.rt(block,i) = t.firstPress{2}; % get response time from array - don't need to minus dots onset here because we're using the MEG timing functions
             end
@@ -657,7 +662,7 @@ catch err
     save(save_file);
     ShowCursor;
     if ~p.MEG_emulator_enabled; KbQueueRelease(); end %KbReleaseWait();
-%     if p.MEG_enabled == 1; MEG.delete; end % stop MEG from limiting button presses
+    %     if p.MEG_enabled == 1; MEG.delete; end % stop MEG from limiting button presses
     sca; %Screen('Close',p.win);
     rethrow(err);
 end
