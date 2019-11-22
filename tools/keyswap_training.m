@@ -108,7 +108,7 @@ while i < f.max_trials
         end
         Screen('Flip', p.win);
         response_waiter(p,MEG) % call response_waiter function
-        %         KbQueueFlush(); % flush the response queue from the response waiter
+        if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue from the response waiter
     end
     
     %% present dots
@@ -122,7 +122,7 @@ while i < f.max_trials
     end
     
     % now run moving_dots
-    %     KbQueueFlush(); % flush the response queue so any accidental presses recorded in the cue period won't affect responses in the dots period
+    if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue so any accidental presses recorded in the cue period won't affect responses in the dots period
     [f.dots_onset(block,i), t.pressed, t.firstPress] = moving_dots(p,dots,MEG,i); % pull time of first flip for dots, as well as information from KBQueueCheck from moving_dots
     
     %% deal with response and provide feedback (or abort if 'p.quitkey' pressed)
@@ -177,18 +177,20 @@ while i < f.max_trials
     Screen('Flip', p.win);
     
     %% post trial clean up
-    %     KbQueueRelease();
+    if ~p.MEG_emulator_enabled; KbQueueRelease(); end
     
     %set up a queue to collect response info (or in the case of p.MEG_enabled, to watch for the quitkey)
-    if p.MEG_enabled == 0
-        t.queuekeys = [KbName(p.resp_keys{1}), KbName(p.resp_keys{2}), KbName(p.quitkey)]; % define the keys the queue cares about
-    elseif p.MEG_enabled == 1
-        t.queuekeys = KbName(p.quitkey); % define the keys the queue cares about
+    if ~p.MEG_emulator_enabled
+        if p.MEG_enabled == 0
+            t.queuekeys = [KbName(p.resp_keys{1}), KbName(p.resp_keys{2}), KbName(p.quitkey)]; % define the keys the queue cares about
+        elseif p.MEG_enabled == 1
+            t.queuekeys = KbName(p.quitkey); % define the keys the queue cares about
+        end
+        t.queuekeylist = zeros(1,256); % create a list of all possible keys (all 'turned off' i.e. zeroes)
+        t.queuekeylist(t.queuekeys) = 1; % 'turn on' the keys we care about in the list (make them ones)
+        KbQueueCreate([], t.queuekeylist); % initialises queue to collect response information from the list we made (not listening for response yet)
+        KbQueueStart(); % starts delivering keypress info to the queue
     end
-    t.queuekeylist = zeros(1,256); % create a list of all possible keys (all 'turned off' i.e. zeroes)
-    t.queuekeylist(t.queuekeys) = 1; % 'turn on' the keys we care about in the list (make them ones)
-    %     KbQueueCreate([], t.queuekeylist); % initialises queue to collect response information from the list we made (not listening for response yet)
-    %     KbQueueStart(); % starts delivering keypress info to the queue
     
 end
 
@@ -200,7 +202,7 @@ DrawFormattedText(p.win,'\n all done training!\n\n\n press either button to cont
 Screen('Flip', p.win);
 t.waiting = []; % wait for user input
 response_waiter(p,MEG) % call response_waiter function
-% KbQueueFlush(); % flush the response queue from the response waiter
+if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue from the response waiter
 
 return
 

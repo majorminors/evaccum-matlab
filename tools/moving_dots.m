@@ -41,6 +41,7 @@ function [dots_onset_time, pressed, firstPress] = moving_dots(p,dots,MEG,exp_tri
 %
 % requires from 'p':
 %    p.MEG_enabled            a boolean (0 or 1) telling the script whether we should record responses with KbQueue or with MEG functions
+%    p.MEG_emulator_enabled   a boolean (0 or 1) telling the script whether we should turn off KbQueue functions (incompatible with the MEG emulator, as it uses GetChar
 %    p.stim_mat               needs this to determine the unique MEG trigger to send for each trial condition
 %    p.fix_trial_time         if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 %    p.dots_duration          seconds for the dot cloud to be displayed
@@ -150,7 +151,6 @@ if p.MEG_enabled == 1
     MEG.ResetClock; % reset the timer
     button_pressed = 0; % a counter to make sure we catch the first time a button was pressed
     pause(0.005); % quick pause before we reset triggers
-%     MEG.WaitForButtonPress(p.dots_duration); % listen for button press
     MEG.SendTrigger(0); % reset triggers
 end
 
@@ -260,7 +260,7 @@ for frame_num = 1:total_frames
     elseif p.MEG_enabled == 1
         MEG.WaitForButtonPress(0);
         if ~isempty(MEG.LastButtonPress) && ~button_pressed % check for a keypress in the MEG key wait function every frame, if a key hasn't been pressed yet
-            fprintf('response!\n')
+            fprintf('response!\n') % check the MEG parts of the script are working
             button_pressed = 1; % record that a key has been pressed this trial
             MEG.SendTrigger(p.stim_mat(exp_trial,p.MEGtriggers.responses)); % send a trigger
             firstPress{1} = MEG.LastButtonPress; % record the key pressed
@@ -292,10 +292,13 @@ elseif p.MEG_enabled == 1
         firstPress{1} = cellstr('RR');
         firstPress{2} = 0;
     end
-    %     [~,checkquit] = KbQueueCheck(); % do a check to see if we quit, and if so error out
-    %     if strcmp(KbName(checkquit),p.quitkey)
-    %         fclose('all');
-    %         error('%s quit by user (p.quitkey pressed)\n', mfilename);
+    if ~p.MEG_emulator_enabled
+        [~,checkquit] = KbQueueCheck(); % do a check to see if we quit, and if so error out
+        if strcmp(KbName(checkquit),p.quitkey)
+            fclose('all');
+            error('%s quit by user (p.quitkey pressed)\n', mfilename);
+        end
+    end
 end
 
 

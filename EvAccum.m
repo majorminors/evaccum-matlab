@@ -79,7 +79,7 @@ p.num_blocks = 20;
 p.breakblocks = 0; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
 p.keyswap = 2; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
 p.MEG_enabled = 1; % using MEG
-p.MEG_emulator_enabled = 1;
+p.MEG_emulator_enabled = 1; % using the emulator - be aware we can't quit using the quitkey with emulator
 
 % check set up
 if ~ismember(p.fullscreen_enabled,[0,1]); error('invalid value for p.fullscreen_enabled'); end % check if valid or error
@@ -89,6 +89,8 @@ if ~ismember(p.fix_trial_time,[0,1]); error('invalid value for p.fix_trial_time'
 if ~ismember(p.iti_on,[0,1]); error('invalid value for p.iti_on'); end % check if valid or error
 if ~ismember(p.feedback_type,[0,1,2]); error('invalid value for p.feedback_type'); end % check if valid or error
 if ~ismember(p.MEG_enabled,[0,1]); error('invalid value for p.MEG_enabled'); end % check if valid or error
+if ~ismember(p.MEG_emulator_enabled,[0,1]); error('invalid value for p.MEG_emulator_enabled'); end % check if valid or error
+if p.MEG_emulator_enabled == 1 && p.MEG_enabled == 0; error('you cannot emulate MEG without enabling MEG - check p.MEG_enabled and p.MEG_emulator_enabled'); end
 %if p.MEG_enabled == 1 && p.testing_enabled == 1; error('are you sure you want to be testing with MEG enabled? if so, comment out this line'); end
 if p.MEG_enabled == 1 && p.training_enabled == 1; error('you cannot train with MEG enabled currently'); end
 
@@ -106,7 +108,7 @@ p.training_reduction = 1; % by how much do we reduce the duration during trainin
 p.training_interval = 2; % how many trials should we train on before reducing the dots presentation time
 
 % test variables
-p.num_test_trials = 4;
+p.num_test_trials = 3;
 p.num_test_blocks = 4;
 if p.testing_enabled == 1
     p.PTBsynctests = 1; % PTB will skip synctests if 1
@@ -324,8 +326,12 @@ p.MEGtriggers.responses = 10; % what column p.stim_mat are you keeping your trig
 
 % invoke the MEG functions if p.MEG_enabled
 if p.MEG_enabled == 1
-    MEG = MEGSynchClass(1); % call MEG function
-    MEG.Keys = {'a','s'};
+    if p.MEG_emulator_enabled == 0
+        MEG = MEGSynchClass;
+    elseif p.MEG_emulator_enabled == 1
+        MEG = MEGSynchClass(1); % call MEG function
+        MEG.Keys = {'a','s'};
+    end
     MEG.SendTrigger(0); % make sure all triggers are off
 elseif p.MEG_enabled == 0
     MEG = 0; % just put something here so the switches and the functions we pass this to don't freak out
@@ -396,15 +402,17 @@ try
             fprintf('trial %u of %u\n',i,p.act_trial_num); % report trial number to command window
             
             %set up a queue to collect response info (or in the case of p.MEG_enabled, to watch for the quitkey)
-            if p.MEG_enabled == 0
-                t.queuekeys = [KbName(p.resp_keys{1}), KbName(p.resp_keys{2}), KbName(p.quitkey)]; % define the keys the queue cares about
-            elseif p.MEG_enabled == 1
-                t.queuekeys = KbName(p.quitkey); % define the keys the queue cares about
-            end
+            if ~p.MEG_emulator_enabled
+                if p.MEG_enabled == 0
+                    t.queuekeys = [KbName(p.resp_keys{1}), KbName(p.resp_keys{2}), KbName(p.quitkey)]; % define the keys the queue cares about
+                elseif p.MEG_enabled == 1
+                    t.queuekeys = KbName(p.quitkey); % define the keys the queue cares about
+                end
                 t.queuekeylist = zeros(1,256); % create a list of all possible keys (all 'turned off' i.e. zeroes)
                 t.queuekeylist(t.queuekeys) = 1; % 'turn on' the keys we care about in the list (make them ones)
-%                 KbQueueCreate([], t.queuekeylist); % initialises queue to collect response information from the list we made (not listening for response yet)
-%                 KbQueueStart(); % starts delivering keypress info to the queue
+                KbQueueCreate([], t.queuekeylist); % initialises queue to collect response information from the list we made (not listening for response yet)
+                KbQueueStart(); % starts delivering keypress info to the queue
+            end
             
             % take a break
             if t.takeabreak == 1
@@ -414,7 +422,7 @@ try
                 DrawFormattedText(p.win,sprintf('\n take a little break\n\n we are on block %u of %u\n\n experimenter will continue',block, p.act_block_num), 'center', 'center', p.text_colour);
                 Screen('Flip', p.win);
                 response_waiter(p,MEG) % call response_waiter function
-%                 KbQueueFlush(); % flush the response queue from the response waiter
+                if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue from the response waiter
                 t.takeabreak = 2; % break event complete
             end
             
@@ -426,7 +434,7 @@ try
                 DrawFormattedText(p.win,'\n the response keys have swapped!\n\n\n we will do some practice\n\n\n press either button to continue\n', 'center', 'center', p.text_colour);
                 Screen('Flip', p.win);
                 response_waiter(p,MEG) % call response_waiter function
-%                 KbQueueFlush(); % flush the response queue from the response waiter
+                if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue from the response waiter
                 t.keyswapper = 2; % keyswap complete
                 fprintf('first we will run some practice on the new keys before we get into trial %u\n', i); % report that we're about to do some training
                 if p.MEG_enabled == 1
@@ -497,7 +505,7 @@ try
                 %% response waiter function
                 response_waiter(p,MEG) % call response_waiter function
                 %% response waiter function ends
-%                 KbQueueFlush(); % flush the response queue from the response waiter
+                if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue from the response waiter
                 if p.MEG_enabled == 1
                     WaitSecs(0.5);
                     MEG.WaitForButtonPress(0); % reset MEG button press to empty
@@ -532,7 +540,7 @@ try
             end
             
             % now run moving_dots
-%             KbQueueFlush(); % flush the response queue so any accidental presses recorded in the cue period won't affect responses in the dots period
+            if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue so any accidental presses recorded in the cue period won't affect responses in the dots period
             if p.MEG_enabled == 1
                 MEG.WaitForButtonPress(0); % reset MEG button press to empty
             end
@@ -607,7 +615,7 @@ try
             end
             
             %% post trial clean up
-%             KbQueueRelease();
+            if ~p.MEG_emulator_enabled; KbQueueRelease(); end
             
             % save the trial data
             save(save_file); % save all data in '.mat' format
@@ -638,7 +646,7 @@ try
     
     % close screen
     ShowCursor;
-%     KbQueueRelease(); %KbReleaseWait();
+    if ~p.MEG_emulator_enabled; KbQueueRelease(); end %KbReleaseWait();
     if p.MEG_enabled == 1; MEG.delete; end % stop MEG from limiting button presses
     clear block i ans; % clear specific indexes and stuff
     Screen('Close',p.win);
@@ -648,7 +656,7 @@ try
 catch err
     save(save_file);
     ShowCursor;
-%     KbQueueRelease(); %KbReleaseWait();
+    if ~p.MEG_emulator_enabled; KbQueueRelease(); end %KbReleaseWait();
 %     if p.MEG_enabled == 1; MEG.delete; end % stop MEG from limiting button presses
     sca; %Screen('Close',p.win);
     rethrow(err);
