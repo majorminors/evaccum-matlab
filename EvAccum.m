@@ -43,7 +43,7 @@
 %% subfunctions - can use these at bottom instead of external functions from at least R2018a:
 
 %% dots_onset_time, pressed, firstPress] = moving_dots(p,dots,MEG,exp_trial)
-% creates a cloud of moving dots, then creates a fixation by putting a small 
+% creates a cloud of moving dots, then creates a fixation by putting a small
 % black square in a bigger white square, then flips the screen
 %% response_waiter(p,MEG)
 % will wait for button responses before continuing
@@ -67,18 +67,19 @@ d = struct(); % est structure for trial data
 t = struct(); % another structure for untidy trial specific floating variables that we might want to interrogate later if we mess up
 
 % set up variables
-rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum'; % root directory - used to inform directory mappings
+rootdir = 'C:\Users\doria\Google Drive\04 Research\05 Evidence Accumulation\01 EvAccum Code';%'\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum'; % root directory - used to inform directory mappings
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
 p.training_enabled = 0; % if 0 (or any other than 1) will do nothing, if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
 p.fix_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anything other than 1) will not do iti
-p.feedback_type = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
+p.feedback_type = 1; % if 0 (or anything other than 1 or 2) no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
 p.num_blocks = 20;
 p.breakblocks = 0; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
 p.keyswap = 2; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
 p.MEG_enabled = 0; % using MEG
+p.MEG_emulator_enabled = 1; % using the emulator - be aware we can't quit using the quitkey with emulator
 
 % check set up
 if ~ismember(p.fullscreen_enabled,[0,1]); error('invalid value for p.fullscreen_enabled'); end % check if valid or error
@@ -88,8 +89,15 @@ if ~ismember(p.fix_trial_time,[0,1]); error('invalid value for p.fix_trial_time'
 if ~ismember(p.iti_on,[0,1]); error('invalid value for p.iti_on'); end % check if valid or error
 if ~ismember(p.feedback_type,[0,1,2]); error('invalid value for p.feedback_type'); end % check if valid or error
 if ~ismember(p.MEG_enabled,[0,1]); error('invalid value for p.MEG_enabled'); end % check if valid or error
-if p.MEG_enabled == 1 && p.testing_enabled == 1; error('are you sure you want to be testing with MEG enabled? if so, comment out this line'); end
+if ~ismember(p.MEG_emulator_enabled,[0,1]); error('invalid value for p.MEG_emulator_enabled'); end % check if valid or error
+%if p.MEG_enabled == 1 && p.testing_enabled == 1; error('are you sure you want to be testing with MEG enabled? if so, comment out this line'); end
 if p.MEG_enabled == 1 && p.training_enabled == 1; error('you cannot train with MEG enabled currently'); end
+if p.MEG_emulator_enabled == 1 && p.MEG_enabled == 0
+    warning('you cannot emulate MEG without enabling MEG - turning off emulation\n');
+    WaitSecs(1);
+    p.MEG_emulator_enabled = 0;
+    fprintf('p.MEG_emulator_enabled is now off\n')
+end
 
 % directory mapping
 addpath(genpath(fullfile(rootdir, 'tools'))); % add tools folder to path (includes moving_dots function which is required for dot motion, as well as an external copy of subfunctions for backwards compatibility with MATLAB)
@@ -105,7 +113,7 @@ p.training_reduction = 1; % by how much do we reduce the duration during trainin
 p.training_interval = 2; % how many trials should we train on before reducing the dots presentation time
 
 % test variables
-p.num_test_trials = 4;
+p.num_test_trials = 3;
 p.num_test_blocks = 4;
 if p.testing_enabled == 1
     p.PTBsynctests = 1; % PTB will skip synctests if 1
@@ -183,7 +191,11 @@ fprintf('defining exp params for %s\n', mfilename);
 if p.MEG_enabled == 0
     p.resp_keys = {'a','s'}; % only accepts two response options
 elseif p.MEG_enabled == 1 % what keys in the MEG
-    p.resp_keys = {'RB','RY'}; % only accepts two response options
+    if p.MEG_emulator_enabled == 0
+        p.resp_keys = {'RB','RY'}; % only accepts two response options
+    elseif p.MEG_emulator_enabled == 1
+        p.resp_keys = {'LY','RB'}; % LY and RB correspond to a and s on the keyboard
+    end
     %p.continue_key = {'RR'};
 end
 p.quitkey = {'q'}; % this is watched by KbQueue regardless of p.MEG_enabled
@@ -319,7 +331,12 @@ p.MEGtriggers.responses = 10; % what column p.stim_mat are you keeping your trig
 
 % invoke the MEG functions if p.MEG_enabled
 if p.MEG_enabled == 1
-    MEG = MEGSynchClass(1); % call MEG function
+    if p.MEG_emulator_enabled == 0
+        MEG = MEGSynchClass;
+    elseif p.MEG_emulator_enabled == 1
+        MEG = MEGSynchClass(1); % call MEG function
+        MEG.Keys = {'a','s'};
+    end
     MEG.SendTrigger(0); % make sure all triggers are off
 elseif p.MEG_enabled == 0
     MEG = 0; % just put something here so the switches and the functions we pass this to don't freak out
@@ -390,15 +407,17 @@ try
             fprintf('trial %u of %u\n',i,p.act_trial_num); % report trial number to command window
             
             %set up a queue to collect response info (or in the case of p.MEG_enabled, to watch for the quitkey)
-            if p.MEG_enabled == 0
-                t.queuekeys = [KbName(p.resp_keys{1}), KbName(p.resp_keys{2}), KbName(p.quitkey)]; % define the keys the queue cares about
-            elseif p.MEG_enabled == 1
-                t.queuekeys = KbName(p.quitkey); % define the keys the queue cares about
-            end
+            if ~p.MEG_emulator_enabled
+                if p.MEG_enabled == 0
+                    t.queuekeys = [KbName(p.resp_keys{1}), KbName(p.resp_keys{2}), KbName(p.quitkey)]; % define the keys the queue cares about
+                elseif p.MEG_enabled == 1
+                    t.queuekeys = KbName(p.quitkey); % define the keys the queue cares about
+                end
                 t.queuekeylist = zeros(1,256); % create a list of all possible keys (all 'turned off' i.e. zeroes)
                 t.queuekeylist(t.queuekeys) = 1; % 'turn on' the keys we care about in the list (make them ones)
                 KbQueueCreate([], t.queuekeylist); % initialises queue to collect response information from the list we made (not listening for response yet)
                 KbQueueStart(); % starts delivering keypress info to the queue
+            end
             
             % take a break
             if t.takeabreak == 1
@@ -408,7 +427,7 @@ try
                 DrawFormattedText(p.win,sprintf('\n take a little break\n\n we are on block %u of %u\n\n experimenter will continue',block, p.act_block_num), 'center', 'center', p.text_colour);
                 Screen('Flip', p.win);
                 response_waiter(p,MEG) % call response_waiter function
-                KbQueueFlush(); % flush the response queue from the response waiter
+                if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue from the response waiter
                 t.takeabreak = 2; % break event complete
             end
             
@@ -420,7 +439,7 @@ try
                 DrawFormattedText(p.win,'\n the response keys have swapped!\n\n\n we will do some practice\n\n\n press either button to continue\n', 'center', 'center', p.text_colour);
                 Screen('Flip', p.win);
                 response_waiter(p,MEG) % call response_waiter function
-                KbQueueFlush(); % flush the response queue from the response waiter
+                if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue from the response waiter
                 t.keyswapper = 2; % keyswap complete
                 fprintf('first we will run some practice on the new keys before we get into trial %u\n', i); % report that we're about to do some training
                 if p.MEG_enabled == 1
@@ -491,8 +510,9 @@ try
                 %% response waiter function
                 response_waiter(p,MEG) % call response_waiter function
                 %% response waiter function ends
-                KbQueueFlush(); % flush the response queue from the response waiter
+                if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue from the response waiter
                 if p.MEG_enabled == 1
+                    WaitSecs(0.5);
                     MEG.WaitForButtonPress(0); % reset MEG button press to empty
                 end
             end
@@ -525,7 +545,7 @@ try
             end
             
             % now run moving_dots
-            KbQueueFlush(); % flush the response queue so any accidental presses recorded in the cue period won't affect responses in the dots period
+            if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue so any accidental presses recorded in the cue period won't affect responses in the dots period
             if p.MEG_enabled == 1
                 MEG.WaitForButtonPress(0); % reset MEG button press to empty
             end
@@ -545,9 +565,9 @@ try
                 d.resp_key_time(block,i) = sum(t.firstPress); % get the timing info of the key used to respond
                 d.rt(block,i) = d.resp_key_time(block,i) - d.dots_onset(block,i); % rt is the timing of key info - time of dots onset (if you get minus values something's wrong with how we deal with nil/early responses)
             elseif p.MEG_enabled == 1
-                if exist('t.firstPress.multipress','var')
-                    d.multiple_keypresses(i,:,block) = t.firstPress;
-                end
+                %                 if exist('t.firstPress.multipress','var')
+                %                     d.multiple_keypresses(i,:,block) = t.firstPress;
+                %                 end
                 d.resp_key_name(block,i) = t.firstPress{1}; % get response key from array
                 d.rt(block,i) = t.firstPress{2}; % get response time from array - don't need to minus dots onset here because we're using the MEG timing functions
             end
@@ -600,7 +620,7 @@ try
             end
             
             %% post trial clean up
-            KbQueueRelease();
+            if ~p.MEG_emulator_enabled; KbQueueRelease(); end
             
             % save the trial data
             save(save_file); % save all data in '.mat' format
@@ -622,6 +642,7 @@ try
     
     %% wrap up
     
+    
     % tell them it's over
     DrawFormattedText(p.win,'done!', 'center', 'center', p.text_colour); % tell them it's over!
     Screen('Flip', p.win);
@@ -630,7 +651,7 @@ try
     
     % close screen
     ShowCursor;
-    KbQueueRelease(); %KbReleaseWait();
+    if ~p.MEG_emulator_enabled; KbQueueRelease(); end %KbReleaseWait();
     if p.MEG_enabled == 1; MEG.delete; end % stop MEG from limiting button presses
     clear block i ans; % clear specific indexes and stuff
     Screen('Close',p.win);
@@ -640,8 +661,8 @@ try
 catch err
     save(save_file);
     ShowCursor;
-    KbQueueRelease(); %KbReleaseWait();
-    if p.MEG_enabled == 1; MEG.delete; end % stop MEG from limiting button presses
+    if ~p.MEG_emulator_enabled; KbQueueRelease(); end %KbReleaseWait();
+    %     if p.MEG_enabled == 1; MEG.delete; end % stop MEG from limiting button presses
     sca; %Screen('Close',p.win);
     rethrow(err);
 end

@@ -5,7 +5,7 @@ function f = keyswap_training(p,dots,d,MEG)
 %
 % requires KBQueueStart() called prior to function (so may want to
 % call KBQueueFlush() prior to function).
-% 
+%
 % will create KBQueue again before it wraps up, but be sure
 % that queue is the same as the one you created outside the function.
 %
@@ -29,7 +29,7 @@ function f = keyswap_training(p,dots,d,MEG)
 %% subfunctions - can use these at bottom instead of external functions
 
 %% dots_onset_time, pressed, firstPress] = moving_dots(p,dots,MEG,exp_trial)
-% creates a cloud of moving dots, then creates a fixation by putting a small 
+% creates a cloud of moving dots, then creates a fixation by putting a small
 % black square in a bigger white square, then flips the screen
 %% response_waiter(p,MEG)
 % will wait for button responses before continuing
@@ -108,7 +108,7 @@ while i < f.max_trials
         end
         Screen('Flip', p.win);
         response_waiter(p,MEG) % call response_waiter function
-        KbQueueFlush(); % flush the response queue from the response waiter
+        if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue from the response waiter
     end
     
     %% present dots
@@ -122,31 +122,36 @@ while i < f.max_trials
     end
     
     % now run moving_dots
-    KbQueueFlush(); % flush the response queue so any accidental presses recorded in the cue period won't affect responses in the dots period
+    if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue so any accidental presses recorded in the cue period won't affect responses in the dots period
     [f.dots_onset(block,i), t.pressed, t.firstPress] = moving_dots(p,dots,MEG,i); % pull time of first flip for dots, as well as information from KBQueueCheck from moving_dots
     
     %% deal with response and provide feedback (or abort if 'p.quitkey' pressed)
     
-    % code response info (without saving multiple keypress information this time, since it's training)
+    % code response info
     if p.MEG_enabled == 0
         if nnz(t.firstPress) > 1 % (if number of non-zero elements is greater than 1 - i.e. if participant has responded more than once)
+            f.multiple_keypress_name(:,i,block) = KbName(t.firstPress); % record all the keypresses
+            f.multiple_keypress_time(:,i,block) = t.firstPress(t.firstPress>0)' - d.dots_onset(block,i); % record all the rts
             t.firstPress(find(t.firstPress==max(t.firstPress))) = 0; % zero out the max value so only the first press is recorded in the matrix
         end
         f.resp_key_name{block,i} = KbName(t.firstPress); % get the name of the key used to respond - needs to be squiggly brackets or it wont work for no response
         f.resp_key_time(block,i) = sum(t.firstPress); % get the timing info of the key used to respond
         f.rt(block,i) = f.resp_key_time(block,i) - f.dots_onset(block,i); % rt is the timing of key info - time of dots onset (if you get minus values something's wrong with how we deal with nil/early responses)
     elseif p.MEG_enabled == 1
-        d.resp_key_name{block,i} = t.firstPress{1}; % get response key from array
-        d.rt(block,i) = t.firstPress{2}; % get response time from array - don't need to minus dots onset here because we're using the MEG timing functions
+        %                 if exist('t.firstPress.multipress','var')
+        %                     d.multiple_keypresses(i,:,block) = t.firstPress;
+        %                 end
+        f.resp_key_name(block,i) = t.firstPress{1}; % get response key from array
+        f.rt(block,i) = t.firstPress{2}; % get response time from array - don't need to minus dots onset here because we're using the MEG timing functions
     end
     
     % create variable for correct response
     if p.stim_mat(i,7) == 1 % if trial matches blue
-        f.correct_resp(block,i) = p.resp_keys{1};
-        f.incorrect_resp(block,i) = p.resp_keys{2};
+        f.correct_resp{block,i} = p.resp_keys{1};
+        f.incorrect_resp{block,i} = p.resp_keys{2};
     elseif p.stim_mat(i,7) == 2 % if trial matches orange
-        f.correct_resp(block,i) = p.resp_keys{2};
-        f.incorrect_resp(block,i) = p.resp_keys{1};
+        f.correct_resp{block,i} = p.resp_keys{2};
+        f.incorrect_resp{block,i} = p.resp_keys{1};
     end
     
     % score response
@@ -172,18 +177,20 @@ while i < f.max_trials
     Screen('Flip', p.win);
     
     %% post trial clean up
-    KbQueueRelease();
+    if ~p.MEG_emulator_enabled; KbQueueRelease(); end
     
     %set up a queue to collect response info (or in the case of p.MEG_enabled, to watch for the quitkey)
-    if p.MEG_enabled == 0
-        t.queuekeys = [KbName(p.resp_keys{1}), KbName(p.resp_keys{2}), KbName(p.quitkey)]; % define the keys the queue cares about
-    elseif p.MEG_enabled == 1
-        t.queuekeys = KbName(p.quitkey); % define the keys the queue cares about
+    if ~p.MEG_emulator_enabled
+        if p.MEG_enabled == 0
+            t.queuekeys = [KbName(p.resp_keys{1}), KbName(p.resp_keys{2}), KbName(p.quitkey)]; % define the keys the queue cares about
+        elseif p.MEG_enabled == 1
+            t.queuekeys = KbName(p.quitkey); % define the keys the queue cares about
+        end
+        t.queuekeylist = zeros(1,256); % create a list of all possible keys (all 'turned off' i.e. zeroes)
+        t.queuekeylist(t.queuekeys) = 1; % 'turn on' the keys we care about in the list (make them ones)
+        KbQueueCreate([], t.queuekeylist); % initialises queue to collect response information from the list we made (not listening for response yet)
+        KbQueueStart(); % starts delivering keypress info to the queue
     end
-    t.queuekeylist = zeros(1,256); % create a list of all possible keys (all 'turned off' i.e. zeroes)
-    t.queuekeylist(t.queuekeys) = 1; % 'turn on' the keys we care about in the list (make them ones)
-    KbQueueCreate([], t.queuekeylist); % initialises queue to collect response information from the list we made (not listening for response yet)
-    KbQueueStart(); % starts delivering keypress info to the queue
     
 end
 
@@ -195,15 +202,15 @@ DrawFormattedText(p.win,'\n all done training!\n\n\n press either button to cont
 Screen('Flip', p.win);
 t.waiting = []; % wait for user input
 response_waiter(p,MEG) % call response_waiter function
-KbQueueFlush(); % flush the response queue from the response waiter
+if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue from the response waiter
 
 return
 
 %% subfunctions
 
 %% convert visual angles in degrees to pixels
-function pix = angle2pix(p,ang) 
+function pix = angle2pix(p,ang)
 pixSize = p.screen_width/p.resolution(1);   % cm/pix
 sz = 2*p.screen_distance*tan(pi*ang/(2*180));  %cm
-pix = round(sz/pixSize);   % pix 
+pix = round(sz/pixSize);   % pix
 return

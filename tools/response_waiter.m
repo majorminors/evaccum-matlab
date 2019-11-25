@@ -9,6 +9,7 @@ function response_waiter(p,MEG)
 %
 % requires from p:
 %   p.MEG_enabled (0 or 1)
+%   p.MEG_emulator_enabled (0 or 1)
 % requires from MEG - a class of functions for the MEG interface with the National Instruments PCI 6503 card (MRC CBU)
 %   MEG.LastButtonPress
 %   MEG.WaitForButtonPress
@@ -25,8 +26,10 @@ elseif p.MEG_enabled == 1
     MEG.WaitForButtonPress(0); % reset MEG button press to empty
     while isempty(MEG.LastButtonPress)
         MEG.WaitForButtonPress; % wait for user input
-%         pressed = KbQueueCheck();
-%         if pressed == 1; break; end % assumes you are listening for a quit key on experimenter keyboard
+        if ~p.MEG_emulator_enabled
+            pressed = KbQueueCheck();
+            if pressed == 1; break; end % assumes you are listening for a quit key on experimenter keyboard
+        end
     end
 end
 
