@@ -293,7 +293,7 @@ dots.lifetime = 5; % number of frames dots live for
 %  7)  match blue (1) or match orange (2)
 %  8)  matching difficulty (1 = easy, 2 = difficult)
 %  9)  gives you a unique number for each trial condition
-% 10)  gives a number based on 9 to identify each response for each trial condition
+% 10)  gives a number based on 9 for meg triggers
 % note: if you try to test with two matching angles that are the same, you
 %       will get an error, so make them different by at least 1 degree. this is
 %       because we use 'union()' to calc matching distance from cue direction.
@@ -312,7 +312,7 @@ p.stim_mat(:,6) = min(dist,[],2);
 p.stim_mat(:,7) = (p.stim_mat(:,6)>90)+1;
 p.stim_mat(:,8) = ~((p.stim_mat(:,6)==min(p.stim_mat(:,6)))|(p.stim_mat(:,6)==max(p.stim_mat(:,6))))+1;
 p.stim_mat(:,9) = 1:length(p.stim_mat(:,9));
-p.stim_mat(:,10) = p.stim_mat(:,9)+p.num_trials_per_block;
+p.stim_mat(:,10) = p.stim_mat(:,9)+3;
 % clear floating variables
 clear dist;
 
@@ -328,8 +328,7 @@ clear block;
 
 % MEG trigger info
 p.MEGtriggers.training = 255; % unique trigger to tell us when to ignore triggers sent during training
-p.MEGtriggers.onsets = 9; % what column of p.stim_mat are you keeping your trigger information for onset in?
-p.MEGtriggers.responses = 10; % what column p.stim_mat are you keeping your trigger information for responses in?
+p.MEGtriggers.triggers = 10; % what column of p.stim_mat are you keeping your trigger information in?
 
 % invoke the MEG functions if p.MEG_enabled
 if p.MEG_enabled == 1
@@ -559,7 +558,7 @@ try
                 if p.MEG_enabled == 1
                     MEG.SendTrigger(0); % reset triggers
                     WaitSecs(p.iti_time-p.MEG_onset_trigger_time);
-                    MEG.SendTrigger(p.stim_mat(i,p.MEGtriggers.onsets)); % send a trigger for trial onset
+                    MEG.SendTrigger(p.stim_mat(i,p.MEGtriggers.triggers)); % send a trigger for trial onset
                     WaitSecs(p.MEG_onset_trigger_time);
                     MEG.SendTrigger(0); % reset triggers
                 elseif p.MEG_enabled == 0

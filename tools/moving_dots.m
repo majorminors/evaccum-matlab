@@ -259,7 +259,7 @@ for frame_num = 1:total_frames
         if ~isempty(MEG.LastButtonPress) && ~button_pressed % check for a keypress in the MEG key wait function every frame, if a key hasn't been pressed yet
             fprintf('response!\n') % check the MEG parts of the script are working
             button_pressed = 1; % record that a key has been pressed this trial
-            MEG.SendTrigger(p.stim_mat(exp_trial,p.MEGtriggers.responses)); % send a trigger - we reset before the next trial starts, so we don't reset here (to let the trigger reach it's value)
+            MEG.SendTrigger(p.stim_mat(exp_trial,p.MEGtriggers.triggers)); % send a trigger - we reset before the next trial starts, so we don't reset here (to let the trigger reach it's value)
             firstPress{1} = MEG.LastButtonPress; % record the key pressed
             firstPress{2} = MEG.TimeOfLastButtonPress; % record the time of the key pressed
             if p.fix_trial_time == 0
