@@ -145,15 +145,6 @@ total_frames = secs2frames(p,p.dots_duration);
 
 %% loop through frames
 
-% if p.MEG_enabled then set up MEG for response recording
-if p.MEG_enabled == 1
-    MEG.SendTrigger(p.stim_mat(exp_trial,p.MEGtriggers.onsets)); % send a trigger for trial onset
-    MEG.ResetClock; % reset the timer
-    button_pressed = 0; % a counter to make sure we catch the first time a button was pressed
-    pause(0.005); % quick pause before we reset triggers
-    MEG.SendTrigger(0); % reset triggers
-end
-
 for frame_num = 1:total_frames
     count = 1;
     
@@ -244,6 +235,12 @@ for frame_num = 1:total_frames
     %% flip the screen and check for keypress
       
     if frame_num == 1
+        % if p.MEG_enabled then set up MEG for response recording
+        if p.MEG_enabled == 1
+            MEG.ResetClock; % reset the timer
+            button_pressed = 0; % a counter to make sure we catch the first time a button was pressed
+            MEG.SendTrigger(0); % reset triggers
+        end
         dots_onset_time = Screen('Flip',p.win);
     else
         Screen('Flip',p.win);
@@ -262,11 +259,9 @@ for frame_num = 1:total_frames
         if ~isempty(MEG.LastButtonPress) && ~button_pressed % check for a keypress in the MEG key wait function every frame, if a key hasn't been pressed yet
             fprintf('response!\n') % check the MEG parts of the script are working
             button_pressed = 1; % record that a key has been pressed this trial
-            MEG.SendTrigger(p.stim_mat(exp_trial,p.MEGtriggers.responses)); % send a trigger
+            MEG.SendTrigger(p.stim_mat(exp_trial,p.MEGtriggers.responses)); % send a trigger - we reset before the next trial starts, so we don't reset here (to let the trigger reach it's value)
             firstPress{1} = MEG.LastButtonPress; % record the key pressed
             firstPress{2} = MEG.TimeOfLastButtonPress; % record the time of the key pressed
-            pause(0.005); % quick pause before resetting
-            MEG.SendTrigger(0); % reset the triggers
             if p.fix_trial_time == 0
                 break % break the frame-loop which will end the function
             end

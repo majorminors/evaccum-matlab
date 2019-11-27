@@ -226,10 +226,12 @@ p.visual_angle_dots = 0.15; % visual angle of the dots expressed as a decimal - 
 % timing info
 p.min_cue_time = 0.5; % minimum period to display cue (participants can't continue during this time)
 p.iti_time = 0.3; % inter trial inteval time
+p.MEG_onset_trigger_time = 0.1; % time to let the MEG trigger reach full strength - recommend 100ms but must be smaller than p.iti_time
 p.dots_duration = 1.5; % seconds for the dot cloud to be displayed
 p.feedback_time = 0.5; % period to display feedback after response
 p.keyswap_inform_time = 1; % minumum period to display keyswap notification
 p.break_inform_time = 1; % minumum period to display break notification (stop participants from accidentally continuing)
+if p.MEG_onset_trigger_time>p.iti_time; error('p.MEG_onset_trigger_time is larger than p.iti_time'); end
 
 % trial settings (*p.stim_mat* = parameter required to calculate stimulus condition matrix)
 t.takeabreak = 0; % will use this variable to mark a break event (code currently at commencement of block loop)
@@ -544,6 +546,28 @@ try
                 end
             end
             
+            % intertrial period - display fixation
+            if p.iti_on == 1
+                t.centre = p.resolution/2;
+                t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
+                t.iti_rect = [-t.sz_l+t.centre(1),-t.sz_l+t.centre(2),t.sz_l+t.centre(1),t.sz_l+t.centre(2)];
+                t.sz_s = angle2pix(p,0.5/4); % this value (0.5/4) comes from p.fixation.size specified in movingdots.m
+                t.iti_rect_sml = [-t.sz_s+t.centre(1),-t.sz_s+t.centre(2),t.sz_s+t.centre(1),t.sz_s+t.centre(2)];
+                Screen('FillOval', p.win, [255,255,255],t.iti_rect);
+                Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
+                Screen('Flip', p.win);
+                if p.MEG_enabled == 1
+                    MEG.SendTrigger(0); % reset triggers
+                    WaitSecs(p.iti_time-p.MEG_onset_trigger_time);
+                    MEG.SendTrigger(p.stim_mat(i,p.MEGtriggers.onsets)); % send a trigger for trial onset
+                    WaitSecs(p.MEG_onset_trigger_time);
+                    MEG.SendTrigger(0); % reset triggers
+                elseif p.MEG_enabled == 0
+                    WaitSecs(p.iti_time);
+                end
+                % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
+            end
+            
             % now run moving_dots
             if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue so any accidental presses recorded in the cue period won't affect responses in the dots period
             if p.MEG_enabled == 1
@@ -602,20 +626,6 @@ try
                 DrawFormattedText(p.win, t.feedback, 'center', 'center', p.text_colour); %display feedback
                 Screen('Flip', p.win);
                 WaitSecs(p.feedback_time);
-                Screen('Flip', p.win);
-            end
-            
-            % intertrial period - display fixation
-            if p.iti_on == 1
-                t.centre = p.resolution/2;
-                t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
-                t.iti_rect = [-t.sz_l+t.centre(1),-t.sz_l+t.centre(2),t.sz_l+t.centre(1),t.sz_l+t.centre(2)];
-                t.sz_s = angle2pix(p,0.5/4); % this value (0.5/4) comes from p.fixation.size specified in movingdots.m
-                t.iti_rect_sml = [-t.sz_s+t.centre(1),-t.sz_s+t.centre(2),t.sz_s+t.centre(1),t.sz_s+t.centre(2)];
-                Screen('FillOval', p.win, [255,255,255],t.iti_rect);
-                Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
-                Screen('Flip', p.win);
-                WaitSecs(p.iti_time);
                 Screen('Flip', p.win);
             end
             
