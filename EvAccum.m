@@ -78,8 +78,8 @@ p.feedback_type = 1; % if 0 (or anything other than 1 or 2) no feedback, if 1 th
 p.num_blocks = 20;
 p.breakblocks = 0; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
 p.keyswap = 2; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
-p.MEG_enabled = 0; % using MEG
-p.MEG_emulator_enabled = 1; % using the emulator - be aware we can't quit using the quitkey with emulator
+p.MEG_enabled = 1; % usiyng MEG
+p.MEG_emulator_enabled = 0; % using the emulator - be aware we can't quit using the quitkey with emulator
 
 % check set up
 if ~ismember(p.fullscreen_enabled,[0,1]); error('invalid value for p.fullscreen_enabled'); end % check if valid or error
@@ -196,9 +196,9 @@ elseif p.MEG_enabled == 1 % what keys in the MEG
     elseif p.MEG_emulator_enabled == 1
         p.resp_keys = {'LY','RB'}; % LY and RB correspond to a and s on the keyboard
     end
-    %p.continue_key = {'RR'};
 end
 p.quitkey = {'q'}; % this is watched by KbQueue regardless of p.MEG_enabled
+p.continuekey = {'c'}; % this is watched by KbQueue regardless of p.MEG_enabled
 t.keyswapper = 0; % will use this variable to mark a keyswap event (code currently at commencement of block loop)
 % establish response keys for the trial based off whether participant id is odd or even
 if mod(d.participant_id,2) % if pid not divisible by 2 (i.e. leaves a modulus after division)
@@ -409,9 +409,9 @@ try
             %set up a queue to collect response info (or in the case of p.MEG_enabled, to watch for the quitkey)
             if ~p.MEG_emulator_enabled
                 if p.MEG_enabled == 0
-                    t.queuekeys = [KbName(p.resp_keys{1}), KbName(p.resp_keys{2}), KbName(p.quitkey)]; % define the keys the queue cares about
+                    t.queuekeys = [KbName(p.resp_keys{1}), KbName(p.resp_keys{2}), KbName(p.quitkey), KbName(p.continuekey)]; % define the keys the queue cares about
                 elseif p.MEG_enabled == 1
-                    t.queuekeys = KbName(p.quitkey); % define the keys the queue cares about
+                    t.queuekeys = [KbName(p.quitkey), KbName(p.continuekey)]; % define the keys the queue cares about
                 end
                 t.queuekeylist = zeros(1,256); % create a list of all possible keys (all 'turned off' i.e. zeroes)
                 t.queuekeylist(t.queuekeys) = 1; % 'turn on' the keys we care about in the list (make them ones)
@@ -508,7 +508,9 @@ try
                 end
                 Screen('Flip', p.win);
                 %% response waiter function
+                p.no_participant_response = 1;
                 response_waiter(p,MEG) % call response_waiter function
+                p.no_participant_response = 0;
                 %% response waiter function ends
                 if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue from the response waiter
                 if p.MEG_enabled == 1
