@@ -226,10 +226,12 @@ p.visual_angle_dots = 0.15; % visual angle of the dots expressed as a decimal - 
 % timing info
 p.min_cue_time = 0.5; % minimum period to display cue (participants can't continue during this time)
 p.iti_time = 0.3; % inter trial inteval time
+p.MEG_onset_trigger_time = 0.1; % time to let the MEG trigger reach full strength - recommend 100ms but must be smaller than p.iti_time
 p.dots_duration = 1.5; % seconds for the dot cloud to be displayed
 p.feedback_time = 0.5; % period to display feedback after response
 p.keyswap_inform_time = 1; % minumum period to display keyswap notification
 p.break_inform_time = 1; % minumum period to display break notification (stop participants from accidentally continuing)
+if p.MEG_onset_trigger_time>p.iti_time; error('p.MEG_onset_trigger_time is larger than p.iti_time'); end
 
 % trial settings (*p.stim_mat* = parameter required to calculate stimulus condition matrix)
 t.takeabreak = 0; % will use this variable to mark a break event (code currently at commencement of block loop)
@@ -291,7 +293,7 @@ dots.lifetime = 5; % number of frames dots live for
 %  7)  match blue (1) or match orange (2)
 %  8)  matching difficulty (1 = easy, 2 = difficult)
 %  9)  gives you a unique number for each trial condition
-% 10)  gives a number based on 9 to identify each response for each trial condition
+% 10)  gives a number based on 9 for meg triggers
 % note: if you try to test with two matching angles that are the same, you
 %       will get an error, so make them different by at least 1 degree. this is
 %       because we use 'union()' to calc matching distance from cue direction.
@@ -310,7 +312,7 @@ p.stim_mat(:,6) = min(dist,[],2);
 p.stim_mat(:,7) = (p.stim_mat(:,6)>90)+1;
 p.stim_mat(:,8) = ~((p.stim_mat(:,6)==min(p.stim_mat(:,6)))|(p.stim_mat(:,6)==max(p.stim_mat(:,6))))+1;
 p.stim_mat(:,9) = 1:length(p.stim_mat(:,9));
-p.stim_mat(:,10) = p.stim_mat(:,9)+p.num_trials_per_block;
+p.stim_mat(:,10) = p.stim_mat(:,9)+3;
 % clear floating variables
 clear dist;
 
@@ -326,8 +328,7 @@ clear block;
 
 % MEG trigger info
 p.MEGtriggers.training = 255; % unique trigger to tell us when to ignore triggers sent during training
-p.MEGtriggers.onsets = 9; % what column of p.stim_mat are you keeping your trigger information for onset in?
-p.MEGtriggers.responses = 10; % what column p.stim_mat are you keeping your trigger information for responses in?
+p.MEGtriggers.triggers = 10; % what column of p.stim_mat are you keeping your trigger information in?
 
 % invoke the MEG functions if p.MEG_enabled
 if p.MEG_enabled == 1
@@ -444,7 +445,7 @@ try
                 fprintf('first we will run some practice on the new keys before we get into trial %u\n', i); % report that we're about to do some training
                 if p.MEG_enabled == 1
                     MEG.SendTrigger(p.MEGtriggers.training); % send a trigger to inform we're training
-                    pause(0.005); % quick pause before we reset triggers
+                    pause(p.MEG_onset_trigger_time); % quick pause before we reset triggers
                     MEG.SendTrigger(0); % reset triggers
                 end
                 %% training function
@@ -452,7 +453,7 @@ try
                 %% training function ends
                 if p.MEG_enabled == 1
                     MEG.SendTrigger(p.MEGtriggers.training); % send a trigger to inform we're training
-                    pause(0.005); % quick pause before we reset triggers
+                    pause(p.MEG_onset_trigger_time); % quick pause before we reset triggers
                     MEG.SendTrigger(0); % reset triggers
                 end
             end
@@ -546,6 +547,28 @@ try
                 end
             end
             
+            % intertrial period - display fixation
+            if p.iti_on == 1
+                t.centre = p.resolution/2;
+                t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
+                t.iti_rect = [-t.sz_l+t.centre(1),-t.sz_l+t.centre(2),t.sz_l+t.centre(1),t.sz_l+t.centre(2)];
+                t.sz_s = angle2pix(p,0.5/4); % this value (0.5/4) comes from p.fixation.size specified in movingdots.m
+                t.iti_rect_sml = [-t.sz_s+t.centre(1),-t.sz_s+t.centre(2),t.sz_s+t.centre(1),t.sz_s+t.centre(2)];
+                Screen('FillOval', p.win, [255,255,255],t.iti_rect);
+                Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
+                Screen('Flip', p.win);
+                if p.MEG_enabled == 1
+                    MEG.SendTrigger(0); % reset triggers
+                    WaitSecs(p.iti_time-p.MEG_onset_trigger_time);
+                    MEG.SendTrigger(p.stim_mat(i,p.MEGtriggers.triggers)); % send a trigger for trial onset
+                    WaitSecs(p.MEG_onset_trigger_time);
+                    MEG.SendTrigger(0); % reset triggers
+                elseif p.MEG_enabled == 0
+                    WaitSecs(p.iti_time);
+                end
+                % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
+            end
+            
             % now run moving_dots
             if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue so any accidental presses recorded in the cue period won't affect responses in the dots period
             if p.MEG_enabled == 1
@@ -604,20 +627,6 @@ try
                 DrawFormattedText(p.win, t.feedback, 'center', 'center', p.text_colour); %display feedback
                 Screen('Flip', p.win);
                 WaitSecs(p.feedback_time);
-                Screen('Flip', p.win);
-            end
-            
-            % intertrial period - display fixation
-            if p.iti_on == 1
-                t.centre = p.resolution/2;
-                t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
-                t.iti_rect = [-t.sz_l+t.centre(1),-t.sz_l+t.centre(2),t.sz_l+t.centre(1),t.sz_l+t.centre(2)];
-                t.sz_s = angle2pix(p,0.5/4); % this value (0.5/4) comes from p.fixation.size specified in movingdots.m
-                t.iti_rect_sml = [-t.sz_s+t.centre(1),-t.sz_s+t.centre(2),t.sz_s+t.centre(1),t.sz_s+t.centre(2)];
-                Screen('FillOval', p.win, [255,255,255],t.iti_rect);
-                Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
-                Screen('Flip', p.win);
-                WaitSecs(p.iti_time);
                 Screen('Flip', p.win);
             end
             
