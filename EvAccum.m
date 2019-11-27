@@ -446,7 +446,7 @@ try
                 fprintf('first we will run some practice on the new keys before we get into trial %u\n', i); % report that we're about to do some training
                 if p.MEG_enabled == 1
                     MEG.SendTrigger(p.MEGtriggers.training); % send a trigger to inform we're training
-                    pause(0.005); % quick pause before we reset triggers
+                    pause(p.MEG_onset_trigger_time); % quick pause before we reset triggers
                     MEG.SendTrigger(0); % reset triggers
                 end
                 %% training function
@@ -454,7 +454,7 @@ try
                 %% training function ends
                 if p.MEG_enabled == 1
                     MEG.SendTrigger(p.MEGtriggers.training); % send a trigger to inform we're training
-                    pause(0.005); % quick pause before we reset triggers
+                    pause(p.MEG_onset_trigger_time); % quick pause before we reset triggers
                     MEG.SendTrigger(0); % reset triggers
                 end
             end
