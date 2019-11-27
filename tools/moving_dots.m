@@ -261,7 +261,7 @@ for frame_num = 1:total_frames
             fprintf('response!\n') % check the MEG parts of the script are working
             MEG.SendTrigger(0); % reset triggers
             button_pressed = 1; % record that a key has been pressed this trial
-            MEG.SendTrigger(p.MEGtriggers.response); % send a trigger - we reset before the next trial starts, so we don't reset here (to let the trigger reach it's value)
+            MEG.SendTrigger(p.MEGtriggers.response); % send a trigger
             firstPress{1} = MEG.LastButtonPress; % record the key pressed
             firstPress{2} = MEG.TimeOfLastButtonPress; % record the time of the key pressed
             if p.fix_trial_time == 0
@@ -292,6 +292,7 @@ elseif p.MEG_enabled == 1
     if ~p.MEG_emulator_enabled
         [~,checkquit] = KbQueueCheck(); % do a check to see if we quit, and if so error out
         if strcmp(KbName(checkquit),p.quitkey)
+            MEG.SendTrigger(0); % reset triggers
             fclose('all');
             error('%s quit by user (p.quitkey pressed)\n', mfilename);
         end
