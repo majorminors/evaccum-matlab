@@ -67,7 +67,7 @@ d = struct(); % est structure for trial data
 t = struct(); % another structure for untidy trial specific floating variables that we might want to interrogate later if we mess up
 
 % set up variables
-rootdir = 'C:\Users\doria\Google Drive\04 Research\05 Evidence Accumulation\01 EvAccum Code';%'\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum'; % root directory - used to inform directory mappings
+rootdir = 'Z:\projects\EvAccum';%'C:\Users\doria\Google Drive\04 Research\05 Evidence Accumulation\01 EvAccum Code';%'\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum'; % root directory - used to inform directory mappings
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 0; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing_enabled = 1; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
@@ -76,7 +76,7 @@ p.fix_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for d
 p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anything other than 1) will not do iti
 p.feedback_type = 1; % if 0 (or anything other than 1 or 2) no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
 p.num_blocks = 20;
-p.breakblocks = 0; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
+p.breakblocks = [2,4]; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
 p.keyswap = 2; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
 p.MEG_enabled = 1; % usiyng MEG
 p.MEG_emulator_enabled = 0; % using the emulator - be aware we can't quit using the quitkey with emulator
@@ -197,7 +197,8 @@ elseif p.MEG_enabled == 1 % what keys in the MEG
         p.resp_keys = {'LY','RB'}; % LY and RB correspond to a and s on the keyboard
     end
 end
-p.quitkey = {'q'}; % this is watched by KbQueue regardless of p.MEG_enabled
+p.no_participant_response = 0; % turn this off for response_waiter function to work
+p.quitkey = {'q'}; % this is watched by KbqQueue regardless of p.MEG_enabled
 p.continuekey = {'c'}; % this is watched by KbQueue regardless of p.MEG_enabled
 t.keyswapper = 0; % will use this variable to mark a keyswap event (code currently at commencement of block loop)
 % establish response keys for the trial based off whether participant id is odd or even
@@ -426,7 +427,12 @@ try
                 WaitSecs(p.break_inform_time);
                 DrawFormattedText(p.win,sprintf('\n take a little break\n\n we are on block %u of %u\n\n experimenter will continue',block, p.act_block_num), 'center', 'center', p.text_colour);
                 Screen('Flip', p.win);
+                %% start function
+                p.no_participant_response = 1; % turn on no particpant response
+                disp(p.no_participant_response)
                 response_waiter(p,MEG) % call response_waiter function
+                p.no_participant_response = 0; % turn off no particpant response
+                %% script continue
                 if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue from the response waiter
                 t.takeabreak = 2; % break event complete
             end
@@ -508,9 +514,7 @@ try
                 end
                 Screen('Flip', p.win);
                 %% response waiter function
-                p.no_participant_response = 1;
                 response_waiter(p,MEG) % call response_waiter function
-                p.no_participant_response = 0;
                 %% response waiter function ends
                 if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue from the response waiter
                 if p.MEG_enabled == 1
