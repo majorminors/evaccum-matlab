@@ -67,16 +67,16 @@ d = struct(); % est structure for trial data
 t = struct(); % another structure for untidy trial specific floating variables that we might want to interrogate later if we mess up
 
 % set up variables
-rootdir = 'E:\Dorian\EvAccum';%'C:\Users\doria\Google Drive\04 Research\05 Evidence Accumulation\01 EvAccum Code';%'\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum'; % root directory - used to inform directory mappings
+rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum';%'C:\Users\doria\Google Drive\04 Research\05 Evidence Accumulation\01 EvAccum Code';%'\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum'; % root directory - used to inform directory mappings
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
-p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
+p.fullscreen_enabled = 0; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
 p.training_enabled = 0; % if 0 (or any other than 1) will do nothing, if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
 p.fix_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anything other than 1) will not do iti
 p.feedback_type = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
 p.num_blocks = 4;
-p.breakblocks = 7; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
+p.breakblocks = 0; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
 p.keyswap = 1; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
 p.MEG_enabled = 1; % using MEG
 p.MEG_emulator_enabled = 0; % using the emulator - be aware we can't quit using the quitkey with emulator
@@ -90,7 +90,7 @@ if ~ismember(p.iti_on,[0,1]); error('invalid value for p.iti_on'); end % check i
 if ~ismember(p.feedback_type,[0,1,2]); error('invalid value for p.feedback_type'); end % check if valid or error
 if ~ismember(p.MEG_enabled,[0,1]); error('invalid value for p.MEG_enabled'); end % check if valid or error
 if ~ismember(p.MEG_emulator_enabled,[0,1]); error('invalid value for p.MEG_emulator_enabled'); end % check if valid or error
-if p.MEG_enabled == 1 && p.testing_enabled == 1; error('are you sure you want to be testing with MEG enabled? if so, comment out this line'); end
+%if p.MEG_enabled == 1 && p.testing_enabled == 1; error('are you sure you want to be testing with MEG enabled? if so, comment out this line'); end
 if p.MEG_enabled == 1 && p.training_enabled == 1; error('you cannot train with MEG enabled currently'); end
 if p.MEG_emulator_enabled == 1 && p.MEG_enabled == 0
     warning('you cannot emulate MEG without enabling MEG - turning off emulation\n');
@@ -229,12 +229,13 @@ p.visual_angle_dots = 0.15; % visual angle of the dots expressed as a decimal - 
 % timing info
 p.min_cue_time = 0.5; % minimum period to display cue (participants can't continue during this time)
 p.iti_time = 0.3; % inter trial inteval time
-p.MEG_onset_trigger_time = 0.1; % time to let the MEG trigger reach full strength - recommend 100ms but must be smaller than p.iti_time
+p.MEG_long_trigger_time = 0.1; % time to let the MEG trigger reach full strength - recommend 100ms for large values but must be smaller than p.iti_time since we'll deliver it in the iti
+p.MEG_short_trigger_time = 0.05; % time for short triggers with small values
 p.dots_duration = 1.5; % seconds for the dot cloud to be displayed
 p.feedback_time = 0.5; % period to display feedback after response
 p.keyswap_inform_time = 1; % minumum period to display keyswap notification
 p.break_inform_time = 1; % minumum period to display break notification (stop participants from accidentally continuing)
-if p.MEG_onset_trigger_time>p.iti_time; error('p.MEG_onset_trigger_time is larger than p.iti_time'); end
+if p.MEG_long_trigger_time*2>p.iti_time; error('p.MEG_long_trigger_time doubled is larger than p.iti_time'); end
 
 % trial settings (*p.stim_mat* = parameter required to calculate stimulus condition matrix)
 t.takeabreak = 0; % will use this variable to mark a break event (code currently at commencement of block loop)
@@ -332,7 +333,6 @@ clear block;
 % MEG trigger info
 p.MEGtriggers.onset = 1;
 p.MEGtriggers.response = 3;
-p.MEGtriggers.training = 255; % unique trigger to tell us when to ignore triggers sent during training
 p.MEGtriggers.trial = 10; % what column of p.stim_mat are you keeping your trigger information in?
 
 % invoke the MEG functions if p.MEG_enabled
@@ -454,23 +454,28 @@ try
                 if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue from the response waiter
                 t.keyswapper = 2; % keyswap complete
                 fprintf('first we will run some practice on the new keys before we get into trial %u\n', i); % report that we're about to do some training
-                if p.MEG_enabled == 1
-                    MEG.SendTrigger(p.MEGtriggers.training); % send a trigger to inform we're training
-                    pause(p.MEG_onset_trigger_time); % quick pause before we reset triggers
-                    MEG.SendTrigger(0); % reset triggers
-                end
                 %% training function
                 d.trainingdata = keyswap_training(p,dots,d,MEG); % run some training on the new keys
                 %% training function ends
-                if p.MEG_enabled == 1
-                    MEG.SendTrigger(p.MEGtriggers.training); % send a trigger to inform we're training
-                    pause(p.MEG_onset_trigger_time); % quick pause before we reset triggers
-                    MEG.SendTrigger(0); % reset triggers
-                end
             end
             
             %% present cue and response mapping
             if i == 1 || p.stim_mat(i,1) ~= p.stim_mat(i-1,1) || ~mod(i-1,8) % && p.stim_mat(i+1,1) == p.stim_mat(i,1) % if first trial, or cue changes (as currently blocked), or every 8 trials unless we're about to change cue then display cue
+                
+                if i > 1
+                    if p.iti_on == 1 % do an inter trial interval fixation so we have a buffer between the last trial and the cue appearing
+                        t.centre = p.resolution/2;
+                        t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
+                        t.iti_rect = [-t.sz_l+t.centre(1),-t.sz_l+t.centre(2),t.sz_l+t.centre(1),t.sz_l+t.centre(2)];
+                        t.sz_s = angle2pix(p,0.5/4); % this value (0.5/4) comes from p.fixation.size specified in movingdots.m
+                        t.iti_rect_sml = [-t.sz_s+t.centre(1),-t.sz_s+t.centre(2),t.sz_s+t.centre(1),t.sz_s+t.centre(2)];
+                        Screen('FillOval', p.win, [255,255,255],t.iti_rect);
+                        Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
+                        Screen('Flip', p.win);
+                        WaitSecs(p.iti_time);
+                        % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
+                    end
+                end
                 
                 % make the texture and scale it
                 p.cue_tex = Screen('MakeTexture', p.win, p.cue);
@@ -524,7 +529,7 @@ try
                 %% response waiter function ends
                 if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue from the response waiter
                 if p.MEG_enabled == 1
-                    WaitSecs(0.5);
+                    WaitSecs(0.5); % wait long enough that the MEG function can clear the button press
                     MEG.WaitForButtonPress(0); % reset MEG button press to empty
                 end
             end
@@ -556,7 +561,7 @@ try
                 end
             end
             
-            % intertrial period - display fixation
+            % intertrial interval - display fixation and do MEG trigger stuff
             if p.iti_on == 1
                 t.centre = p.resolution/2;
                 t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
@@ -568,10 +573,11 @@ try
                 Screen('Flip', p.win);
                 if p.MEG_enabled == 1
                     MEG.SendTrigger(0); % reset triggers
-                    WaitSecs(p.iti_time-p.MEG_onset_trigger_time);
+                    WaitSecs(p.iti_time-p.MEG_long_trigger_time*2);
                     MEG.SendTrigger(p.stim_mat(i,p.MEGtriggers.trial)); % send a trigger for trial onset
-                    WaitSecs(p.MEG_onset_trigger_time);
+                    WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to reach value
                     MEG.SendTrigger(0); % reset triggers
+                    WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to return to zero
                 elseif p.MEG_enabled == 0
                     WaitSecs(p.iti_time);
                 end
