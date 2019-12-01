@@ -67,7 +67,7 @@ d = struct(); % est structure for trial data
 t = struct(); % another structure for untidy trial specific floating variables that we might want to interrogate later if we mess up
 
 % set up variables
-rootdir = 'Z:\projects\EvAccum';%'C:\Users\doria\Google Drive\04 Research\05 Evidence Accumulation\01 EvAccum Code';%'\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum'; % root directory - used to inform directory mappings
+rootdir = 'E:\Dorian\EvAccum';%'C:\Users\doria\Google Drive\04 Research\05 Evidence Accumulation\01 EvAccum Code';%'\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum'; % root directory - used to inform directory mappings
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
@@ -75,9 +75,9 @@ p.training_enabled = 0; % if 0 (or any other than 1) will do nothing, if 1, init
 p.fix_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anything other than 1) will not do iti
 p.feedback_type = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
-p.num_blocks = 36;
-p.breakblocks = [7,13,19,25,31]; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
-p.keyswap = 2; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
+p.num_blocks = 4;
+p.breakblocks = 7; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
+p.keyswap = 1; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
 p.MEG_enabled = 1; % using MEG
 p.MEG_emulator_enabled = 0; % using the emulator - be aware we can't quit using the quitkey with emulator
 
@@ -192,7 +192,8 @@ if p.MEG_enabled == 0
     p.resp_keys = {'a','s'}; % only accepts two response options
 elseif p.MEG_enabled == 1 % what keys in the MEG
     if p.MEG_emulator_enabled == 0
-        p.resp_keys = {'RB','RY'}; % only accepts two response options
+        p.resp_keys = {'RB','RR'}; % only accepts two response options
+        p.resp_key_names = {'Left','Right'};
     elseif p.MEG_emulator_enabled == 1
         p.resp_keys = {'LY','RB'}; % LY and RB correspond to a and s on the keyboard
     end
@@ -206,6 +207,7 @@ if mod(d.participant_id,2) % if pid not divisible by 2 (i.e. leaves a modulus af
     p.resp_keys = {p.resp_keys{1},p.resp_keys{2}}; % essentially do nothing - keep resp keys the same
 elseif ~mod(d.participant_id,2) % if pid is divisible by 2 (i.e. does not leave a modulus after division)
     p.resp_keys = {p.resp_keys{2},p.resp_keys{1}}; % then swap the response keys
+    p.resp_key_names = {p.resp_key_names{2},p.resp_key_names{1}}; % then swap the response key names
 end
 
 
@@ -218,10 +220,10 @@ p.cue_colour_blue = [121 181 240]; % colour of cue, for text formatting
 p.cue_colour_orange = [240 181 121]; % colour of cue, for text formatting
 p.text_size = 40; % size of text
 p.window_size = [0 0 1200 800]; % size of window when ~p.fullscreen_enabled
-p.screen_width = 35;   % Screen width in cm
-p.screen_height = 50;    % Screen height in cm
-p.screen_distance = 50; % Screen distance from participant in cm
-p.visual_angle_cue = 15; % visual angle of the cue expressed as a decimal - determines size
+p.screen_width = 46;   % Screen width in cm
+p.screen_height = 37;    % Screen height in cm
+p.screen_distance = 137; % Screen distance from participant in cm
+p.visual_angle_cue = 10; % visual angle of the cue expressed as a decimal - determines size
 p.visual_angle_dots = 0.15; % visual angle of the dots expressed as a decimal - determines size
 
 % timing info
@@ -313,7 +315,7 @@ p.stim_mat(:,6) = min(dist,[],2);
 p.stim_mat(:,7) = (p.stim_mat(:,6)>90)+1;
 p.stim_mat(:,8) = ~((p.stim_mat(:,6)==min(p.stim_mat(:,6)))|(p.stim_mat(:,6)==max(p.stim_mat(:,6))))+1;
 p.stim_mat(:,9) = 1:length(p.stim_mat(:,9));
-p.stim_mat(:,10) = p.stim_mat(:,9)+5;
+p.stim_mat(:,10) = p.stim_mat(:,9)+[0:2:127]'+5;
 % clear floating variables
 clear dist;
 
@@ -329,7 +331,7 @@ clear block;
 
 % MEG trigger info
 p.MEGtriggers.onset = 1;
-p.MEGtriggers.response = 2;
+p.MEGtriggers.response = 3;
 p.MEGtriggers.training = 255; % unique trigger to tell us when to ignore triggers sent during training
 p.MEGtriggers.trial = 10; % what column of p.stim_mat are you keeping your trigger information in?
 
@@ -391,6 +393,7 @@ try
         % swap response keys halfway through blocks (rounded to nearest integer)
         if block == round(p.act_block_num/p.keyswap)+1
             p.resp_keys = {p.resp_keys{2},p.resp_keys{1}}; % then swap the response keys
+            p.resp_key_names = {p.resp_key_names{2},p.resp_key_names{1}}; % then swap the response key names
             t.keyswapper = 1; % keyswap initiated (tells a screen to pop up informing participants and starts some training)
         end
         
@@ -485,17 +488,17 @@ try
                 % DrawFormattedText(p.win, sprintf('\n press %s for %s\n press %s for %s\n', p.resp_keys{1}, p.matching_cue_1, p.resp_keys{2}, p.matching_cue_2), 'center', t.rect(RectBottom)*1.01, p.text_colour);
                 % draw the response mapping at the corners of the t.rect you just made depending on the orientation of the cue
                 if p.stim_mat(i,1) == 1
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{1}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_blue);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{2}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_orange);
                 elseif p.stim_mat(i,1) == 2
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{1}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_blue);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{2}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_orange);
                 elseif p.stim_mat(i,1) == 3
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{1}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_blue);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{2}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_orange);
                 elseif p.stim_mat(i,1) == 4
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{1}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_blue);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{2}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_orange);
                 end
                 d.cue_onset(block,i) = Screen('Flip', p.win); % pull the time of the screen flip from the flip function while flipping
                 WaitSecs(p.min_cue_time);
@@ -503,17 +506,17 @@ try
                 % redraw also the response mapping
                 DrawFormattedText(p.win, sprintf('\n press either button to continue\n'), 'center', t.rect(RectBottom)*1.1, p.text_colour);
                 if p.stim_mat(i,1) == 1
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{1}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_blue);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{2}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_orange);
                 elseif p.stim_mat(i,1) == 2
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{1}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_blue);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{2}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_orange);
                 elseif p.stim_mat(i,1) == 3
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{1}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_blue);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{2}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_orange);
                 elseif p.stim_mat(i,1) == 4
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{1}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_blue);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{2}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_orange);
                 end
                 Screen('Flip', p.win);
                 %% response waiter function

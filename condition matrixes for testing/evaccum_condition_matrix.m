@@ -45,7 +45,7 @@ p.stim_mat(:,6) = min(dist,[],2);
 p.stim_mat(:,7) = (p.stim_mat(:,6)>90)+1;
 p.stim_mat(:,8) = ~((p.stim_mat(:,6)==min(p.stim_mat(:,6)))|(p.stim_mat(:,6)==max(p.stim_mat(:,6))))+1;
 p.stim_mat(:,9) = 1:length(p.stim_mat(:,9));
-p.stim_mat(:,10) = p.stim_mat(:,9)+5;
+p.stim_mat(:,10) = p.stim_mat(:,9)+[0:2:127]'+5;
 
 % clear floating variables
 clear dist;

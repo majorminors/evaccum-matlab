@@ -286,7 +286,7 @@ if p.MEG_enabled == 0
 elseif p.MEG_enabled == 1 
     pressed = 0; % just put something in here because its used in KbQueue and moving_dots expects an output
     if button_pressed == 0
-        firstPress{1} = cellstr('RR');
+        firstPress{1} = cellstr('LR');
         firstPress{2} = 0;
     end
     if ~p.MEG_emulator_enabled
