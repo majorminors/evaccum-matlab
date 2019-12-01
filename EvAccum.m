@@ -461,8 +461,10 @@ try
             
             %% present cue and response mapping
             if i == 1 || p.stim_mat(i,1) ~= p.stim_mat(i-1,1) || ~mod(i-1,8) % && p.stim_mat(i+1,1) == p.stim_mat(i,1) % if first trial, or cue changes (as currently blocked), or every 8 trials unless we're about to change cue then display cue
-                
+                                
                 if i > 1
+                    % save data
+                    save(save_file); % save all data in '.mat' format
                     if p.iti_on == 1 % do an inter trial interval fixation so we have a buffer between the last trial and the cue appearing
                         t.centre = p.resolution/2;
                         t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
@@ -648,9 +650,6 @@ try
             %% post trial clean up
             if ~p.MEG_emulator_enabled; KbQueueRelease(); end
             
-            % save the trial data
-            save(save_file); % save all data in '.mat' format
-            
         end % trial loop
         
         % display some feedback if blockwise feedback on
@@ -663,6 +662,9 @@ try
             WaitSecs(p.feedback_time);
             Screen('Flip', p.win);
         end
+        
+        % save data
+        save(save_file); % save all data in '.mat' format
         
     end % end block loop
     
