@@ -69,14 +69,14 @@ t = struct(); % another structure for untidy trial specific floating variables t
 % set up variables
 rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum';%'C:\Users\doria\Google Drive\04 Research\05 Evidence Accumulation\01 EvAccum Code';%'\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum'; % root directory - used to inform directory mappings
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
-p.fullscreen_enabled = 0; % 1 is full screen, 0 is whatever you've set p.window_size to
+p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
 p.training_enabled = 0; % if 0 (or any other than 1) will do nothing, if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
 p.fix_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anything other than 1) will not do iti
 p.feedback_type = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
-p.num_blocks = 4;
-p.breakblocks = 0; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
+p.num_blocks = 36;
+p.breakblocks = [7,13,19,25,31]; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
 p.keyswap = 1; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
 p.MEG_enabled = 1; % using MEG
 p.MEG_emulator_enabled = 0; % using the emulator - be aware we can't quit using the quitkey with emulator
@@ -90,7 +90,7 @@ if ~ismember(p.iti_on,[0,1]); error('invalid value for p.iti_on'); end % check i
 if ~ismember(p.feedback_type,[0,1,2]); error('invalid value for p.feedback_type'); end % check if valid or error
 if ~ismember(p.MEG_enabled,[0,1]); error('invalid value for p.MEG_enabled'); end % check if valid or error
 if ~ismember(p.MEG_emulator_enabled,[0,1]); error('invalid value for p.MEG_emulator_enabled'); end % check if valid or error
-%if p.MEG_enabled == 1 && p.testing_enabled == 1; error('are you sure you want to be testing with MEG enabled? if so, comment out this line'); end
+if p.MEG_enabled == 1 && p.testing_enabled == 1; error('are you sure you want to be testing with MEG enabled? if so, comment out this line'); end
 if p.MEG_enabled == 1 && p.training_enabled == 1; error('you cannot train with MEG enabled currently'); end
 if p.MEG_emulator_enabled == 1 && p.MEG_enabled == 0
     warning('you cannot emulate MEG without enabling MEG - turning off emulation\n');
@@ -193,11 +193,11 @@ if p.MEG_enabled == 0
 elseif p.MEG_enabled == 1 % what keys in the MEG
     if p.MEG_emulator_enabled == 0
         p.resp_keys = {'RB','RR'}; % only accepts two response options
-        p.resp_key_names = {'Left','Right'};
     elseif p.MEG_emulator_enabled == 1
         p.resp_keys = {'LY','RB'}; % LY and RB correspond to a and s on the keyboard
     end
 end
+p.resp_key_names = {'Left','Right'};
 p.no_participant_response = 0; % turn this off for response_waiter function to work
 p.quitkey = {'q'}; % this is watched by KbqQueue regardless of p.MEG_enabled
 p.continuekey = {'c'}; % this is watched by KbQueue regardless of p.MEG_enabled
