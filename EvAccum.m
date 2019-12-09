@@ -67,19 +67,19 @@ d = struct(); % est structure for trial data
 t = struct(); % another structure for untidy trial specific floating variables that we might want to interrogate later if we mess up
 
 % set up variables
-rootdir = 'C:\Users\doria\Google Drive\04 Research\05 Evidence Accumulation\01 EvAccum Code';%'\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum'; % root directory - used to inform directory mappings
+rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum';%'C:\Users\doria\Google Drive\04 Research\05 Evidence Accumulation\01 EvAccum Code';%'\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum'; % root directory - used to inform directory mappings
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
-p.fullscreen_enabled = 0; % 1 is full screen, 0 is whatever you've set p.window_size to
-p.testing_enabled = 1; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
+p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
+p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
 p.training_enabled = 0; % if 0 (or any other than 1) will do nothing, if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
 p.fix_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anything other than 1) will not do iti
-p.feedback_type = 1; % if 0 (or anything other than 1 or 2) no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
-p.num_blocks = 20;
-p.breakblocks = 0; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
-p.keyswap = 2; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
-p.MEG_enabled = 0; % using MEG
-p.MEG_emulator_enabled = 1; % using the emulator - be aware we can't quit using the quitkey with emulator
+p.feedback_type = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
+p.num_blocks = 36;
+p.breakblocks = [7,13,19,25,31]; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
+p.keyswap = 1; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
+p.MEG_enabled = 1; % using MEG
+p.MEG_emulator_enabled = 0; % using the emulator - be aware we can't quit using the quitkey with emulator
 
 % check set up
 if ~ismember(p.fullscreen_enabled,[0,1]); error('invalid value for p.fullscreen_enabled'); end % check if valid or error
@@ -90,7 +90,7 @@ if ~ismember(p.iti_on,[0,1]); error('invalid value for p.iti_on'); end % check i
 if ~ismember(p.feedback_type,[0,1,2]); error('invalid value for p.feedback_type'); end % check if valid or error
 if ~ismember(p.MEG_enabled,[0,1]); error('invalid value for p.MEG_enabled'); end % check if valid or error
 if ~ismember(p.MEG_emulator_enabled,[0,1]); error('invalid value for p.MEG_emulator_enabled'); end % check if valid or error
-%if p.MEG_enabled == 1 && p.testing_enabled == 1; error('are you sure you want to be testing with MEG enabled? if so, comment out this line'); end
+if p.MEG_enabled == 1 && p.testing_enabled == 1; error('are you sure you want to be testing with MEG enabled? if so, comment out this line'); end
 if p.MEG_enabled == 1 && p.training_enabled == 1; error('you cannot train with MEG enabled currently'); end
 if p.MEG_emulator_enabled == 1 && p.MEG_enabled == 0
     warning('you cannot emulate MEG without enabling MEG - turning off emulation\n');
@@ -192,44 +192,48 @@ if p.MEG_enabled == 0
     p.resp_keys = {'a','s'}; % only accepts two response options
 elseif p.MEG_enabled == 1 % what keys in the MEG
     if p.MEG_emulator_enabled == 0
-        p.resp_keys = {'RB','RY'}; % only accepts two response options
+        p.resp_keys = {'RB','RR'}; % only accepts two response options
     elseif p.MEG_emulator_enabled == 1
         p.resp_keys = {'LY','RB'}; % LY and RB correspond to a and s on the keyboard
     end
-    %p.continue_key = {'RR'};
 end
-p.quitkey = {'q'}; % this is watched by KbQueue regardless of p.MEG_enabled
+p.resp_key_names = {'Left','Right'};
+p.no_participant_response = 0; % turn this off for response_waiter function to work
+p.quitkey = {'q'}; % this is watched by KbqQueue regardless of p.MEG_enabled
+p.continuekey = {'c'}; % this is watched by KbQueue regardless of p.MEG_enabled
 t.keyswapper = 0; % will use this variable to mark a keyswap event (code currently at commencement of block loop)
 % establish response keys for the trial based off whether participant id is odd or even
 if mod(d.participant_id,2) % if pid not divisible by 2 (i.e. leaves a modulus after division)
     p.resp_keys = {p.resp_keys{1},p.resp_keys{2}}; % essentially do nothing - keep resp keys the same
 elseif ~mod(d.participant_id,2) % if pid is divisible by 2 (i.e. does not leave a modulus after division)
     p.resp_keys = {p.resp_keys{2},p.resp_keys{1}}; % then swap the response keys
+    p.resp_key_names = {p.resp_key_names{2},p.resp_key_names{1}}; % then swap the response key names
 end
 
 
 % define display info
 p.bg_colour = [0 0 0]; % needs to be the same as the cue stimuli background colour (unless transparent)
 p.text_colour = [255 255 255]; % colour of instructional text
-p.matching_cue_1 = 'BLUE'; % variable used to indicate response keys - this the upward arrow of the doublesided arrow cue in stimdir
-p.matching_cue_2 = 'ORANGE'; % variable used to indicate response keys - this the downward arrow of the doublesided arrow cue in stimdir
-p.cue_colour_blue = [121 181 240]; % colour of cue, for text formatting
-p.cue_colour_orange = [240 181 121]; % colour of cue, for text formatting
+p.cue_colour_one = [255 255 255]; % colour of cue, for text formatting
+p.cue_colour_two = [255 255 255]; % colour of cue, for text formatting
 p.text_size = 40; % size of text
 p.window_size = [0 0 1200 800]; % size of window when ~p.fullscreen_enabled
-p.screen_width = 35;   % Screen width in cm
-p.screen_height = 50;    % Screen height in cm
-p.screen_distance = 50; % Screen distance from participant in cm
-p.visual_angle_cue = 15; % visual angle of the cue expressed as a decimal - determines size
+p.screen_width = 46;   % Screen width in cm
+p.screen_height = 37;    % Screen height in cm
+p.screen_distance = 137; % Screen distance from participant in cm
+p.visual_angle_cue = 10; % visual angle of the cue expressed as a decimal - determines size
 p.visual_angle_dots = 0.15; % visual angle of the dots expressed as a decimal - determines size
 
 % timing info
 p.min_cue_time = 0.5; % minimum period to display cue (participants can't continue during this time)
 p.iti_time = 0.3; % inter trial inteval time
+p.MEG_long_trigger_time = 0.1; % time to let the MEG trigger reach full strength - recommend 100ms for large values but must be smaller than p.iti_time since we'll deliver it in the iti
+p.MEG_short_trigger_time = 0.05; % time for short triggers with small values
 p.dots_duration = 1.5; % seconds for the dot cloud to be displayed
 p.feedback_time = 0.5; % period to display feedback after response
 p.keyswap_inform_time = 1; % minumum period to display keyswap notification
 p.break_inform_time = 1; % minumum period to display break notification (stop participants from accidentally continuing)
+if p.MEG_long_trigger_time*2>p.iti_time; error('p.MEG_long_trigger_time doubled is larger than p.iti_time'); end
 
 % trial settings (*p.stim_mat* = parameter required to calculate stimulus condition matrix)
 t.takeabreak = 0; % will use this variable to mark a break event (code currently at commencement of block loop)
@@ -264,7 +268,7 @@ fprintf('defining stimuli params for %s\n', mfilename);
 
 
 % read in stimulus file for the cue
-p.cue = imread(fullfile(stimdir, 'arrows_cue_colours_with_line.png'));
+p.cue = imread(fullfile(stimdir, 'arrows_cue_with_line.png'));
 
 % dot cloud parameters for moving_dots function
 %   note that for the following required params for moving_dots:
@@ -291,7 +295,7 @@ dots.lifetime = 5; % number of frames dots live for
 %  7)  match blue (1) or match orange (2)
 %  8)  matching difficulty (1 = easy, 2 = difficult)
 %  9)  gives you a unique number for each trial condition
-% 10)  gives a number based on 9 to identify each response for each trial condition
+% 10)  gives a number based on 9 for meg triggers
 % note: if you try to test with two matching angles that are the same, you
 %       will get an error, so make them different by at least 1 degree. this is
 %       because we use 'union()' to calc matching distance from cue direction.
@@ -310,7 +314,7 @@ p.stim_mat(:,6) = min(dist,[],2);
 p.stim_mat(:,7) = (p.stim_mat(:,6)>90)+1;
 p.stim_mat(:,8) = ~((p.stim_mat(:,6)==min(p.stim_mat(:,6)))|(p.stim_mat(:,6)==max(p.stim_mat(:,6))))+1;
 p.stim_mat(:,9) = 1:length(p.stim_mat(:,9));
-p.stim_mat(:,10) = p.stim_mat(:,9)+p.num_trials_per_block;
+p.stim_mat(:,10) = p.stim_mat(:,9)+[0:2:127]'+5;
 % clear floating variables
 clear dist;
 
@@ -325,9 +329,9 @@ clear block;
 %% set up MEG
 
 % MEG trigger info
-p.MEGtriggers.training = 255; % unique trigger to tell us when to ignore triggers sent during training
-p.MEGtriggers.onsets = 9; % what column of p.stim_mat are you keeping your trigger information for onset in?
-p.MEGtriggers.responses = 10; % what column p.stim_mat are you keeping your trigger information for responses in?
+p.MEGtriggers.onset = 1;
+p.MEGtriggers.response = 3;
+p.MEGtriggers.trial = 10; % what column of p.stim_mat are you keeping your trigger information in?
 
 % invoke the MEG functions if p.MEG_enabled
 if p.MEG_enabled == 1
@@ -387,6 +391,7 @@ try
         % swap response keys halfway through blocks (rounded to nearest integer)
         if block == round(p.act_block_num/p.keyswap)+1
             p.resp_keys = {p.resp_keys{2},p.resp_keys{1}}; % then swap the response keys
+            p.resp_key_names = {p.resp_key_names{2},p.resp_key_names{1}}; % then swap the response key names
             t.keyswapper = 1; % keyswap initiated (tells a screen to pop up informing participants and starts some training)
         end
         
@@ -409,9 +414,9 @@ try
             %set up a queue to collect response info (or in the case of p.MEG_enabled, to watch for the quitkey)
             if ~p.MEG_emulator_enabled
                 if p.MEG_enabled == 0
-                    t.queuekeys = [KbName(p.resp_keys{1}), KbName(p.resp_keys{2}), KbName(p.quitkey)]; % define the keys the queue cares about
+                    t.queuekeys = [KbName(p.resp_keys{1}), KbName(p.resp_keys{2}), KbName(p.quitkey), KbName(p.continuekey)]; % define the keys the queue cares about
                 elseif p.MEG_enabled == 1
-                    t.queuekeys = KbName(p.quitkey); % define the keys the queue cares about
+                    t.queuekeys = [KbName(p.quitkey), KbName(p.continuekey)]; % define the keys the queue cares about
                 end
                 t.queuekeylist = zeros(1,256); % create a list of all possible keys (all 'turned off' i.e. zeroes)
                 t.queuekeylist(t.queuekeys) = 1; % 'turn on' the keys we care about in the list (make them ones)
@@ -426,7 +431,12 @@ try
                 WaitSecs(p.break_inform_time);
                 DrawFormattedText(p.win,sprintf('\n take a little break\n\n we are on block %u of %u\n\n experimenter will continue',block, p.act_block_num), 'center', 'center', p.text_colour);
                 Screen('Flip', p.win);
+                %% start function
+                p.no_participant_response = 1; % turn on no particpant response
+                disp(p.no_participant_response)
                 response_waiter(p,MEG) % call response_waiter function
+                p.no_participant_response = 0; % turn off no particpant response
+                %% script continue
                 if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue from the response waiter
                 t.takeabreak = 2; % break event complete
             end
@@ -442,23 +452,30 @@ try
                 if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue from the response waiter
                 t.keyswapper = 2; % keyswap complete
                 fprintf('first we will run some practice on the new keys before we get into trial %u\n', i); % report that we're about to do some training
-                if p.MEG_enabled == 1
-                    MEG.SendTrigger(p.MEGtriggers.training); % send a trigger to inform we're training
-                    pause(0.005); % quick pause before we reset triggers
-                    MEG.SendTrigger(0); % reset triggers
-                end
                 %% training function
                 d.trainingdata = keyswap_training(p,dots,d,MEG); % run some training on the new keys
                 %% training function ends
-                if p.MEG_enabled == 1
-                    MEG.SendTrigger(p.MEGtriggers.training); % send a trigger to inform we're training
-                    pause(0.005); % quick pause before we reset triggers
-                    MEG.SendTrigger(0); % reset triggers
-                end
             end
             
             %% present cue and response mapping
             if i == 1 || p.stim_mat(i,1) ~= p.stim_mat(i-1,1) || ~mod(i-1,8) % && p.stim_mat(i+1,1) == p.stim_mat(i,1) % if first trial, or cue changes (as currently blocked), or every 8 trials unless we're about to change cue then display cue
+                                
+                if i > 1
+                    % save data
+                    save(save_file); % save all data in '.mat' format
+                    if p.iti_on == 1 % do an inter trial interval fixation so we have a buffer between the last trial and the cue appearing
+                        t.centre = p.resolution/2;
+                        t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
+                        t.iti_rect = [-t.sz_l+t.centre(1),-t.sz_l+t.centre(2),t.sz_l+t.centre(1),t.sz_l+t.centre(2)];
+                        t.sz_s = angle2pix(p,0.5/4); % this value (0.5/4) comes from p.fixation.size specified in movingdots.m
+                        t.iti_rect_sml = [-t.sz_s+t.centre(1),-t.sz_s+t.centre(2),t.sz_s+t.centre(1),t.sz_s+t.centre(2)];
+                        Screen('FillOval', p.win, [255,255,255],t.iti_rect);
+                        Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
+                        Screen('Flip', p.win);
+                        WaitSecs(p.iti_time);
+                        % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
+                    end
+                end
                 
                 % make the texture and scale it
                 p.cue_tex = Screen('MakeTexture', p.win, p.cue);
@@ -473,20 +490,19 @@ try
                 
                 % then display cue and response mapping
                 Screen('DrawTexture', p.win, p.cue_tex, [], t.rect, p.stim_mat(i,2)); % draws the cue in the orientation specified in column 2 of p.stim_mat for the current trial
-                % DrawFormattedText(p.win, sprintf('\n press %s for %s\n press %s for %s\n', p.resp_keys{1}, p.matching_cue_1, p.resp_keys{2}, p.matching_cue_2), 'center', t.rect(RectBottom)*1.01, p.text_colour);
                 % draw the response mapping at the corners of the t.rect you just made depending on the orientation of the cue
                 if p.stim_mat(i,1) == 1
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{1}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_one);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{2}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_two);
                 elseif p.stim_mat(i,1) == 2
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{1}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_one);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{2}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_two);
                 elseif p.stim_mat(i,1) == 3
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{1}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_one);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{2}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_two);
                 elseif p.stim_mat(i,1) == 4
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{1}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_one);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{2}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_two);
                 end
                 d.cue_onset(block,i) = Screen('Flip', p.win); % pull the time of the screen flip from the flip function while flipping
                 WaitSecs(p.min_cue_time);
@@ -494,17 +510,17 @@ try
                 % redraw also the response mapping
                 DrawFormattedText(p.win, sprintf('\n press either button to continue\n'), 'center', t.rect(RectBottom)*1.1, p.text_colour);
                 if p.stim_mat(i,1) == 1
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{1}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_one);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{2}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_two);
                 elseif p.stim_mat(i,1) == 2
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{1}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_one);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{2}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_two);
                 elseif p.stim_mat(i,1) == 3
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{1}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_one);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{2}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_two);
                 elseif p.stim_mat(i,1) == 4
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{1}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_one);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{2}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_two);
                 end
                 Screen('Flip', p.win);
                 %% response waiter function
@@ -512,7 +528,7 @@ try
                 %% response waiter function ends
                 if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue from the response waiter
                 if p.MEG_enabled == 1
-                    WaitSecs(0.5);
+                    WaitSecs(0.5); % wait long enough that the MEG function can clear the button press
                     MEG.WaitForButtonPress(0); % reset MEG button press to empty
                 end
             end
@@ -542,6 +558,29 @@ try
                     p.dots_duration = t.orig_dots_duration; % revert to the experimental dots duration
                     fprintf('dots duration now stable at p.dots_duration (%u secs)\n', p.dots_duration);
                 end
+            end
+            
+            % intertrial interval - display fixation and do MEG trigger stuff
+            if p.iti_on == 1
+                t.centre = p.resolution/2;
+                t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
+                t.iti_rect = [-t.sz_l+t.centre(1),-t.sz_l+t.centre(2),t.sz_l+t.centre(1),t.sz_l+t.centre(2)];
+                t.sz_s = angle2pix(p,0.5/4); % this value (0.5/4) comes from p.fixation.size specified in movingdots.m
+                t.iti_rect_sml = [-t.sz_s+t.centre(1),-t.sz_s+t.centre(2),t.sz_s+t.centre(1),t.sz_s+t.centre(2)];
+                Screen('FillOval', p.win, [255,255,255],t.iti_rect);
+                Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
+                Screen('Flip', p.win);
+                if p.MEG_enabled == 1
+                    MEG.SendTrigger(0); % reset triggers
+                    WaitSecs(p.iti_time-p.MEG_long_trigger_time*2);
+                    MEG.SendTrigger(p.stim_mat(i,p.MEGtriggers.trial)); % send a trigger for trial onset
+                    WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to reach value
+                    MEG.SendTrigger(0); % reset triggers
+                    WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to return to zero
+                elseif p.MEG_enabled == 0
+                    WaitSecs(p.iti_time);
+                end
+                % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
             end
             
             % now run moving_dots
@@ -605,25 +644,8 @@ try
                 Screen('Flip', p.win);
             end
             
-            % intertrial period - display fixation
-            if p.iti_on == 1
-                t.centre = p.resolution/2;
-                t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
-                t.iti_rect = [-t.sz_l+t.centre(1),-t.sz_l+t.centre(2),t.sz_l+t.centre(1),t.sz_l+t.centre(2)];
-                t.sz_s = angle2pix(p,0.5/4); % this value (0.5/4) comes from p.fixation.size specified in movingdots.m
-                t.iti_rect_sml = [-t.sz_s+t.centre(1),-t.sz_s+t.centre(2),t.sz_s+t.centre(1),t.sz_s+t.centre(2)];
-                Screen('FillOval', p.win, [255,255,255],t.iti_rect);
-                Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
-                Screen('Flip', p.win);
-                WaitSecs(p.iti_time);
-                Screen('Flip', p.win);
-            end
-            
             %% post trial clean up
             if ~p.MEG_emulator_enabled; KbQueueRelease(); end
-            
-            % save the trial data
-            save(save_file); % save all data in '.mat' format
             
         end % trial loop
         
@@ -637,6 +659,9 @@ try
             WaitSecs(p.feedback_time);
             Screen('Flip', p.win);
         end
+        
+        % save data
+        save(save_file); % save all data in '.mat' format
         
     end % end block loop
     
