@@ -1,7 +1,9 @@
 function ID = getMEGID(subject)
 % retrieve scans IDs and details for the PD rdk study.
 % meg .fif
-%/megdata/cbu/rdk/megid/megdate/run
+% Ale's data (example): /megdata/cbu/rdk/megid/megdate/run
+% windows: \\cbsu\data\Scandata\MEG\cbu\evaccum\megid\megdate\run
+% unix: /megdata/cbu/evaccum/megid/megdate/run
 
 switch subject
     
