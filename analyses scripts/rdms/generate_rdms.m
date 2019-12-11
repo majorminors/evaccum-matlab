@@ -6,7 +6,7 @@ clc;
 
 fprintf('setting up %s\n', mfilename);
 
-rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum'; % root directory
+rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % root directory
 
 %% do stimulus matrix
 
@@ -72,7 +72,7 @@ mat1 = repmat(p.stim_mat(:,3),1,64); % repeat column 3 (cue direction code) for 
 
 mat2 = repmat(p.stim_mat(:,3)',64,1); % repeat column 3 transposed for trial rows
 
-rdm_stim = mat1-mat2; % minus one from the other to get dissimilarity
+rdm_stim = abs(mat1-mat2); % minus one from the other to get dissimilarity then absolute values since it's a circle, not a continuum
 
 clear mat1 mat2
 
@@ -87,7 +87,7 @@ mat2 = repmat(p.stim_mat(:,1)',64,1); % repeat cue code for trials as rows
 
 rdm_cue = mat1~=mat2; % if they aren't equal, then 1 (dissimilar) otherwise 0
 
-rdm_cue_detail = mat1-mat2; % minus one from the other to get dissimilarity
+rdm_cue_detail = abs(mat1-mat2); % minus one from the other to get dissimilarity
 
 clear mat1 mat2
 
