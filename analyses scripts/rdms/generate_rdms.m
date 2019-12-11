@@ -68,68 +68,101 @@ clear block;
 
 %% RDM - stimulus
 
-mat1 = repmat(p.stim_mat(:,4),1,64);
+mat1 = repmat(p.stim_mat(:,3),1,64); % repeat column 3 (cue direction code) for trial columns
 
-mat2 = repmat(p.stim_mat(:,4)',64,1);
+mat2 = repmat(p.stim_mat(:,3)',64,1); % repeat column 3 transposed for trial rows
 
-rdm_stim = mat1~=mat2;
-
-clear mat1 mat2
-
-fig.stim = imagesc(rdm_stim);
-
-%% RDM - rule
-
-mat1 = repmat(p.stim_mat(:,6),1,64);
-
-mat2 = repmat(p.stim_mat(:,6)',64,1);
-
-rdm_rule = mat1~=mat2;
+rdm_stim = mat1-mat2; % minus one from the other to get dissimilarity
 
 clear mat1 mat2
 
-fig.rule = imagesc(rdm_rule);
+imagesc(rdm_stim);
+savefig('rdm_stim')
 
 %% RDM - cue
 
-mat1 = repmat(p.stim_mat(:,1),1,64);
+mat1 = repmat(p.stim_mat(:,1),1,64); % repeat cue code for trials as columns
 
-mat2 = repmat(p.stim_mat(:,1)',64,1);
+mat2 = repmat(p.stim_mat(:,1)',64,1); % repeat cue code for trials as rows
 
-rdm_cue = mat1~=mat2;
+rdm_cue = mat1~=mat2; % if they aren't equal, then 1 (dissimilar) otherwise 0
+
+rdm_cue_detail = mat1-mat2; % minus one from the other to get dissimilarity
 
 clear mat1 mat2
 
-fig.cue = imagesc(rdm_cue);
+imagesc(rdm_cue);
+savefig('rdm_cue');
+
+imagesc(rdm_cue_detail);
+savefig('rdm_cue_detail');
+
+%% RDM - rule decision
+
+mat1 = abs(rdm_cue_detail);
+
+mat1(mat1 == 3) = 1;
+
+rdm_ruledec = mat1;
+
+clear mat1
+
+imagesc(rdm_ruledec);
+savefig('rdm_ruledec');
+
+%% RDM - rule difficulty
+
+mat1 = repmat(p.stim_mat(:,8),1,64); % repeat difficulty for trial cols
+
+mat2 = repmat(p.stim_mat(:,8)',64,1); % repeat difficulty for trial rows
+
+rdm_rulediff = mat1~=mat2; % if not equal, 1 (dissimilar) else 0
+
+clear mat1 mat2
+
+imagesc(rdm_rulediff);
+savefig('rdm_rulediff');
 
 %% RDM - response
 
-mat1 = repmat(p.stim_mat(:,7),1,64);
+mat1 = repmat(p.stim_mat(:,7),1,64); % repeat for trial columns
 
-mat2 = repmat(p.stim_mat(:,7)',64,1);
+mat2 = repmat(p.stim_mat(:,7)',64,1); % repeat for trial rows
 
-rdm_resp = mat1~=mat2;
+rdm_resp = mat1~=mat2; % if not equal, 1 (dissimilar) else 0
+
+rdm_resp_inverse = mat1==mat2; % if equal, 1 else 0 - for blocks for which there was a keyswap event
 
 clear mat1 mat2
 
-fig.resp = imagesc(rdm_resp);
+imagesc(rdm_resp);
+savefig('rdm_resp');
+
+imagesc(rdm_resp_inverse);
+savefig('rdm_resp_inverse');
 
 %% show all figures
 
+% create subplot and map rdms to it
 figure
-visualise(1)=subplot(2,2,1);
-visualise(2)=subplot(2,2,2);
-visualise(3)=subplot(2,2,3);
-visualise(4)=subplot(2,2,4);
-% paste our figures on the subplots
-copyobj(imagesc(rdm_stim),visualise(1));
-copyobj(imagesc(rdm_cue),visualise(2));
-copyobj(imagesc(rdm_rule),visualise(3));
-copyobj(imagesc(rdm_resp),visualise(4));
+visualise(1)=subplot(2,3,1);
+imagesc(rdm_stim);
+visualise(2)=subplot(2,3,2);
+%imagesc(rdm_cue);
+imagesc(rdm_cue_detail);
+visualise(3)=subplot(2,3,3);
+imagesc(rdm_ruledec);
+visualise(4)=subplot(2,3,4);
+imagesc(rdm_rulediff);
+visualise(5)=subplot(2,3,5);
+imagesc(rdm_resp);
+visualise(6)=subplot(2,3,6);
+imagesc(rdm_resp_inverse);
 
-linkaxes([visualise],'xy')
 % add a legend
-t(1)=title(visualise(1),'stim rdm');
-t(2)=title(visualise(2),'cue rdm');
-t(3)=title(visualise(3),'rule rdm');
-t(4)=title(visualise(4),'resp rdm');
+t(1)=title(visualise(1),'stimulus');
+t(2)=title(visualise(2),'cue');
+t(3)=title(visualise(3),'rule decision boundary');
+t(4)=title(visualise(4),'rule difficulty');
+t(5)=title(visualise(5),'response');
+t(6)=title(visualise(6),'response inverted');
