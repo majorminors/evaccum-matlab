@@ -52,7 +52,7 @@ for runtype = 1:2
         settings.maxfld= sprintf(maxfld,dname{subi});
         
         
-        ID = getMEGID(sprintf('AT_RDK2_%s',IDnum{subi}));
+        ID = getMEGID(sprintf('DM_evaccumpilot_%s',IDnum{subi}));
         
         if~exist([droot,dname{subi},'ID_',num2str(dname{subi}),'.mat'],'file')
             save([droot,dname{subi},'ID_',num2str(dname{subi}),'.mat'],'ID');% save subject's details

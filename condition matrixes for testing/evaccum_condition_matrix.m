@@ -51,9 +51,9 @@ p.stim_mat(:,10) = p.stim_mat(:,9)+[0:2:127]'+5;
 clear dist;
 
 % shuffle the trial condition order for each block into 'd.stim_mat_all' then re-sort by cue
-for block=1:p.num_blocks
-    d.stim_mat_all(:,:,block) = p.stim_mat(Shuffle(1:p.num_trials_per_block),:);
-    d.stim_mat_all(:,:,block) = sortrows(d.stim_mat_all(:,:,block),1);
-end
+% for block=1:p.num_blocks
+%     d.stim_mat_all(:,:,block) = p.stim_mat(Shuffle(1:p.num_trials_per_block),:);
+%     d.stim_mat_all(:,:,block) = sortrows(d.stim_mat_all(:,:,block),1);
+% end
 % clear floating variables
 clear block;

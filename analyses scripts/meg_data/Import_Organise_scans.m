@@ -1,10 +1,10 @@
 
 addpath /hpc-software/matlab/cbu/
-addpath /imaging/at07/Matlab/Projects/CBU2016/RDK_PD/Preprocessing/
+addpath /group/woolgar-lab/projects/EvAccum/data/meg_pilot_1/
 
 %numbers refer to the PID number
-subjs = [51 52 53];
-fld_tar = '/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/MEGData/subj';
+subjs = [01 02 03];
+fld_tar = '/group/woolgar-lab/projects/EvAccum/data/meg_pilot_1/S';
 
 %decide whether to update (0 - e.g. after scanning new participants) or whether
 %to start from scratch (1);
@@ -34,9 +34,9 @@ parfor sb = 1:numel(subjs)
 
        baseF{sb} = [fld_tar,num2str(subjs(sb)),'/'];
 
-       ID = getMEGID(sprintf('AT_RDK2_%s',num2str(subjs(sb))));
-       tidyup_rdk2(baseF{sb},ID,overwrite);
-       tidyrest_rdk2(baseF{sb},ID,overwrite);
+       ID = getMEGID(sprintf('DM_evaccumpilot_%s',num2str(subjs(sb))));
+       tidyup_evaccum(baseF{sb},ID,overwrite);
+
 end    
 
 %parpool close force CBU_Cluster
