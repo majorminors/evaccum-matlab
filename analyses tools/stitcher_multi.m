@@ -1,3 +1,5 @@
+%% stitches multiple matlab datafiles together
+
 %% set up
 
 close all;

@@ -25,7 +25,7 @@ switch subject
         ID.ctr     = 0; %?
         ID.usable = 1;
         
-        ID.subj  = 'DM_evaccumpilot_02';
+        ID.subj  = 'DM_evaccumpilot_01';
         
     case {'DM_evaccumpilot_2','DM_evaccumpilot_02'}
         
