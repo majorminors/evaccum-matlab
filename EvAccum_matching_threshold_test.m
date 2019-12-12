@@ -78,8 +78,8 @@ if ~ismember(p.fix_trial_time,[0,1]); error('invalid value for p.fix_trial_time'
 if p.num_blocks ~= 2; error('currently only two blocks are interpretable - check p.num_blocks'); end % check if valid or error
 
 % directory mapping
-addpath(genpath(fullfile(rootdir, 'experiment tools'))); % add tools folder to path (includes moving_dots function which is required for dot motion, as well as an external copy of subfunctions for backwards compatibility with MATLAB)
-stimdir = fullfile(rootdir, 'experiment tools', 'stimuli');
+addpath(genpath(fullfile(rootdir, 'tools_exp'))); % add tools folder to path (includes moving_dots function which is required for dot motion, as well as an external copy of subfunctions for backwards compatibility with MATLAB)
+stimdir = fullfile(rootdir, 'tools_exp', 'stimuli');
 datadir = fullfile(rootdir, 'data'); % will make a data directory if none exists
 if ~exist(datadir,'dir')
     mkdir(datadir);
