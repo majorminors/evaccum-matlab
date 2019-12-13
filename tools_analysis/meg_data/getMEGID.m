@@ -11,18 +11,14 @@ switch subject
         ID.meg_fld  = 'meg19_0423';
         ID.meg_runs = {'1_1_raw', '1_2_raw', '1_3_raw', '1_4_raw', '1_5_raw', '1_6_raw'};
         ID.meg_labs = {'Run1','Run2','Run3','Run4','Run5','Run6'};
-        ID.meg_rest = ''; %?
-        ID.meg_rlab = ''; %?
-        ID.mri      = '';
-        ID.date_mri = '';
+        ID.mri      = 'CBU190516';
+        ID.date_mri = '20190708';
         
         ID.bad_eeg = [];
         ID.bad_meg = [];
         ID.date_meg= '191125';
         ID.runblks = '6';
         ID.note    = 'button mapping swap after run3, matlab data S#_1';
-        ID.emg     = 1;
-        ID.ctr     = 0; %?
         ID.usable = 1;
         
         ID.subj  = 'DM_evaccumpilot_01';
@@ -32,18 +28,14 @@ switch subject
         ID.meg_fld  = 'meg19_0429';
         ID.meg_runs = {'2_1_raw', '2_1b_raw', '2_1c_raw'};
         ID.meg_labs = {'Run1','Run2','Run3'};
-        ID.meg_rest = ''; %?
-        ID.meg_rlab = ''; %?
-        ID.mri      = '';
-        ID.date_mri = '';
+        ID.mri      = 'CBU190686';
+        ID.date_mri = '20190821';
         
         ID.bad_eeg = [];
         ID.bad_meg = [];
         ID.date_meg= '191128';
         ID.runblks = '4';
         ID.note    = 'run1 is 4 blocks (no matlab data), run 2 is 2 blocks (matlab data S#_1), run 3 is 4 blocks (matlab data (S#)';
-        ID.emg     = 1;
-        ID.ctr     = 0; %?
         ID.usable = 1;
         
         ID.subj  = 'DM_evaccumpilot_02';
@@ -53,18 +45,14 @@ switch subject
         ID.meg_fld  = 'meg19_212';
         ID.meg_runs = {'3_1_raw','3_2_raw','3_3a_raw','3_4_raw','3_5_raw'};
         ID.meg_labs = {'Run1','Run2','Run3','Run4','Run5'};
-        ID.meg_rest = ''; %?
-        ID.meg_rlab = ''; %?
-        ID.mri      = '';
-        ID.date_mri = '';
+        ID.mri      = 'CBU190928';
+        ID.date_mri = '20191111';
         
         ID.bad_eeg = [];
         ID.bad_meg = [];
         ID.date_meg= '191202';
         ID.runblks = '6';
         ID.note    = 'run 3 all except last 2 blocks of 8, run 4 includes the last 8 of 3, run 5 is a single block';
-        ID.emg     = 1;
-        ID.ctr     = 0; %?
         ID.usable = 1;
         
         ID.subj  = 'DM_evaccumpilot_03';

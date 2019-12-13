@@ -1,10 +1,10 @@
-
+%%
 addpath /hpc-software/matlab/cbu/
-addpath /group/woolgar-lab/projects/EvAccum/data/meg_pilot_1/
+addpath(genpath('/group/woolgar-lab/projects/Dorian/EvAccum/'))
 
 %numbers refer to the PID number
 subjs = [01 02 03];
-fld_tar = '/group/woolgar-lab/projects/EvAccum/data/meg_pilot_1/S';
+fld_tar = '/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/megdata/';
 
 %decide whether to update (0 - e.g. after scanning new participants) or whether
 %to start from scratch (1);
@@ -16,7 +16,7 @@ if ~overwrite
     subjs =subjs(exdir==0);
 end
 
-
+%%
 ParType = 2;   % Run on multiple Compute machines using parfar (best, but less feedback if crashes)
 
 % open matlabpool if required

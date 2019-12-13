@@ -14,7 +14,7 @@ function [runfiles]=tidyup_evaccum(base,ID,overwrite)
     cd(base);
     
     %create my folders
-    cellfun(@(x) mkdir([base,'MEEG/'],x),{'Preprocess','T1','Trials','EmptyRoom','MaxfilterOutput','Rest','ICAOutput','ScalpTimeStats'});
+    cellfun(@(x) mkdir([base,'MEEG/'],x),{'Preprocess','T1','MaxfilterOutput','ICAOutput','ScalpTimeStats'});
     
     %% import MEG data
     %locate raw files folder

@@ -9,8 +9,8 @@ addpath /hpc-software/matlab/cbu/
 addpath /imaging/at07/Matlab/Projects/CBU2016/RDK_PD/Preprocessing/
 addpath /imaging/at07/Matlab/Projects/CBU2016/RDK_PD/Preprocessing/lib/
 
-droot = '/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/MEGData/';
-maxfld= '/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/MEGData/%s/MEEG/MaxfilterOutput/';
+droot = '/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/';
+maxfld= '/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/%s/MEEG/MaxfilterOutput/'; % will this work
 addpath(droot);
 
 
