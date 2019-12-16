@@ -16,3 +16,5 @@
 *.sltx -crlf -diff -merge
 *.png -crlf -diff -merge
 *.psd -crlf -diff -merge
+*.pdf -crlf -diff -merge
+*.pptx -crlf -diff -merge
