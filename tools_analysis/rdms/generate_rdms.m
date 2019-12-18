@@ -47,6 +47,9 @@ p.stim_mat(:,1) = sort(repmat(1:p.num_cues,[1,p.num_trials_per_block/p.num_cues]
 p.stim_mat(:,2) = p.cue_directions(p.stim_mat(:,1));
 p.stim_mat(:,3) = repmat(sort(repmat(1:p.num_motion_coherence,[1,p.num_trials_per_block/p.num_cues/p.num_motion_coherence])),[1,p.num_cues]);
 p.stim_mat(:,4) = p.dot_motion_directions(p.stim_mat(:,3));
+temp = p.stim_mat(:,4);
+temp(temp > 360) = temp(temp > 360) - 360;
+p.stim_mat(:,4) = temp; clear temp;
 p.stim_mat(:,5) = repmat(sort(repmat(1:2,[1,p.num_trials_per_block/p.num_cues/p.num_motion_coherence/2])),[1,p.num_cues*p.num_motion_coherence]);
 dist = abs([p.stim_mat(:,4)-360,p.stim_mat(:,4),p.stim_mat(:,4)+360]-repmat(p.stim_mat(:,2),[1,3]));
 p.stim_mat(:,6) = min(dist,[],2);
@@ -66,18 +69,37 @@ clear dist;
 % clear floating variables
 clear block;
 
-%% RDM - stimulus
+%% RDM - stimulus distance
 
-mat1 = repmat(p.stim_mat(:,3),1,64); % repeat column 3 (cue direction code) for trial columns
+mat1 = repmat(p.stim_mat(:,4),1,64); % repeat column 3 (cue direction code) for trial columns
 
-mat2 = repmat(p.stim_mat(:,3)',64,1); % repeat column 3 transposed for trial rows
+mat2 = repmat(p.stim_mat(:,4)',64,1); % repeat column 3 transposed for trial rows
 
-rdm_stim = abs(mat1-mat2); % minus one from the other to get dissimilarity then absolute values since it's a circle, not a continuum
+mat3 = mod(mat1-mat2,360); % normalised difference between angles
 
-clear mat1 mat2
+rdm_stim = min(360-mat3,mat3); % the smallest of the two differences between angles
+
+clear mat1 mat2 mat3
 
 imagesc(rdm_stim);
 savefig('rdm_stim')
+
+% then you need to do two more:
+% 1. decisions made - so 1-4 cue one is different from 3-6 cue 2 and 5-8 cue 3 and 7-2 cue 4
+% 2. decisions made detail - so 1-4 cue one is LESS different to 3-6 cue 2 THAN 5-8 cue 3
+
+%% RDM - coherence
+
+mat1 = repmat(p.stim_mat(:,5),1,64);
+
+mat2 = repmat(p.stim_mat(:,5)',64,1);
+
+rdm_coh = mat1~=mat2; % if not equal, 1 (dissimilar) else 0
+
+clear mat1 mat2
+
+imagesc(rdm_coh);
+savefig('rdm_coh')
 
 %% RDM - cue
 
@@ -87,27 +109,18 @@ mat2 = repmat(p.stim_mat(:,1)',64,1); % repeat cue code for trials as rows
 
 rdm_cue = mat1~=mat2; % if they aren't equal, then 1 (dissimilar) otherwise 0
 
-rdm_cue_detail = abs(mat1-mat2); % minus one from the other to get dissimilarity
-
-clear mat1 mat2
-
 imagesc(rdm_cue);
 savefig('rdm_cue');
 
-imagesc(rdm_cue_detail);
-savefig('rdm_cue_detail');
+%% RDM - decision boundary
 
-%% RDM - rule decision
+rdm_decbdry = abs(mat1-mat2); % minus one from the other to get dissimilarity
 
-mat1 = abs(rdm_cue_detail);
+rdm_decbdry(rdm_decbdry == 3) = 1;
 
-mat1(mat1 == 3) = 1;
+clear mat1 mat2
 
-rdm_ruledec = mat1;
-
-clear mat1
-
-imagesc(rdm_ruledec);
+imagesc(rdm_decbdry);
 savefig('rdm_ruledec');
 
 %% RDM - rule difficulty
@@ -131,38 +144,70 @@ mat2 = repmat(p.stim_mat(:,7)',64,1); % repeat for trial rows
 
 rdm_resp = mat1~=mat2; % if not equal, 1 (dissimilar) else 0
 
-rdm_resp_inverse = mat1==mat2; % if equal, 1 else 0 - for blocks for which there was a keyswap event
-
 clear mat1 mat2
 
 imagesc(rdm_resp);
 savefig('rdm_resp');
 
-imagesc(rdm_resp_inverse);
-savefig('rdm_resp_inverse');
+%% RDM - decision
+
+rdm_dec = rdm_decbdry;
+
+for i1 = 1:length(rdm_dec(:,1))
+    for i2 = 1:length(rdm_dec(1,:))
+        if rdm_resp(i1,i2) == 1 && rdm_dec(i1,i2) == 0
+            rdm_dec(i1,i2) = 2;
+        elseif rdm_resp(i1,i2) == 1 &&  rdm_dec(i1,i2) == 2
+            rdm_dec(i1,i2) = 0;
+        end
+    end
+end
+
+rdm_dec_equal = rdm_decbdry;
+
+for i1 = 1:length(rdm_dec_equal(:,1))
+    for i2 = 1:length(rdm_dec_equal(1,:))
+        if rdm_resp(i1,i2) == 1 && rdm_dec_equal(i1,i2) == 0
+            rdm_dec_equal(i1,i2) = 2;
+        elseif rdm_resp(i1,i2) == 1 &&  rdm_dec_equal(i1,i2) == 2
+            rdm_dec_equal(i1,i2) = 1;
+        end
+    end
+end
+
+imagesc(rdm_dec);
+savefig('rdm_dec');
+
+imagesc(rdm_dec_equal);
+savefig('rdm_dec_equal');
 
 %% show all figures
 
 % create subplot and map rdms to it
 figure
-visualise(1)=subplot(2,3,1);
+visualise(1)=subplot(4,2,1);
 imagesc(rdm_stim);
-visualise(2)=subplot(2,3,2);
-%imagesc(rdm_cue);
-imagesc(rdm_cue_detail);
-visualise(3)=subplot(2,3,3);
-imagesc(rdm_ruledec);
-visualise(4)=subplot(2,3,4);
+visualise(2)=subplot(4,2,2);
+imagesc(rdm_coh);
+visualise(3)=subplot(4,2,3);
+imagesc(rdm_cue);
+visualise(4)=subplot(4,2,4);
+imagesc(rdm_decbdry);
+visualise(5)=subplot(4,2,5);
 imagesc(rdm_rulediff);
-visualise(5)=subplot(2,3,5);
+visualise(6)=subplot(4,2,6);
 imagesc(rdm_resp);
-visualise(6)=subplot(2,3,6);
-imagesc(rdm_resp_inverse);
+visualise(7)=subplot(4,2,7);
+imagesc(rdm_dec);
+visualise(8)=subplot(4,2,8);
+imagesc(rdm_dec_equal);
 
 % add a legend
 t(1)=title(visualise(1),'stimulus');
-t(2)=title(visualise(2),'cue');
-t(3)=title(visualise(3),'rule decision boundary');
-t(4)=title(visualise(4),'rule difficulty');
-t(5)=title(visualise(5),'response');
-t(6)=title(visualise(6),'response inverted');
+t(5)=title(visualise(2),'coherence difficulty');
+t(2)=title(visualise(3),'cue');
+t(3)=title(visualise(4),'decision boundary');
+t(4)=title(visualise(5),'rule difficulty');
+t(5)=title(visualise(6),'response');
+t(5)=title(visualise(7),'decision');
+t(5)=title(visualise(8),'decision treated equal');
