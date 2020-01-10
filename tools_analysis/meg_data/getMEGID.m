@@ -18,7 +18,7 @@ switch subject
         ID.bad_meg = [];
         ID.date_meg= '191125';
         ID.runblks = '6';
-        ID.note    = 'button mapping swap after run3, matlab data S#_1';
+        ID.note    = 'button mapping swap after run3 (halfway - matlab data S#_2, pre stitching the files';
         ID.usable = 1;
         
         ID.subj  = 'DM_evaccumpilot_01';

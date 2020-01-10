@@ -4,7 +4,7 @@ function fun_MEGtrgRT(filenames,behavfile,savebehav,settings,trfiles)%#ok
 MEG_RT=[];alltrl = []; allconditionlabels = {};tmplabs ={};%#ok
 load(behavfile) % matlab behavioural file
 
-runid = repmat((1:numel(filenames))',[1,2]).*2-repmat([1 0],[numel(filenames),1]); % tells the block ids within one run
+%runid = repmat((1:numel(filenames))',[1,2]).*2-repmat([1 0],[numel(filenames),1]); % tells the block ids within one run
 
 % runid looks like:
 %     runid =
@@ -15,8 +15,18 @@ runid = repmat((1:numel(filenames))',[1,2]).*2-repmat([1 0],[numel(filenames),1]
 %      7     8
 %      9    10
 
-conditions = {'pLaL', 'pHaL','pLaH','pHaH'}; % 2x2 coherence and rule
+% S01 - 6 runs, with 6 blocks per run
+runid = [1:6;7:12;13:18;19:24;25:30;31:36];
 
+% S02 - 3 runs, run 1 no data, run 2 is two blocks, run 3 is 4 blocks
+% runid = [[];1:2;3:6];
+% runid = NaN(3,4); runid(2,1:2) = 1:2; runid(3,:) = 3:6;
+
+% S03 - 5 runs, 6 blocks per run ex last run is 1 block, and first 16 trials of run 4 belong to the end of the last block in run 3
+% runid = [1:6;7:12;13:18;19:24;25]; % so block 19 has 16 trials from end of block 18
+% runid = [1:6;7:12;13:18;19:24;25,NaN,NaN,NaN,NaN,NaN];
+
+conditions = {'LcLr', 'LcHr','HcLr','HcHr'}; % 2x2 coherence and rule
 
 for runi = 1:numel(filenames)
 %%
@@ -31,17 +41,19 @@ ttime = D.time;
 
     
 
-block = ResponseArray(ismember(ResponseArray(:,1),runid(runi,:)),:); % (d.stim_mat_all - this selects the elements from the behavioural file from the block/s associated with the run with runid + the reaction time data - so runi on the 3rd element
+% ale's code - block = ResponseArray(ismember(ResponseArray(:,1),runid(runi,:)),:); % (d.stim_mat_all - this selects the elements from the behavioural file from the block/s associated with the run with runid + the reaction time data - so runi on the 3rd element
+block = ResponseArray(ismember(ResponseArray(:,1),runid(:,:,runi)),:);
 
 %find onset trials, coherence, trial type, and rt
 triggers = [4 8 16 32]; % trial type triggers
 coh_trigger = []; % value of coherence onset trigger
 keys     = [4096 8192 16384 -32768]; % index medium ring little - on right button box
 trigger_onset  = (find(round(diff(trig)) == 1)+1)'; % onset of all triggers
-coh_onset = (find(ismember(round(diff(trig)),coh_trigger))+1)'; 
-trial_type_onset = (find(ismember(round(diff(trig)),triggers))+1)'; 
-trigsID  = [0; round(diff(trig)')]; trigsID = trigsID(coh_onset); % gets the amplitude of the trigger (which should be the thing you specified as the trigger) and then strips anything that is not a coherence onset trigger
+coh_onset = (find(ismember(round(diff(trig)),coh_trigger))+1)'; % coherence trigger onset
+trial_type_onset = (find(ismember(round(diff(trig)),triggers))+1)'; % trial type trigger onset
+cohtrigsID  = [0; round(diff(trig)')]; cohtrigsID = cohtrigsID(coh_onset); % gets the amplitude of the trigger (which should be the thing you specified as the trigger) and then strips anything that is not a coherence onset trigger
 trialID  = [0; round(diff(trig)')]; trialID = trialID(trial_type_onset); % same for trial type
+
 %check
 if numel(trigger_onset)~= size(block,1)
     error('Inconsistent number of onset triggers vs trials')
@@ -92,7 +104,7 @@ end
 MEG_RT = cat(1,MEG_RT,[block(:,[1:4 12 14 15 ]), tmp_RT']);% 1block# 2coh 3act 4cond 5trigger 6resKey 7acc 8rt % compiles matlab trial information with the new MEG generated rts
 
 %trial definition for epoching
-if sum(block(:,12) ~= trigsID);error('discrepancy between MEGRT and MEGbehav condition labels!');end
+if sum(block(:,12) ~= cohtrigsID);error('discrepancy between MEGRT and MEGbehav condition labels!');end
 
 % set the trial window, including buffer for edge effects during filtering
 % - in the textbook - lowest frequency will determine
