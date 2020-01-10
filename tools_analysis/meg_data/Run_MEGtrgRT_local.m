@@ -7,7 +7,7 @@ addpath /hpc-software/matlab/cbu/
 addpath(genpath('/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/'))
 
 droot   = '/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/megdata/';
-infld   = fullfile(droot, '%s/MEEG/Preprocess/';
+infld   = fullfile(droot, '%s/MEEG/Preprocess/');
 behav   = '/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/behavioural/%s/%s_EvAccum.mat';
 trfile  = fullfile(infld, 'run%s_%s_trl.mat'); % going to have difficulty with subject naming conventions (Sxx vs subjx)
 megrt   = '/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/Behav/%s_MEGtrg_RT.mat'; % what is this - if it's the matlab recorded rts then it comes from d.rts in the behavioural file
