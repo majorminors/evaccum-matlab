@@ -142,22 +142,21 @@ for runi = 3%1:numel(filenames)
             % for S01
             for ions = 1:numel(trigger_onset)
                 
-                if ions < numel(trigger_onset)figure;plot(trig);hold on;figure;plot(trig);hold on;plot(trial_type_onset,trig(trial_type_onset),'-o')plot(trial_type_onset,trig(trial_type_onset),'-o')
+                if ions < numel(trigger_onset)
                     tmp    =trig(trigger_onset(ions):(trigger_onset(ions+1)-1));
                 else
-                    tmp    =trig(trigger_onset(ions):end);figure;plot(trig);hold on;plot(trial_type_onset,trig(trial_type_onset),'-o')
+                    tmp    =trig(trigger_onset(ions):end);
                 end
                 
-                tmpres = (find(ismember(diff(tmp),keys)figure;plot(trig);hold on;plot(trial_type_onset,trig(trial_type_onset),'-o'),1,'first')+1)';%first to avoid multiple button presses % time of button press within trial period (iti to iti)
+                tmpres = (find(ismember(diff(tmp),keys),1,'first')+1)';%first to avoid multiple button presses % time of button press within trial period (iti to iti)
                 
                 if ~isempty(tmpres)
-                    responset(ions)  = trifigure;plot(trig);hold on;plot(trial_type_onset,trig(trial_type_onset),'-o')gger_onset(ions)+tmpres-1;%#ok % time of button press within block
+                    responset(ions)  = trigger_onset(ions)+tmpres-1;%#ok % time of button press within block
                     tmp_RT(ions)       = ttime(responset(ions))-(ttime(trigger_onset(ions))+.034);%#ok 34ms projector's delay % this is reaction time (i.e. time of button press from coherence onset)
                 else
-                    responsetfigure;plot(trig);hold on;plot(trial_type_onset,trig(trial_type_onset),'-o')(ions) = 0;%#ok
+                    responset(ions) = 0;%#ok
                     tmp_RT(ions)      = 0;%#ok
                 end
-                figure;plot(trig);hold on;plot(trial_type_onset,trig(trial_type_onset),'-o')
             end
         otherwise
             for ions = 1:numel(trial_type_onset)
