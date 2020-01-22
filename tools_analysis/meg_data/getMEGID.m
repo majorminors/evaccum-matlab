@@ -52,7 +52,7 @@ switch subject
         ID.bad_meg = [];
         ID.date_meg= '191202';
         ID.runblks = '6';
-        ID.note    = 'run 3 all except last 2 blocks of 8, run 4 includes the last 8 of 3, run 5 is a single block';
+        ID.note    = 'run 3 all except last 21 trials, run 4 includes the last 8 of 3, run 5 is a single block';
         ID.usable = 1;
         
         ID.subj  = 'DM_evaccumpilot_03';

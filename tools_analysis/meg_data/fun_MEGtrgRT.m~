@@ -27,15 +27,14 @@ switch subjectswitcher
         % runid = [[];1:2;3:6];
         runid = NaN(3,4); runid(2,1:2) = 1:2; runid(3,:) = 3:6;
     case 'S03'
-        % S03 - 5 runs, 6 blocks per run ex last run is 1 block, and first
-        % 8 trials of run 4 belong to the end of the last block in run 3 (we miss 13 trials = 21 - the 8 in run 4
-        % runid = [1:6;7:12;13:18;19:24;25]; % so block 19 has 8 trials from end of block 18, and block 18 is missing 21 trials (8 of which are in the next block)
+        % S03 - 5 runs, 6 blocks per run ex last run is 1 block, and first 16 trials of run 4 belong to the end of the last block in run 3
+        % runid = [1:6;7:12;13:18;19:24;25]; % so block 19 has 16 trials from end of block 18
         runid = [1:6;7:12;13:18;19:24;25,NaN,NaN,NaN,NaN,NaN];
 end
 
 conditions = {'LcLr', 'LcHr','HcLr','HcHr'}; % 2x2 coherence and rule
 
-for runi = 3%1:numel(filenames)
+for runi = 1:numel(filenames)
     %%
     clear trl conditionlabels
     D = spm_eeg_load(filenames{runi});
@@ -68,18 +67,19 @@ for runi = 3%1:numel(filenames)
     
     if strcmp(subjectswitcher,'S03')
         if runi == 3
-            % need to remove the last 21 trials and save 8 for the next run
-            S03savetheseblocks = block(end-7:end,:);
-            block(end-20:end,:) = [];
+            % need to remove the last 16 trials
+            S03missingblocks = block(end-16:end,:);
+            block(end-16:end,:) = [];
         elseif runi == 4
             % need to get the last 16 trials of run 3 at the beginning
-            block = [S03savetheseblocks;block];
+            block = [S03missingblocks;block];
         end
     end
     
+    
     switch subjectswitcher
         case 'S01'
-            % Dfor S01, who has no distinct coh v trial onset triggers
+            % for S01, who has no distinct coh v trial onset triggers
             triggers = d.stim_mat_all(:,9)'; % trial type triggers
             keys     = [4096 8192 16384 -32768]; % index medium ring little - on right button box
             trigger_onset  = (find(round(diff(trig)) == 1)+1)'; % onset of all triggers
@@ -123,8 +123,8 @@ for runi = 3%1:numel(filenames)
                      
     end
     
-    figure;plot(trig);hold on;plot(trial_type_onset,trig(trial_type_onset),'-o');
-    
+    tmp_fig = figure;plot(trig);hold on;plot(trial_type_onset,trig(trial_type_onset),'-o');
+    savefig()
     %check
     if numel(trigger_onset) ~= size(block,1)
         error('Inconsistent number of onset triggers vs trials')
@@ -142,22 +142,22 @@ for runi = 3%1:numel(filenames)
             % for S01
             for ions = 1:numel(trigger_onset)
                 
-                if ions < numel(trigger_onset)figure;plot(trig);hold on;figure;plot(trig);hold on;plot(trial_type_onset,trig(trial_type_onset),'-o')plot(trial_type_onset,trig(trial_type_onset),'-o')
+                if ions < numel(trigger_onset)
                     tmp    =trig(trigger_onset(ions):(trigger_onset(ions+1)-1));
                 else
-                    tmp    =trig(trigger_onset(ions):end);figure;plot(trig);hold on;plot(trial_type_onset,trig(trial_type_onset),'-o')
+                    tmp    =trig(trigger_onset(ions):end);
                 end
                 
-                tmpres = (find(ismember(diff(tmp),keys)figure;plot(trig);hold on;plot(trial_type_onset,trig(trial_type_onset),'-o'),1,'first')+1)';%first to avoid multiple button presses % time of button press within trial period (iti to iti)
+                tmpres = (find(ismember(diff(tmp),keys),1,'first')+1)';%first to avoid multiple button presses % time of button press within trial period (iti to iti)
                 
                 if ~isempty(tmpres)
-                    responset(ions)  = trifigure;plot(trig);hold on;plot(trial_type_onset,trig(trial_type_onset),'-o')gger_onset(ions)+tmpres-1;%#ok % time of button press within block
+                    responset(ions)  = trigger_onset(ions)+tmpres-1;%#ok % time of button press within block
                     tmp_RT(ions)       = ttime(responset(ions))-(ttime(trigger_onset(ions))+.034);%#ok 34ms projector's delay % this is reaction time (i.e. time of button press from coherence onset)
                 else
-                    responsetfigure;plot(trig);hold on;plot(trial_type_onset,trig(trial_type_onset),'-o')(ions) = 0;%#ok
+                    responset(ions) = 0;%#ok
                     tmp_RT(ions)      = 0;%#ok
                 end
-                figure;plot(trig);hold on;plot(trial_type_onset,trig(trial_type_onset),'-o')
+                
             end
         otherwise
             for ions = 1:numel(trial_type_onset)
@@ -233,6 +233,7 @@ for runi = 3%1:numel(filenames)
     %  9)  rts from MEG
     
     %trial definition for epoching
+    if sum(block(:,1) ~= cohtrigsID);error('discrepancy between MEGRT and MEGbehav condition labels!');end
     
     % set the trial window, including buffer for edge effects during filtering
     % - in the textbook - lowest frequency will determine

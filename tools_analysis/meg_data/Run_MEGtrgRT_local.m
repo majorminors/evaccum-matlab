@@ -10,7 +10,7 @@ droot   = '/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/megdata/'
 infld   = fullfile(droot, '%s/MEEG/Preprocess/');
 behav   = '/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/behavioural/%s/%s_EvAccum.mat';
 trfile  = fullfile(infld, 'run%s_%s_trl.mat'); % going to have difficulty with subject naming conventions (Sxx vs subjx)
-megrt   = '/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/Behav/%s_MEGtrg_RT.mat'; % what is this - if it's the matlab recorded rts then it comes from d.rts in the behavioural file
+megrt   = '/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/behavioural/%s/%s_MEGRTs.mat';
 datafld = fullfile(droot, '%s/MEEG/MaxfilterOutput/');
 tarfld  = infld;
 
@@ -20,8 +20,8 @@ outfirst    = 'Run%d_%s_trans.mat';
 addpath(droot);
 
 
-[dname,IDnum] = getnames(droot,7); % what is this function doing?
-bname         = getnames('/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/Behav/MEGBehav/',10);
+[dname,IDnum] = getnames(droot,7);
+bname         = getnames('/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/behavioural/',10);
 bname = unique({bname{:}});
 
 clc
@@ -30,14 +30,14 @@ settings.overwrite = 0;
 
 
 
-for subi = 1:length(dname)
+for subi = 3 %:length(dname)
     
        ID = getMEGID(sprintf('DM_evaccumpilot_%s',IDnum{subi}));
        
        settings.bEEG  = ID.bad_eeg;
        settings.bMEG  = ID.bad_meg;
-       settings.behav = sprintf(behav,bname{subi});
-       settings.svbeh = sprintf(megrt,dname{subi}); 
+       settings.behav = sprintf(behav,bname{subi},bname{subi});
+       settings.svbeh = sprintf(megrt,bname{subi},dname{subi}); 
   
        filenames = {};trfiles = {};
 

@@ -577,7 +577,7 @@ try
                     WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to reach value
                     MEG.SendTrigger(0); % reset triggers
                     WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to return to zero
-                elseif p.MEG_enabledtrigsID  = [0; round(diff(trig)')]; trigsID = trigsID(cohonset); == 0
+                elseif p.MEG_enabled == 0
                     WaitSecs(p.iti_time);
                 end
                 % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
