@@ -35,7 +35,7 @@ end
 
 conditions = {'LcLr', 'LcHr','HcLr','HcHr'}; % 2x2 coherence and rule
 
-for runi = 3%1:numel(filenames)
+for runi = 1%1:numel(filenames)
     %%
     clear trl conditionlabels
     D = spm_eeg_load(filenames{runi});
@@ -72,7 +72,7 @@ for runi = 3%1:numel(filenames)
             S03savetheseblocks = block(end-7:end,:);
             block(end-20:end,:) = [];
         elseif runi == 4
-            % need to get the last 16 trials of run 3 at the beginning
+            % need to get the last 8 trials of run 3 at the beginning
             block = [S03savetheseblocks;block];
         end
     end
@@ -120,7 +120,7 @@ for runi = 3%1:numel(filenames)
                 trialIDtrg  =  tmp_trialID';
                 
             end
-                     
+            
     end
     
     figure;plot(trig);hold on;plot(trial_type_onset,trig(trial_type_onset),'-o');
@@ -129,9 +129,17 @@ for runi = 3%1:numel(filenames)
     if numel(trigger_onset) ~= size(block,1)
         error('Inconsistent number of onset triggers vs trials')
     end
-    % if sum(trialID ~= block(:,9)) % for S01
-    if sum(trialIDtrg ~= block(:,10)) % compare with the d.stim_mat_all column with trigger amplitudes
-        error('Discrepancy between triggers coded conditions and trials')
+    switch subjectswitcher
+        case 'S01'
+            if sum(trialID ~= block(:,9)) % for S01
+                error('Discrepancy between triggers coded conditions and trials')
+            end
+        otherwise
+            if numel(trialID) ~= numel(block(:,10)) || sum(trialID ~= block(:,10))
+                if sum(trialIDtrg ~= block(:,10)) % compare with the d.stim_mat_all column with trigger amplitudes
+                    error('Discrepancy between triggers coded conditions and trials')
+                end
+            end
     end
     
     % find responses and empty trials
@@ -182,10 +190,29 @@ for runi = 3%1:numel(filenames)
     
     %check
     % rts = block(:,13); % will need to get rts from d.rts (this is a column in this script)
+    
     rts = d.rt(vecrunid,:)';rts = rts(:); % transpose relevant rows of d.rt and then place each block under one another in the same row
+    
+    if strcmp(subjectswitcher,'S03')
+        if runi == 3
+            % need to remove the last 21 trials and save 8 for the next run
+            S03savetheserts = rts(end-7:end,:);
+            rts(end-20:end,:) = [];
+        elseif runi == 4
+            % need to get the last 8 trials of run 3 at the beginning
+            rts = [S03savetheserts;rts];
+        end
+    end
     
     idx = rts~=0 & rts>0; % where there is a rt
     
+    if strcmp(subjectswitcher,'S03')
+        if runi == 3
+            tmp_RT(end) = rts(end);
+        end
+    end
+          
+
     tmp = [rts(idx) transpose(tmp_RT(idx))]; % this compares rts here with rts there
     tmp = corr(tmp);
     
@@ -193,6 +220,7 @@ for runi = 3%1:numel(filenames)
         error('large discrepancy between stim RT and MEG RT!')
     end
     
+  
     
     % re-compose matrix of behavioural data
     % so block looks like:
@@ -218,6 +246,17 @@ for runi = 3%1:numel(filenames)
         end
     end
     accuracyrow = d.correct(vecrunid,:)'; accuracyrow = accuracyrow(:); % may as well put this in the new matrix - so transpose relevant rows and then place them one after another in a column
+    if strcmp(subjectswitcher,'S03')
+        if runi == 3
+            % need to remove the last 21 trials and save 8 for the next run
+            S03savetheseaccs = accuracyrow(end-7:end,:);
+            accuracyrow(end-20:end,:) = [];
+        elseif runi == 4
+            % need to get the last 8 trials of run 3 at the beginning
+            accuracyrow = [S03savetheseaccs;accuracyrow];
+        end
+    end
+    
     %MEG_RT = cat(1,MEG_RT,[block(:,[1:4 12 14 15 ]), tmp_RT']);% 1block# 2coh 3act 4cond 5trigger 6resKey 7acc 8rt % compiles matlab trial information with the new MEG generated rts
     MEG_RT = cat(1,MEG_RT,[block(:,[1 3 5 8 10]), conditionlabels, accuracyrow, rts, tmp_RT']);
     % re-composed matrix looks like:

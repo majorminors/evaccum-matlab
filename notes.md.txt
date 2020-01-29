@@ -1,0 +1,9 @@
+
+Pilot data
+==========
+S03
+---
+- in run 4 MEG triggers seem to default to 255. might be able to recover from button press to start sub-block of 8 (since we should be able to time the coherence onset from the button press trigger)
+
+- in run 3, the last rt is cut off, so will add in script to make the MEG rt the computer measured rt
+	- wonder if I can automate this
