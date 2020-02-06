@@ -1,10 +1,36 @@
-% Demo for fitting LBA to one subject
+%% Demo for fitting LBA to one subject
 % Adapted from Alessandro>Holly's 4-choice task
-% DM Feb 2020
+% DM Last Edit: Feb 2020
+
+
+%% set up
+
+close all;
+clearvars;
+clc;
+
+fprintf('setting up %s\n', mfilename);
+t = struct(); % for temp vars
+
+% set up variables
+rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum';%'C:\Users\doria\Google Drive\04 Research\05 Evidence Accumulation\01 EvAccum Code';%'\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum'; % root directory - used to inform directory mappings
+datadir = fullfile(rootdir,'data\behav_pilot_2');
+t.subject = 1;
+
+% directory mappings
+addpath(genpath(fullfile(rootdir, 'tools_analysis'))); % add tools folder to path (includes LBA scripts)
+lbadatadir = fullfile(datadir,'lba_fit'); % find directory with prepped data
+t.fileinfo = dir(fullfile(lbadatadir,'prepped_data.mat'));
+t.datapath = fullfile(lbadatadir,t.fileinfo.name);
+
+% get the data
+t.alldata = load(t.datapath);
+t.data = t.alldata.d.subject(t.subject).data;
 
 %% testing dataset, remove later
 %% --------------------
-[foo1,foo2,dataRaw]=xlsread('FT_4choices/data/1001.xls');%at edited path
+% [foo1,foo2,dataRaw]=xlsread('FT_4choices/data/1001.xls');%at edited path
+dataRaw = t.data; % provide data in the format required here
 %% -----------------
 data2fit={};
 % get quantiles from RT data
