@@ -35,7 +35,7 @@ end
 
 conditions = {'LcLr', 'LcHr','HcLr','HcHr'}; % 2x2 coherence and rule
 
-for runi = 1%1:numel(filenames)
+for runi = 1:numel(filenames)
     %%
     clear trl conditionlabels
     D = spm_eeg_load(filenames{runi});
@@ -79,17 +79,83 @@ for runi = 1%1:numel(filenames)
     
     switch subjectswitcher
         case 'S01'
-            % Dfor S01, who has no distinct coh v trial onset triggers
+            % for S01, who has no distinct coh v trial onset triggers
             triggers = d.stim_mat_all(:,9)'; % trial type triggers
             keys     = [4096 8192 16384 -32768]; % index medium ring little - on right button box
-            trigger_onset  = (find(round(diff(trig)) == 1)+1)'; % onset of all triggers
+            resp_onset = (find(ismember(round(diff(trig)),keys))+1)';
+            trigger_onset  = (find(ismember(round(diff(trig)),triggers))+1)'; % onset of all triggers
             trialID  = [0; round(diff(trig)')]; trialID = trialID(trigger_onset); % for S01 - replaces other two
+            
+            if numel(trialID) ~= numel(block(:,9)) || sum(trialID ~= block(:,9))
+                    tmp_tronset = [];
+                    tmp_trialID =[];
+                    iresp = 0;
+                    twindow = 2000;
+%                     nilresp = 0;
+                    for itr = 1:numel(block(:,9))
+                        iresp = iresp+1; % counter for button presses
+                        
+%                         if nilresp
+%                             
+%                             searchtwin=[0 round(diff(trig(resp_onset(iresp)-1700:resp_onset(iresp))))]; % cut out the time window in the trial interval preceding the button press
+%                             ttrigger = find(searchtwin>0 & searchtwin <= 128); % find any triggers in there - might be able to make this smaller? This is in case is codes two 64 triggers as one, but I don't think that can happen
+%                             ttrigger = ttrigger(end); % save only the most recent trigger (in case we took any from a previous trial)
+%                             
+%                         else
+                            
+                            searchtwin=[0 round(diff(trig(resp_onset(iresp)-twindow:resp_onset(iresp))))]; % cut out the time window in the trial interval preceding the button press
+                            ttrigger = find(searchtwin>0 & searchtwin <= 128); % find any triggers in there - might be able to make this smaller? This is in case is codes two 64 triggers as one, but I don't think that can happen
+                            % is this an appropriate button press response?
+                            if isempty(ttrigger) % this is a cue accept response, not a trial response
+                                iresp = iresp+1;% go to the next button press
+                                if runi == 3 && iresp == 2 && itr == 1; iresp = iresp+1;end % resp 1 accepts end of training for keyswap on this run, resp 2 is the accept cue resp, resp 3 is the start of the trials
+                                if runi == 5 && iresp == 2 && itr == 1; iresp = iresp+1;end % not sure why there are two responses here, but there are
+                                if runi == 6 && iresp == 2 && itr == 1; iresp = iresp+1;end % same - unsure - wondering if it's something in the script, but it didn't happen on run 4...
+                                % do this again
+                                searchtwin=[0 round(diff(trig(resp_onset(iresp)-twindow:resp_onset(iresp))))]; % cut out the time window in the trial interval preceding the button press
+                                ttrigger = find(searchtwin>0 & searchtwin <= 128); % find any triggers in there - might be able to make this smaller? This is in case is codes two 64 triggers as one, but I don't think that can happen
+                            end
+                            ttrigger = ttrigger(end); % save only the most recent trigger (in case we took any from a previous trial)
+                            
+%                         end
+
+                        % check that there is a response between upcoming triggers
+                        % however, currently the code only goes one trigger
+                        % ahead, which will find the response you just used
+                        % to code ttrigger - need to go two ahead, but then
+                        % if you have two fake triggers (due to the slow
+                        % analogue trigger system) it won't work. needs
+                        % thought.
+%                         searchtwin = [0 round(diff(trig(ttrigger+100:ttrigger+1700)))]; % search from 100ms to 1800ms (i.e. 100ms plus trial of 1700ms) - must be less than 2.7s
+%                         trigs_exist = find(searchtwin>0 & searchtwin <= 128);
+%                         if trigs_exist
+%                             searchtwin = [0 round(diff(trig(ttrigger:trigs_exist)))];
+%                             resp_exists = find(searchtwin>2000);
+%                             if ~resp_exists
+%                                 nilresp = 1;
+%                             end
+%                         end
+
+                        
+                        tmp_trialID(itr) = block(itr,9);
+                        
+                        tmp_tronset(itr) = resp_onset(iresp)-twindow + ttrigger-1;
+                    end                            % alternatively, can code by responses, idx for
+                            % trial, then a counter as an idx for responses
+                            % - where no tri
+                    trigger_onset   = tmp_tronset';
+                    trialIDtrg  =  tmp_trialID';
+                end                            % alternatively, can code by responses, idx for
+                            % trial, then a counter as an idx for responses
+                            % - where no tri
+        
         otherwise
             % find onset trials, coherence, trial type, and rt
             triggers = d.stim_mat_all(:,10,1)'; % trial type triggers
             coh_trigger = 1; % value of coherence onset trigger
             keys     = [4096 8192 16384 -32768]; % index medium ring little - on right button box
             trigger_onset  = (find(round(diff(trig)) == 1)+1)'; % onset of all triggers - SUPERFLOUS
+            resp_onset_neg = (find(ismember(round(diff(trig)),-keys))+1)';
             coh_onset = (find(ismember(round(diff(trig)),coh_trigger))+1)'; % coherence trigger onset
             trial_type_onset = (find(ismember(round(diff(trig)),triggers))+1)'; % trial type trigger onset
             trial_type_onset_neg = (find(ismember(round(diff(trig)),-triggers))+1)'; % trial type trigger onset
@@ -114,25 +180,81 @@ for runi = 1%1:numel(filenames)
                         tmp_tronset(ic) = coh_onset(ic)-400 + ttrigger-1;
                         
                     end
-                    
+                    trial_type_onset   = tmp_tronset';
+                    trialIDtrg  =  tmp_trialID';
+                else
+                    if strcmp(subjectswitcher,'S03')
+                        if runi == 4 || runi == 5
+                            iresp = 0;
+                            for itr = 1:numel(block(:,10))
+                                iresp = iresp+1; % counter for button presses
+                                if iresp == 1
+                                    ttrigger = resp_onset_neg(itr)+300;
+                                elseif iresp == 9
+                                    iresp = 0;
+                                    ttrigger = ttrigger+1800;
+                                else
+                                    ttrigger = ttrigger+1800;
+                                end
+                                tmp_tronset(itr) = ttrigger;
+                                
+                                tmp_trialID(itr) = block(itr,10);
+
+                            end                            % alternatively, can code by responses, idx for
+                            % trial, then a counter as an idx for responses
+                            % - where no tri
+                            trigger_onset   = tmp_tronset';
+                            trialIDtrg  =  tmp_trialID';
+                            
+                            if runi == 4
+                                trial_type_onset = [trial_type_onset;trigger_onset(length(trial_type_onset)+1:end)];
+                            elseif runi == 5
+                                trial_type_onset = trigger+onset;
+                            end
+                            
+                            %157797 is cue acceptor trigger end
+                            
+                            %bad_trigger = 255;
+                            %bad_triggers = (find(trig == bad_trigger)+1)';% (find(ismember(round(diff(trig)),bad_trigger))+1)';
+                            %first_bad_trigger = bad_triggers(1);
+                            
+                            % so now from here, we can go back to the big
+                            % difference between the last response of the
+                            % last subblock of 8, and the accept cue response
+                            % of the subblock of 8 that's broken - then go 8
+                            % by 8 thereafter (1.8s between onsets commencing after response trigger off).
+                            
+                            %searchtwin=[0 round(diff(trig(first_bad_trigger-14400:first_bad_trigger)))];
+                            %ttrigger = find(abs(searchtwin>500)-1800);
+                            
+                            
+                        end
+                    end
                 end
-                trial_type_onset   = tmp_tronset;
-                trialIDtrg  =  tmp_trialID';
+                
+                
                 
             end
             
     end
     
-    figure;plot(trig);hold on;plot(trial_type_onset,trig(trial_type_onset),'-o');
-    
+    switch subjectswitcher
+        case 'S01'
+            figure;plot(trig);hold on;plot(trigger_onset,trig(trigger_onset),'-o');
+        otherwise
+            figure;plot(trig);hold on;plot(trial_type_onset,trig(trial_type_onset),'-o');
+    end
+
     %check
     if numel(trigger_onset) ~= size(block,1)
         error('Inconsistent number of onset triggers vs trials')
     end
     switch subjectswitcher
         case 'S01'
-            if sum(trialID ~= block(:,9)) % for S01
-                error('Discrepancy between triggers coded conditions and trials')
+            if numel(trialID) ~= numel(block(:,9)) || sum(trialID ~= block(:,9)) % for S01
+                if sum(trialIDtrg ~= block(:,9))
+                    error('Discrepancy between triggers coded conditions and trials')
+                end
             end
         otherwise
             if numel(trialID) ~= numel(block(:,10)) || sum(trialID ~= block(:,10))
@@ -216,6 +338,7 @@ for runi = 1%1:numel(filenames)
     tmp = [rts(idx) transpose(tmp_RT(idx))]; % this compares rts here with rts there
     tmp = corr(tmp);
     
+    
     if tmp(2,1) <0.99 || isnan(tmp(2,1))   % takes the correlation from the output of corr
         error('large discrepancy between stim RT and MEG RT!')
     end
@@ -274,9 +397,16 @@ for runi = 1%1:numel(filenames)
     
     % set the trial window, including buffer for edge effects during filtering
     % - in the textbook - lowest frequency will determine
-    twind = [-1500 2500];%in samples at 1000Hz sampling % what time window 1500 = 1.5s around the coherence onset
-    trl      = (coh_onset+34)+twind;%[trial-beginning trial-end] accounts for 34ms projector's delay.
-    trl(:,3) = -1500;% epoched trials begin 1500ms before coherence onset
+    switch subjectswitcher
+        case 'S01'
+            twind = [-1500 2500];%in samples at 1000Hz sampling % what time window 1500 = 1.5s around the coherence onset
+            trl      = (trigger_onset+34)+twind;%[trial-beginning trial-end] accounts for 34ms projector's delay.
+            trl(:,3) = -1500;% epoched trials begin 1500ms before coherence onset
+        otherwise
+            twind = [-1500 2500];%in samples at 1000Hz sampling % what time window 1500 = 1.5s around the coherence onset
+            trl      = (coh_onset+34)+twind;%[trial-beginning trial-end] accounts for 34ms projector's delay.
+            trl(:,3) = -1500;% epoched trials begin 1500ms before coherence onset
+    end
     
     %add to session trial def
     alltrl = cat(1,alltrl,trl);
@@ -294,6 +424,7 @@ end
 %%
 
 %allconditionlabels = {conditions{MEG_RT(:,8)}}';%#ok
+allconditionlabels = MEG_RT(:,6);
 
 %check for consistency
 if sum(strcmp(allconditionlabels,tmplabs)) ~= numel(tmplabs); error(['incongruent condition labels:' filenames{runi}]);end
