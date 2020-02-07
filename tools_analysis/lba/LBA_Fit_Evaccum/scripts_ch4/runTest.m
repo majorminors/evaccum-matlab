@@ -13,7 +13,7 @@ fprintf('setting up %s\n', mfilename);
 t = struct(); % for temp vars
 
 % set up variables
-rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum';%'C:\Users\doria\Google Drive\04 Research\05 Evidence Accumulation\01 EvAccum Code';%'\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum'; % root directory - used to inform directory mappings
+rootdir = 'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code';%'\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % root directory - used to inform directory mappings
 datadir = fullfile(rootdir,'data\behav_pilot_2');
 t.subject = 1;
 
@@ -29,8 +29,8 @@ t.data = t.alldata.d.subject(t.subject).data;
 
 %% testing dataset, remove later
 %% --------------------
-[foo1,foo2,dataRaw]=xlsread('FT_4choices/data/1001.xls');%at edited path
-% dataRaw = t.data; % provide data in the format required here
+% [foo1,foo2,dataRaw]=xlsread('FT_4choices/data/1001.xls');%at edited path
+dataRaw = t.data; % provide data in the format required here
 %% -----------------
 data2fit={};
 % get quantiles from RT data
