@@ -18,7 +18,7 @@ function [num_param,param_Fnrep,param_Snrep]=getModelParam_fixC0_old(mod_feature
 % not used
 % finger [0 0]
 
-N=4;
+N=4; % accumulators
 basic_param=6;  %[B \mu_1 : \mu_4, t0]
 feature_space=[4 0 1 1 1 0 0; 1 0 0 0 0 0 0]; % [feature ticked; feature unticked]
 defaultC0 = 0.5; % upper mean starting point fixed at 0.5

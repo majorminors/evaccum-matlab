@@ -9,7 +9,7 @@
 % d.fileinfo = information about matlab files read in
 % d.subject = rowwise subject data, with subject id in first column and
 %             lba-relevent data organised thus:
-%             button press | accuracy | reaction time | trial type | condition
+%             condition | button press | reaction time (in ms) | accuracy | trial type | 
 %
 %             trial type (1-64) is each unique trial condition - 2
 %               coherence levels x 2 matching difficulties x 8 coherence
@@ -37,7 +37,7 @@ datadir = fullfile(rootdir,'data\behav_pilot_2');
 p.datafilepattern = '*_EvAccum.mat';
 p.savefilename = 'prepped_data';
 p.notesfilename = [p.savefilename,'_notes.txt'];
-p.notes = 'd.fileinfo = information about matlab files read in \r\nd.subject = rowwise subject data, with subject id in first column and lba-relevent data organised thus: \r\nbutton press | accuracy | reaction time | trial type (1-64) | condition (1=LcLr,2=LcHr,3=HcLr,4=HcHr)';
+p.notes = 'd.fileinfo = information about matlab files read in \r\nd.subject = rowwise subject data, with subject id in first column and lba-relevent data organised thus: \r\ncondition | button press | reaction time (ms) | accuracy | trial type (1-64) | condition (LcLr,LcHr,HcLr,HcHr)';
 t.conditions = {'LcLr', 'LcHr','HcLr','HcHr'}; % 2x2 coherence and rule
 
 % directory mapping
@@ -62,33 +62,44 @@ for i = 1:length(d.fileinfo) % loop through each
   t.blocks = t.alldata.block; % how many blocks?
   
   t.data = {}; % create this so we can work with it
-  for block = 1:t.blocks
+  for block = 1:t.blocks % go through each block of data
       t.rts = t.alldata.d.rt(block,:)';
+      t.rts = t.rts.*1000; % convert from s to ms
       t.accuracy = t.alldata.d.correct(block,:)';
-      t.button = t.alldata.d.stim_mat_all(:,7,block);
+      % this is the wrong button - correct button t.button = t.alldata.d.stim_mat_all(:,7,block); % pull the correct button
       t.trialtype = t.alldata.d.stim_mat_all(:,9,block);
       
-      % create a row that gives you a number for each condition in your 2x2
       for icond = 1:length(t.alldata.d.stim_mat_all(:,5,block))
-        if t.alldata.d.stim_mat_all(icond,5)==1 && t.alldata.d.stim_mat_all(icond,8)==1
-            t.condition(icond,1) = string(t.conditions{1});
-        elseif t.alldata.d.stim_mat_all(icond,5)==1 && t.alldata.d.stim_mat_all(icond,8)==2
-            t.condition(icond,1) = string(t.conditions{2});
-        elseif t.alldata.d.stim_mat_all(icond,5)==2 && t.alldata.d.stim_mat_all(icond,8)==1
-            t.condition(icond,1) = string(t.conditions{3});
-        elseif t.alldata.d.stim_mat_all(icond,5)==2 && t.alldata.d.stim_mat_all(icond,8)==2
-            t.condition(icond,1) = string(t.conditions{4});
-        end
+          % get the button pressed
+          if strcmp(t.alldata.p.resp_keys{1},t.alldata.d.resp_key_name{block,icond})
+              t.button(icond,1) = 1;
+          elseif strcmp(t.alldata.p.resp_keys{2},t.alldata.d.resp_key_name{block,icond})
+              t.button(icond,1) = 2;
+          else
+              t.button(icond,1) = 0;
+          end
+          
+          % create a row that gives you a number for each condition in your 2x2
+          if t.alldata.d.stim_mat_all(icond,5)==1 && t.alldata.d.stim_mat_all(icond,8)==1
+              t.condition(icond,1) = string(t.conditions{1});
+          elseif t.alldata.d.stim_mat_all(icond,5)==1 && t.alldata.d.stim_mat_all(icond,8)==2
+              t.condition(icond,1) = string(t.conditions{2});
+          elseif t.alldata.d.stim_mat_all(icond,5)==2 && t.alldata.d.stim_mat_all(icond,8)==1
+              t.condition(icond,1) = string(t.conditions{3});
+          elseif t.alldata.d.stim_mat_all(icond,5)==2 && t.alldata.d.stim_mat_all(icond,8)==2
+              t.condition(icond,1) = string(t.conditions{4});
+          end
       end
       clear icond
 
-      
-      t.consolidata(:,1) = num2cell(t.button);
-      t.consolidata(:,2) = num2cell(t.accuracy);
+      % consolidate all that data
+      t.consolidata(:,1) = num2cell(t.condition);
+      t.consolidata(:,2) = num2cell(t.button);
       t.consolidata(:,3) = num2cell(t.rts);
-      t.consolidata(:,4) = num2cell(t.trialtype);
-      t.consolidata(:,5) = num2cell(t.condition);
+      t.consolidata(:,4) = num2cell(t.accuracy);
+      t.consolidata(:,5) = num2cell(t.trialtype);
       
+      % stack it up
       t.data = [t.data;t.consolidata];  
   end
   clear block

@@ -29,8 +29,8 @@ t.data = t.alldata.d.subject(t.subject).data;
 
 %% testing dataset, remove later
 %% --------------------
-% [foo1,foo2,dataRaw]=xlsread('FT_4choices/data/1001.xls');%at edited path
-dataRaw = t.data; % provide data in the format required here
+[foo1,foo2,dataRaw]=xlsread('FT_4choices/data/1001.xls');%at edited path
+% dataRaw = t.data; % provide data in the format required here
 %% -----------------
 data2fit={};
 % get quantiles from RT data

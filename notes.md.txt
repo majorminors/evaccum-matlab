@@ -2,6 +2,7 @@ General Improvements
 ====================
 - change triggers - just 1 for coherence onset, then code from that. Possibly have 1 for trial onset, and another 1 for coherence onset.
 - add something to the script to tell the data output file how many blocks we actually completed (rather than p.num_blocks being how many blocks we planned to do)
+- have an output for the button press - response 1 or response 2 (which will depend on how you've coded the buttons)
 
 Pilot data
 ==========
