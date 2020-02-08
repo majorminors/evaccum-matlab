@@ -1,4 +1,4 @@
-function obs_stats=data_stats_FT4(inpData)
+function obs_stats=data_stats_cond(inpData)
 %   Input:
 %       inpData: column 1 -response
 %       inpData: column 2 -response time

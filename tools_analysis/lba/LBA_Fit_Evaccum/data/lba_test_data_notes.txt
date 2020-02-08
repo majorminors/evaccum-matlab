@@ -1,0 +1,5 @@
+this is data from a behavioural pilot
+
+d.fileinfo = information about matlab files read in 
+d.subject = rowwise subject data, with subject id in first column and lba-relevent data organised thus: 
+condition | condition number | button pressed | reaction time (ms) | accuracy | trial type (1-64) | condition (LcLr,LcHr,HcLr,HcHr)

@@ -9,16 +9,16 @@
 % d.fileinfo = information about matlab files read in
 % d.subject = rowwise subject data, with subject id in first column and
 %             lba-relevent data organised thus:
-%             condition | button press | reaction time (in ms) | accuracy | trial type | 
+%             condition | condition number | button press | reaction time (in ms) | accuracy | trial type | 
 %
 %             trial type (1-64) is each unique trial condition - 2
 %               coherence levels x 2 matching difficulties x 8 coherence
 %               directions x 2 button presses
 %             conditions are:
-%               LcLr = low coherence, easy matching (low rule)
-%               LcHr = low coherence, hard matching (hard rule)
-%               HcLr = high coherence, easy matching (low rule)
-%               HcHr = high coherence, hard matching (hard rule)
+%               LcLr = 1 = low coherence, easy matching (low rule)
+%               LcHr = 2 = low coherence, hard matching (hard rule)
+%               HcLr = 3 = high coherence, easy matching (low rule)
+%               HcHr = 4 = high coherence, hard matching (hard rule)
 
 %% set up
 
@@ -37,8 +37,9 @@ datadir = fullfile(rootdir,'data\behav_pilot_2');
 p.datafilepattern = '*_EvAccum.mat';
 p.savefilename = 'prepped_data';
 p.notesfilename = [p.savefilename,'_notes.txt'];
-p.notes = 'd.fileinfo = information about matlab files read in \r\nd.subject = rowwise subject data, with subject id in first column and lba-relevent data organised thus: \r\ncondition | button press | reaction time (ms) | accuracy | trial type (1-64) | condition (LcLr,LcHr,HcLr,HcHr)';
-t.conditions = {'LcLr', 'LcHr','HcLr','HcHr'}; % 2x2 coherence and rule
+p.notes = 'd.fileinfo = information about matlab files read in \r\nd.subject = rowwise subject data, with subject id in first column and lba-relevent data organised thus: \r\ncondition | condition number | button pressed | reaction time (ms) | accuracy | trial type (1-64) | condition (LcLr,LcHr,HcLr,HcHr)';
+t.conditions = {'LcLr','LcHr','HcLr','HcHr'}; % 2x2 coherence and rule
+t.conditioncodes = {1,2,3,4};
 
 % directory mapping
 addpath(genpath(fullfile(rootdir, 'tools_analysis'))); % add tools folder to path (don't think we need this, but in case)
@@ -64,7 +65,7 @@ for i = 1:length(d.fileinfo) % loop through each
   t.data = {}; % create this so we can work with it
   for block = 1:t.blocks % go through each block of data
       t.rts = t.alldata.d.rt(block,:)';
-      t.rts = t.rts.*1000; % convert from s to ms
+      %t.rts = t.rts.*1000; % convert from s to ms, although I'm going to comment this out for now, because it looks like we convert it straight back soon after
       t.accuracy = t.alldata.d.correct(block,:)';
       % this is the wrong button - correct button t.button = t.alldata.d.stim_mat_all(:,7,block); % pull the correct button
       t.trialtype = t.alldata.d.stim_mat_all(:,9,block);
@@ -82,22 +83,27 @@ for i = 1:length(d.fileinfo) % loop through each
           % create a row that gives you a number for each condition in your 2x2
           if t.alldata.d.stim_mat_all(icond,5)==1 && t.alldata.d.stim_mat_all(icond,8)==1
               t.condition(icond,1) = string(t.conditions{1});
+              t.conditioncode(icond,1) = t.conditioncodes{1};
           elseif t.alldata.d.stim_mat_all(icond,5)==1 && t.alldata.d.stim_mat_all(icond,8)==2
               t.condition(icond,1) = string(t.conditions{2});
+              t.conditioncode(icond,1) = t.conditioncodes{2};
           elseif t.alldata.d.stim_mat_all(icond,5)==2 && t.alldata.d.stim_mat_all(icond,8)==1
               t.condition(icond,1) = string(t.conditions{3});
+              t.conditioncode(icond,1) = t.conditioncodes{3};
           elseif t.alldata.d.stim_mat_all(icond,5)==2 && t.alldata.d.stim_mat_all(icond,8)==2
               t.condition(icond,1) = string(t.conditions{4});
+              t.conditioncode(icond,1) = t.conditioncodes{4};
           end
       end
       clear icond
 
       % consolidate all that data
       t.consolidata(:,1) = num2cell(t.condition);
-      t.consolidata(:,2) = num2cell(t.button);
-      t.consolidata(:,3) = num2cell(t.rts);
-      t.consolidata(:,4) = num2cell(t.accuracy);
-      t.consolidata(:,5) = num2cell(t.trialtype);
+      t.consolidata(:,2) = num2cell(t.conditioncode);
+      t.consolidata(:,3) = num2cell(t.button);
+      t.consolidata(:,4) = num2cell(t.rts);
+      t.consolidata(:,5) = num2cell(t.accuracy);
+      t.consolidata(:,6) = num2cell(t.trialtype);
       
       % stack it up
       t.data = [t.data;t.consolidata];  

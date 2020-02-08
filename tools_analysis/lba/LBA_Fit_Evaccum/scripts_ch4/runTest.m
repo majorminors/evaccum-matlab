@@ -15,26 +15,39 @@ t = struct(); % for temp vars
 % set up variables
 rootdir = 'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code';%'\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % root directory - used to inform directory mappings
 datadir = fullfile(rootdir,'data\behav_pilot_2');
+t.testing = 1; % if you want to use the testing data, then switch to 1 and add the data folder to the path, else to 0
 t.subject = 1;
 
-% directory mappings
-addpath(genpath(fullfile(rootdir, 'tools_analysis'))); % add tools folder to path (includes LBA scripts)
-lbadatadir = fullfile(datadir,'lba_fit'); % find directory with prepped data
-t.fileinfo = dir(fullfile(lbadatadir,'prepped_data.mat'));
-t.datapath = fullfile(lbadatadir,t.fileinfo.name);
+if ~t.testing
+    % directory mappings
+    addpath(genpath(fullfile(rootdir, 'tools_analysis'))); % add tools folder to path (includes LBA scripts)
+    lbadatadir = fullfile(datadir,'lba_fit'); % find directory with prepped data
+    t.fileinfo = dir(fullfile(lbadatadir,'prepped_data.mat'));
+    t.datapath = fullfile(lbadatadir,t.fileinfo.name);
+    
+    % get the data
+    t.alldata = load(t.datapath);
+    t.data = t.alldata.d.subject(t.subject).data;
+end
 
-% get the data
-t.alldata = load(t.datapath);
-t.data = t.alldata.d.subject(t.subject).data;
-
-%% testing dataset, remove later
+%% testing dataset
 %% --------------------
-% [foo1,foo2,dataRaw]=xlsread('FT_4choices/data/1001.xls');%at edited path
-dataRaw = t.data; % provide data in the format required here
+if t.testing
+   t.alldata = load('lba_test_data.mat');
+   t.data = t.alldata.d.subject(t.subject).data;
+end
+
 %% -----------------
+dataRaw = t.data; % here's the data
+dataValid = []; % strip invalid responses out
+for i = 1:size(dataRaw,1)
+    if dataRaw{i,5} >= 0 % if there's a valid response
+        dataValid(end+1,:) = [dataRaw{i,2} dataRaw{i,3} dataRaw{i,4} dataRaw{i,5}]; % add the following rows to this new variable in order: condition code, response, rt, accuracy
+    end
+end
 data2fit={};
 % get quantiles from RT data
-[data2fit{1},data2fit{2}]=data_stats_indv(dataRaw);
+data2fit = data_stats_cond(dataValid(:,[2 3 1])); % requires: response, rt, condition code
 
 % fit the basic model
 % startpar=[1,1,1,1,1, .1 .3]; % initial parameter [boundary,four drift rate, non-decisiontime, drift rate std]
