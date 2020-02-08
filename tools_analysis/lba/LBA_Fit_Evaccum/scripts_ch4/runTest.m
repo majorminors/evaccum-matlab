@@ -53,7 +53,7 @@ data2fit = data_stats_cond(dataValid(:,[2 3 1])); % requires: response, rt, cond
 % startpar=[1,1,1,1,1, .1 .3]; % initial parameter [boundary,four drift rate, non-decisiontime, drift rate std]
 % upper staring-point is fixed 
 randiter = 100; % random search 100 iters before optimization
-nosession = 20; % 20 optimization iterations
+nosession = 1; % 20 optimization iterations
 
 % Model fitting
 Model_Feature=[1 4];
@@ -71,14 +71,13 @@ disp(['best error funcion value: ' num2str(bestval(best_indx))]);
 
 [num_par,par_Free,par_Spec]=getModelParam_fixC0(Model_Feature,bestpar(best_indx,:));
 % [pmod_simpRT,qobs{1},cumRT,propInvalidTrial]=mod_stats_sim_simpRT('LBA_simpRT_template',par_simpRT,1,data2fit.allObs(:,1),1,1); %,goalstat_spec_norep.cond_ratio);
-[pmod_FT,priorMod_FT,qobs_Free{1},foo3,cumRT_Free]=mod_stats_sim('LBA_spec_FT3_c_even_template',par_Free,1,data2fit{1}.allObs(:,1),4,1); %,goalstat_free_norep.cond_ratio);
-[pmod_spec_norep,foo2,qobs_Spec{1},foo4,cumRT_Spec]=mod_stats_sim('LBA_spec_c_even_template',par_Spec,1,data2fit{2}.allObs(:,1),4,1); %,goalstat_spec_norep.cond_ratio);
+[pmod_FT,priorMod_FT,qobs_Free{1},foo3,cumRT_Free]=mod_stats_sim('LBA_spec_FT3_c_even_template',par_Free,1,data2fit.allObs(:,1),4,1); %,goalstat_free_norep.cond_ratio);
 
 
 % Plotting...
 figure; hold on;
-plot(data2fit{1}.allObs(1:end-1,1),data2fit{1}.allObs(1:end-1,2),'k','Marker','o');
-plot(data2fit{1}.allObs(1:end-1,1),cumRT_Free(1:end-1),'r','Marker','*');
+plot(data2fit.allObs(1:end-1,1),data2fit.allObs(1:end-1,2),'k','Marker','o');
+plot(data2fit.allObs(1:end-1,1),cumRT_Free(1:end-1),'r','Marker','*');
 legend({'data','model'},'Location','SouthEast');
 % title({['Model params (B, A, Astd,To): [' num2str(bestpar(best_indx,:),2) ']'] });
 title('Chosen condition');
@@ -88,20 +87,10 @@ ylabel('Cumulative probability');
 xlabel('Response Time (s)');
 
 figure; hold on;
-temp=[data2fit{1}.priorProb{1:4}];
-choiceProb=[temp(1:2:8);priorMod_FT];
+temp=[data2fit.priorProb{1:end}];
+choiceProb=[temp;priorMod_FT];
 bar(choiceProb');
 legend({'data','model'});
-set(gca,'XTick',[1:4]);
-set(gca,'XTickLabel',{'Index' 'Middle' 'Ring' 'Little'});
-title('Choice probability in Free condition');
-
-figure; hold on;
-plot(data2fit{2}.allObs(1:end-1,1),data2fit{2}.allObs(1:end-1,2),'k','Marker','o');
-plot(data2fit{2}.allObs(1:end-1,1),cumRT_Spec(1:end-1),'r','Marker','*');
-legend({'data','model'},'Location','SouthEast');
-% title({['Model params (B, A, Astd,To): [' num2str(bestpar(best_indx,:),2) ']'] });
-title('Specified condition');
-ylim([0 1]);
-ylabel('Cumulative probability');
-xlabel('Response Time (s)');
+set(gca,'XTick',[1:2]);
+set(gca,'XTickLabel',{'Button 1' 'Button 2'});
+title('Choice probability');
