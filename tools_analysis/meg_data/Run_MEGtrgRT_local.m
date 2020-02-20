@@ -30,7 +30,7 @@ settings.overwrite = 1;
 
 
 
-for subi = 1 %:length(dname)
+for subi = 3 %:length(dname)
     
        ID = getMEGID(sprintf('DM_evaccumpilot_%s',IDnum{subi}));
        

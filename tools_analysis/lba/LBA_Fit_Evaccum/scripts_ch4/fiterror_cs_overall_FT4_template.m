@@ -11,7 +11,7 @@ N=2; % number of responses
 BIC=0;
 error=0;
 % model_param=struct('N',N,'B',{param(1:B_num).*ones(1,N)},'C0',param(B_num+1),'Ame',{[param(B_num+2:(N+B_num)+1) ]},'Astd',param(N+B_num+2),'T0',param(N+B_num+3));
-[num_par,par_Fnrep,par_Snrep]=getModelParam_fixC0(mod_feature,param);
+[num_par,par_Fnrep,par_Snrep]=getModelParam_fixC0_2afc(mod_feature,param);
 
 pmod_FT=nan;
 priorMod_FT=nan;

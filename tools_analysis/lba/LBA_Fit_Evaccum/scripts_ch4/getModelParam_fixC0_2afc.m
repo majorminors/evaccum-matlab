@@ -1,42 +1,42 @@
-function [num_param,param_Fnrep,param_Snrep]=getModelParam_fixC0_old(mod_feature,param)
+function [num_param,param_Fnrep,param_Snrep]=getModelParam_fixC0_2afc(mod_feature,param)
 % generate model parameter for difference conditions
 % total free parameter for a particular design
 % if param is null, will return the number of free parameters that satistfy
 % the model design
 % bssic parameter:
-% B, [\mu_1:\mu_4], t0
+% B, [\mu_1:\mu_2], t0
 % feature:
 % ------------------ 1 - Std differ across fingers [3 0] not used
-% 1 - Std differ across fingers [4 1]
+% 1 - Std differ across fingers [2 1]
 % ------------------ 2 - C0 differ across fingers  [4 1]           not used
 % 3 - B differ across conditions [1 0]
-% 4 - Drift rate differ across conditions [1 0]
+% 4 - Accumulation rate differ across conditions [1 0]
 % 5 - t0 differ across conditions [1 0]
-% 6 - drift rates are the same for 4 fingers in spec conditions [0 0] not
+% 6 - Accumulation rates are the same for 2 fingers in spec conditions [0 0] not
 % used
 % 7 - drift rate ratio applied to all fingers rather than only repetition
 % not used
 % finger [0 0]
 
-N=4; % accumulators
-basic_param=6;  %[B \mu_1 : \mu_4, t0]
-feature_space=[4 0 1 1 1 0 0; 1 0 0 0 0 0 0]; % [feature ticked; feature unticked]
+N=2; % accumulators (left and right finger)
+basic_param=4;  %[B \mu_1 : \mu_2, t0]
+feature_space=[2 0 1 1 1 0 0; 1 0 0 0 0 0 0]; % [feature ticked; feature unticked]
 defaultC0 = 0.5; % upper mean starting point fixed at 0.5
 
 % get index for feature from param vector
 feature_len=zeros(1,size(feature_space,2));
 for i=1:length(feature_len)
-    if ismember(i,mod_feature)
-        feature_len(i)=feature_space(1,i);
+    if ismember(i,mod_feature)%if this is the free parameter selected
+        feature_len(i)=feature_space(1,i);%read the corresponding param value from feature space
     else
-        feature_len(i)=feature_space(2,i);
+        feature_len(i)=feature_space(2,i);%otherwise read default values
     end
 end
 
 
-num_param=sum(feature_len)+basic_param;
+num_param=sum(feature_len)+basic_param;%the total number of free params so far
 
-if nargin < 2 %if param is not specified then just give number of free params
+if nargin < 2%if param is not specified then just give number of free params
     return;
 end
 

@@ -35,7 +35,7 @@ end
 
 conditions = {'LcLr', 'LcHr','HcLr','HcHr'}; % 2x2 coherence and rule
 
-for runi = 1:numel(filenames)
+for runi = 3:4%1:numel(filenames)
     %%
     clear trl conditionlabels
     D = spm_eeg_load(filenames{runi});

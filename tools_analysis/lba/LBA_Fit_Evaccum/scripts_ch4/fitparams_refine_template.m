@@ -3,7 +3,7 @@ function [bestpar,bestval,BIC]=fitparams_refine_template(errfunc,mod_feature,dat
 nopara=length(parange);     % number of parameters
 bestpar = zeros (nosession, nopara);    % best fit parameters
 bestval = Inf (nosession, 1) ;          % best error functions
-BIC=Inf(nosession,1);
+BIC=Inf(nosession,1); %start big for optimisation
 goalstat = cell(1, length(data2fit));    % data to fit
 
 if length(data2fit)==1
