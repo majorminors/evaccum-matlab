@@ -73,7 +73,7 @@ disp(['best error funcion value: ' num2str(bestval(best_indx))]);
 
 [num_par,par_Free,par_Spec]=getModelParam_fixC0_2afc(Model_Feature,bestpar(best_indx,:));
 % [pmod_simpRT,qobs{1},cumRT,propInvalidTrial]=mod_stats_sim_simpRT('LBA_simpRT_template',par_simpRT,1,data2fit.allObs(:,1),1,1); %,goalstat_spec_norep.cond_ratio);
-[pmod_FT,priorMod_FT,qobs_Free{1},foo3,cumRT_Free]=mod_stats_sim('LBA_spec_FT3_c_even_template',par_Free,1,data2fit.allObs(:,1),4,1); %,goalstat_free_norep.cond_ratio);
+[pmod_FT,priorMod_FT,qobs_Free{1},foo3,cumRT_Free]=mod_stats_sim('LBA_spec_FT3_c_even_template',par_Free,1,data2fit.allObs(:,1),2,1); %,goalstat_free_norep.cond_ratio);
 
 
 % Plotting...
