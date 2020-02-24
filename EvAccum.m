@@ -1,7 +1,7 @@
 %% Matching motion coherence to direction cue in MEG
 % Dorian Minors
 % Created: JUN19
-% Last Edit: 18NOV19
+% Last Edit: FEB20
 
 % trial settings all saved in 'p'
 
@@ -328,10 +328,11 @@ clear block;
 
 %% set up MEG
 
-% MEG trigger info
+% MEG trigger info - these need to be sufficiently spaced in an analogue
+%   system to allow you to distinguish them if they don't quite reach their value
 p.MEGtriggers.onset = 1;
-p.MEGtriggers.response = 3;
-p.MEGtriggers.trial = 10; % what column of p.stim_mat are you keeping your trigger information in?
+p.MEGtriggers.cue = 150;
+p.MEGtriggers.trial = 50;
 
 % invoke the MEG functions if p.MEG_enabled
 if p.MEG_enabled == 1
@@ -488,6 +489,14 @@ try
                 t.imgrect = [0 0 t.imagewidth t.imageheight]; % make a scaled rect for the cue
                 t.rect = CenterRectOnPointd(t.imgrect,p.resolution(1,1)/2,p.resolution(1,2)/2); % offset it for the centre of the window
                 
+                % send a trigger to let us know this is a cue
+                if p.MEG_enabled == 1
+                    MEG.SendTrigger(0); % reset triggers
+                    WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to return to zero
+                    MEG.SendTrigger(p.MEGtriggers.cue); % send the cue trigger
+                    % we will let it stay on for the duration of the cue
+                end
+                
                 % then display cue and response mapping
                 Screen('DrawTexture', p.win, p.cue_tex, [], t.rect, p.stim_mat(i,2)); % draws the cue in the orientation specified in column 2 of p.stim_mat for the current trial
                 % draw the response mapping at the corners of the t.rect you just made depending on the orientation of the cue
@@ -528,6 +537,7 @@ try
                 %% response waiter function ends
                 if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue from the response waiter
                 if p.MEG_enabled == 1
+                    MEG.SendTrigger(0); % reset triggers (from cue trigger, earlier) - this needs about .1s after it to allow it time to return to zero
                     WaitSecs(0.5); % wait long enough that the MEG function can clear the button press
                     MEG.WaitForButtonPress(0); % reset MEG button press to empty
                 end
@@ -573,7 +583,7 @@ try
                 if p.MEG_enabled == 1
                     MEG.SendTrigger(0); % reset triggers
                     WaitSecs(p.iti_time-p.MEG_long_trigger_time*2);
-                    MEG.SendTrigger(p.stim_mat(i,p.MEGtriggers.trial)); % send a trigger for trial onset
+                    MEG.SendTrigger(p.MEGtriggers.trial); % send a trigger for trial onset
                     WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to reach value
                     MEG.SendTrigger(0); % reset triggers
                     WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to return to zero
@@ -609,6 +619,14 @@ try
                 %                 end
                 d.resp_key_name(block,i) = t.firstPress{1}; % get response key from array
                 d.rt(block,i) = t.firstPress{2}; % get response time from array - don't need to minus dots onset here because we're using the MEG timing functions
+            end
+            % save the response key (as a code)
+            if d.resp_key_name(block,i) == p.resp_keys{1}
+                d.resp_keycode(block,i) = 1; % code response 1 pressed
+            elseif d.resp_key_name(block,i) == p.resp_keys{2}
+                d.resp_keycode(block,i) = 2; % code response 2 pressed
+            else
+                d.resp_keycode(block,i) = 0; % code invalid response
             end
             
             % create variable for correct response
@@ -665,8 +683,36 @@ try
         
     end % end block loop
     
-    %% wrap up
+    % record how many blocks/trials were actually completed
+    if length(d.rt(block,:)) == p.num_trials_per_block && length(d.correct(block,:)) == p.num_trials_per_block
+        t.block_matches_trials = 1;
+    else
+        t.block_matches_trials = 0;
+    end
     
+    if t.block_matches_trials == 1
+        d.blocks_completed = block;
+        d.incomplete_blocks = 0;
+    elseif t.block_matches_trials == 0
+        d.incomplete_blocks = 1;
+        warning('there are incomplete blocks\n')
+        if length(d.rt(block-1,:)) == p.num_trials_per_block && length(d.correct(block-1,:)) == p.num_trials_per_block
+            d.blocks_completed = block-1;
+            if length(d.rt(block,:)) == length(d.correct(block,:))
+                d.incomplete_block_trials = length(d.rt(block,:));
+            else
+                d.incomplete_block_trials = -1;
+                warning('incomplete block has mismatching rt and accuracy info--could not record trials in incomplete block\n')
+            end
+        else
+            d.blocks_completed = -1;
+            warning('the last and second to last blocks have too few trials--requires troubleshooting\n')
+        end
+    end
+    
+    d.trials_completed = d.blocks_completed*p.num_trials_per_block;
+    
+    %% wrap up
     
     % tell them it's over
     DrawFormattedText(p.win,'done!', 'center', 'center', p.text_colour); % tell them it's over!

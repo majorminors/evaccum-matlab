@@ -240,7 +240,7 @@ for frame_num = 1:total_frames
             %fprintf('onset trig\n') % check this works
             MEG.ResetClock; % reset the timer
             button_pressed = 0; % a counter to make sure we catch the first time a button was pressed
-            MEG.SendTrigger(p.MEGtriggers.onset);
+            MEG.SendTrigger(p.MEGtriggers.onset); % send a trigger to tell us the dots started
             trig_reset = 0;
         end
         dots_onset_time = Screen('Flip',p.win);
