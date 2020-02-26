@@ -15,6 +15,8 @@ load(behavfile) % matlab behavioural file
 %      7     8
 %      9    10
 
+% so will need a code here that allows you to get the run info. might be
+% worth having a variable in notes that you can just pull out
 subjectswitcher = input('enter pilot subject (e.g. S01): ','s');
 %subjectswitcher = string(subjectswitcher);
 
@@ -35,7 +37,7 @@ end
 
 conditions = {'LcLr', 'LcHr','HcLr','HcHr'}; % 2x2 coherence and rule
 
-for runi = 1:numel(filenames)
+for runi = 3:4%1:numel(filenames)
     %%
     clear trl conditionlabels
     D = spm_eeg_load(filenames{runi});
@@ -77,79 +79,7 @@ for runi = 1:numel(filenames)
         end
     end
     
-    switch subjectswitcher
-        case 'S01'
-            % for S01, who has no distinct coh v trial onset triggers
-            triggers = d.stim_mat_all(:,9)'; % trial type triggers
-            keys     = [4096 8192 16384 -32768]; % index medium ring little - on right button box
-            resp_onset = (find(ismember(round(diff(trig)),keys))+1)';
-            trigger_onset  = (find(ismember(round(diff(trig)),triggers))+1)'; % onset of all triggers
-            trialID  = [0; round(diff(trig)')]; trialID = trialID(trigger_onset); % for S01 - replaces other two
-            
-            if numel(trialID) ~= numel(block(:,9)) || sum(trialID ~= block(:,9))
-                    tmp_tronset = [];
-                    tmp_trialID =[];
-                    iresp = 0;
-                    twindow = 2000;
-%                     nilresp = 0;
-                    for itr = 1:numel(block(:,9))
-                        iresp = iresp+1; % counter for button presses
-                        
-%                         if nilresp
-%                             
-%                             searchtwin=[0 round(diff(trig(resp_onset(iresp)-1700:resp_onset(iresp))))]; % cut out the time window in the trial interval preceding the button press
-%                             ttrigger = find(searchtwin>0 & searchtwin <= 128); % find any triggers in there - might be able to make this smaller? This is in case is codes two 64 triggers as one, but I don't think that can happen
-%                             ttrigger = ttrigger(end); % save only the most recent trigger (in case we took any from a previous trial)
-%                             
-%                         else
-                            
-                            searchtwin=[0 round(diff(trig(resp_onset(iresp)-twindow:resp_onset(iresp))))]; % cut out the time window in the trial interval preceding the button press
-                            ttrigger = find(searchtwin>0 & searchtwin <= 128); % find any triggers in there - might be able to make this smaller? This is in case is codes two 64 triggers as one, but I don't think that can happen
-                            % is this an appropriate button press response?
-                            if isempty(ttrigger) % this is a cue accept response, not a trial response
-                                iresp = iresp+1;% go to the next button press
-                                if runi == 3 && iresp == 2 && itr == 1; iresp = iresp+1;end % resp 1 accepts end of training for keyswap on this run, resp 2 is the accept cue resp, resp 3 is the start of the trials
-                                if runi == 5 && iresp == 2 && itr == 1; iresp = iresp+1;end % not sure why there are two responses here, but there are
-                                if runi == 6 && iresp == 2 && itr == 1; iresp = iresp+1;end % same - unsure - wondering if it's something in the script, but it didn't happen on run 4...
-                                % do this again
-                                searchtwin=[0 round(diff(trig(resp_onset(iresp)-twindow:resp_onset(iresp))))]; % cut out the time window in the trial interval preceding the button press
-                                ttrigger = find(searchtwin>0 & searchtwin <= 128); % find any triggers in there - might be able to make this smaller? This is in case is codes two 64 triggers as one, but I don't think that can happen
-                            end
-                            ttrigger = ttrigger(end); % save only the most recent trigger (in case we took any from a previous trial)
-                            
-%                         end
 
-                        % check that there is a response between upcoming triggers
-                        % however, currently the code only goes one trigger
-                        % ahead, which will find the response you just used
-                        % to code ttrigger - need to go two ahead, but then
-                        % if you have two fake triggers (due to the slow
-                        % analogue trigger system) it won't work. needs
-                        % thought.
-%                         searchtwin = [0 round(diff(trig(ttrigger+100:ttrigger+1700)))]; % search from 100ms to 1800ms (i.e. 100ms plus trial of 1700ms) - must be less than 2.7s
-%                         trigs_exist = find(searchtwin>0 & searchtwin <= 128);
-%                         if trigs_exist
-%                             searchtwin = [0 round(diff(trig(ttrigger:trigs_exist)))];
-%                             resp_exists = find(searchtwin>2000);
-%                             if ~resp_exists
-%                                 nilresp = 1;
-%                             end
-%                         end
-
-                        
-                        tmp_trialID(itr) = block(itr,9);
-                        
-                        tmp_tronset(itr) = resp_onset(iresp)-twindow + ttrigger-1;
-                    end                            % alternatively, can code by responses, idx for
-                            % trial, then a counter as an idx for responses
-                            % - where no tri
-                    trigger_onset   = tmp_tronset';
-                    trialIDtrg  =  tmp_trialID';
-                end                            % alternatively, can code by responses, idx for
-                            % trial, then a counter as an idx for responses
-                            % - where no tri
-        
-        otherwise
             % find onset trials, coherence, trial type, and rt
             triggers = d.stim_mat_all(:,10,1)'; % trial type triggers
             coh_trigger = 1; % value of coherence onset trigger
@@ -236,7 +166,7 @@ for runi = 1:numel(filenames)
                 
             end
             
-    end
+
     
     switch subjectswitcher
         case 'S01'

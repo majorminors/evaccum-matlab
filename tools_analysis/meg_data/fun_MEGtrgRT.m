@@ -102,8 +102,8 @@ for runi = 3:4%1:numel(filenames)
 %                             ttrigger = ttrigger(end); % save only the most recent trigger (in case we took any from a previous trial)
 %                             
 %                         else
-                            
-                            searchtwin=[0 round(diff(trig(resp_onset(iresp)-twindow:resp_onset(iresp))))]; % cut out the time window in the trial interval preceding the button press
+                          searchtwin=[0 round(diff(trig(resp_onset(iresp)-twindow:resp_onset(iresp))))]; % cut out the time window in the trial interval preceding the button press
+        
                             ttrigger = find(searchtwin>0 & searchtwin <= 128); % find any triggers in there - might be able to make this smaller? This is in case is codes two 64 triggers as one, but I don't think that can happen
                             % is this an appropriate button press response?
                             if isempty(ttrigger) % this is a cue accept response, not a trial response
@@ -184,6 +184,13 @@ for runi = 3:4%1:numel(filenames)
                     trialIDtrg  =  tmp_trialID';
                 else
                     if strcmp(subjectswitcher,'S03')
+                        % so to recover the triggers using the rt from
+                        % matlab, we can go to response 2, then search back
+                        % for the rt time window (probably plus 100ms or
+                        % so) and if there's nothing, check the next
+                        % response - but keep track of these, maybe even
+                        % add another trigger, so you can see it in the
+                        % plot.
                         if runi == 4 || runi == 5
                             iresp = 0;
                             for itr = 1:numel(block(:,10))
@@ -200,9 +207,7 @@ for runi = 3:4%1:numel(filenames)
                                 
                                 tmp_trialID(itr) = block(itr,10);
 
-                            end                            % alternatively, can code by responses, idx for
-                            % trial, then a counter as an idx for responses
-                            % - where no tri
+                            end
                             trigger_onset   = tmp_tronset';
                             trialIDtrg  =  tmp_trialID';
                             
