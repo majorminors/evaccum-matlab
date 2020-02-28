@@ -1,35 +1,25 @@
-function fun_fitbehav_LBA_PD(settings)
+function fun_singlecell_RDKPD_LBA(settings)
 % Fit LBA model to RDK-tapping task
 % Use for  3-choice task: CONDITIONS segregated
 % JZ 15/10/2014 - 4-choice tapping task
 % AT 17/02/2016 adapted to 3-choice RDK task
-rseed = settings.rseed;
-rng(rseed,'twister') % for reproducibility
+
+rng(17,'twister') % for reproducibility
 
 %clear all
 %%
-
-% these are just in case it didn't work in the previous script
-droot = '/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/Behav/';
+droot = '/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/Behav/MEGBehav/';
 datafld = '/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/Model/fitBehav/results/';
+%stemf = '%s_LBA_PD.mat';
 savename = settings.savename;
 
 addpath(genpath('/imaging/at07/Matlab/Projects/CBU2016/RDKPD/'));
 
-Model_Feature = settings.modfeat; % model variant for this job
+Model_Feature = settings.modfeat;
 
 condLabs = {'pLaL','pHaL','pLaH','pHaH'};
 
-% optional but doesn't save time (thought it would be faster than normal
-% gradient descent, but isn't)
-if ~isfield(settings,'bayesOptim')
-    bayesian = 0;
-else
-    bayesian = settings.bayesOptim;
-    if bayesian
-        addpath(genpath('/imaging/at07/Matlab/Toolboxes/bads'));
-    end
-end
+
 
 
 % experimental designs
@@ -38,17 +28,20 @@ end
 
 %contrasts = 1:4;
 
-sname = settings.sname;
 
+%% Get sample IDs
+% --------------------
+sname = dir([droot,'AT_RDK2_*.mat']);
+sname = {sname.name};
 
 %initialise cells
 data2fit={};Ava_opt = {}; dataRaw = {}; CohLevs = {};%#ok
 
 for idxsubj = 1:length(sname)   
-    %%
-    clear MEG_RT LocStim  rt conds badT resp loc % clear vars from behavioural data to avoid reading mixed subject data
     
-    load([droot,sname{idxsubj}],'MEG_RT','LocStim')
+    clear ResponseArray LocStim muRT rt conds badT resp loc
+    
+    load([droot,sname{idxsubj}])
     fprintf('loading %s \n',sname{idxsubj})
     
 
@@ -56,45 +49,30 @@ for idxsubj = 1:length(sname)
 
 % do descriptive stats
 
-% REMOVES NANs for INCOMPLETE SESSIONS - i don't think 
-[rt,loc,conds,badT,resp,acc] = prepare_data(MEG_RT,LocStim);
+[rt,loc,conds,badT,resp,acc] = prepare_data(ResponseArray,LocStim);
 
-minRT(idxsubj) = min(rt(rt>=0.1)); % not used
 
 %remove bad trials
 if ~isempty(badT)
     disp([sname{idxsubj}, ' invalid trials (',num2str(length(badT)),'/',num2str(length(rt)), '):',num2str(badT')]);
     
-    resp(badT) = [];rt(badT) = []; conds(badT)=[];loc(badT,:)=[]; % delete the content of variables for bad trials
+    resp(badT) = [];rt(badT) = []; conds(badT)=[];loc(badT,:)=[];
     
 end
-%shortest RT
-%minRT(idxsubj) = min(rt);
 
-
-%check responses (related to location stuff - you don't need)
-clear check
-check = [];
-for i = 1:size(loc,1)
-    try
-    check(i) =loc(i,resp(i));
-    catch
-    check(i) = 1;    
-    end
-end
+%check responses
+check = [];for i = 1:size(loc,1);check(i) =loc(i,resp(i));end%#ok
 if sum(check)~=size(loc,1); error('stim location and response do not correspond!');end
 
-%%
+
 %Pool conditions according to design matrix & calculate stats
-  for levels = 1:4 % four conditions
+  for levels = 1:4
        
         
         trialn = conds == levels;
         dataRaw{idxsubj,levels}  = [resp(trialn) rt(trialn)]; %#ok
         
-        % don't need this - you're not changing what you're doing between
-        % the four conditions (other than the four condition types)
-        if  sum(ismember(levels,[1 2]))%single stim
+        if  sum(ismember(levels,[1 2]));%single stim
             data2fit{idxsubj,levels} = data_stats(dataRaw{idxsubj,levels});%#ok
         else
             tmp = loc(trialn,:);tmp(:,5) = nan;for i = 1:size(tmp,1);tmp(i,5)=find(tmp(i,:)==0);end 
@@ -102,15 +80,9 @@ if sum(check)~=size(loc,1); error('stim location and response do not correspond!
             data2fit{idxsubj,levels}     = data_stats_FT4RDK(dataRaw{idxsubj,levels});%#ok
              
         end
-        
-        % add some info to data2fit (the condition labels as a string, and
-        % the minRT - in the case that the min rt is smaller than the
-        % non-decision time - let's leave this for now, just in case)
-        data2fit{idxsubj,levels}.cond = condLabs(levels);%#ok
-        data2fit{idxsubj,levels}.minRT= round(minRT(idxsubj),2);
-        %parange(end,1) = round(minRT(idxsubj),2);%constrain the lower bound of T0 to the shortest RT
+        data2fit{idxsubj,levels}.cond= condLabs(levels);%#ok
    end
-%%
+
 end
 
 
@@ -146,39 +118,91 @@ nosession = settings.nosession;
 %%
 
 
-numParam   =getModelParam_cell_RDK(Model_Feature,2); % you will change this 4 to two - reflects response options
+numParam   =getModelParam_cell_RDK(Model_Feature,4);
 parange=[zeros(1,numParam);zeros(1,numParam)+10]';
 
 
 for idxsubj = 1:length(sname)
-         
-    [bestpar{idxsubj,1},bestval{idxsubj,1},BIC{idxsubj,1}]=fitparams_refine_template_RDK('fiterror_cell_RDK',Model_Feature,{data2fit{idxsubj,1:4}},randiter,nosession,[],parange,bayesian);%#ok
+          
+    [bestpar{idxsubj,1},bestval{idxsubj,1},BIC{idxsubj,1}]=fitparams_refine_template_RDK('fiterror_cell_RDK',Model_Feature,{data2fit{idxsubj,1:4}},randiter,nosession,[],parange);%#ok
    
 end  
 
-save(savename,'bestpar','bestval','BIC','rseed','settings');%,'bestpar_PA','bestval_PA','BIC_PA')
+save(savename,'bestpar','bestval','BIC');%,'bestpar_PA','bestval_PA','BIC_PA')
 
 end
 
 
-function [rt,loc,conds,badT,resp,acc] = prepare_data(MEG_RT,LocStim)
+function [rt,locs,cond,badT,resp,acc] = prepare_data(ResponseArray,LocStim)
 
-rt    = MEG_RT(:,8);
+rt    = ResponseArray(:,13);
 
-acc   = MEG_RT(:,7);
-resp  = MEG_RT(:,6); %note fingers inverted in MEG: 4 = index
+acc   = ResponseArray(:,end);
+badT  = find(isinf(rt) | rt<0 | acc == 0);%LBA is fitted only to correct responses
+resp  = ResponseArray(:,14); %note fingers inverted in MEG: 4 = index
 
-%badT  = find(isinf(rt) | rt<=0 | acc < 1 | isnan(resp));%LBA is fitted only to correct responses
-badT  = find(isinf(rt) | rt<0.1 | acc < 1 | isnan(resp));%LBA is fitted only to correct responses
+%% deal with locations
+locs = LocStim;
 
-% deal with locations
 
-loc = LocStim;
+%% deal with conditions
+%re-code conditions so that 1ll 2lh 3lh 4hh
+cond = ResponseArray(:,4);
 
-% deal with conditions
-conds = MEG_RT(:,4);
+cond(cond<3) = 3-cond(cond<3);
+cond(cond>2) = 7-cond(cond>2);
+
 
 end
+
+
+% options = [1 3];
+% for i = 1:2
+%     
+%     idx = ResponseArray(:,3)==options(i); %action level
+%     hit = ResponseArray(:,end)==1; fa = ResponseArray(:,end)==0;
+%     
+%     idhit = find(hit & idx);%hit given action level
+%     idfa  = find(fa  & idx);
+%     
+%     for ii = 1:numel(idhit)
+%                       
+%         clear tmp;
+%         if options(i) == 3
+%             opt = 1:4;  opt(ResponseArray(idhit(ii),14))=[];
+%             opt = randsample(opt,1);
+%             tmp = ones(1,5);tmp(opt)=0;
+%             
+%         else
+%             tmp = zeros(1,5);
+%             tmp(ResponseArray(idhit(ii),14))=1;
+%         end
+%         
+%         locs(idhit(ii),:)= tmp;
+%                              
+%     end
+%     
+%     
+%     for ii = 1:numel(idfa)
+%         
+%         clear tmp;       
+%         if options(i) == 1
+%             opt = 1:4;  opt(ResponseArray(idfa(ii),14))=[];
+%             opt = randsample(opt,1);
+%             tmp = zeros(1,5);tmp(opt)=1;
+%         else
+%             tmp = ones(1,5);
+%             tmp(ResponseArray(idfa(ii),14))=0; 
+%         end
+%         
+%         
+%         
+%         locs(idfa(ii),:) = tmp;
+%         
+%     end
+%        
+% end
+
 % 
 % 
 % for idxsubj = 1:length(sname)    % Best mdoel

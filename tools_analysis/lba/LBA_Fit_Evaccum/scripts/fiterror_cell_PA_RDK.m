@@ -1,4 +1,4 @@
-function [f_error, BIC, pmod_LL,pmod_HL, pmod_LH,pmod_HH,priorMod_HA,qobs] = fiterror_cell_RDK (param, mod_feature, data2fit)
+function [f_error, BIC, pmod_LL,pmod_HL, pmod_LH,pmod_HH,priorMod_HA,qobs] = fiterror_cell_PA_RDK (param, mod_feature, data2fit)
 % fit the model to freechoice and specified selection
 % param [boundary, X0 range, drift 1, drift 2, drift 3, drift 4, drift std,
 % T0, theta,alpha] 
@@ -10,7 +10,6 @@ if length(data2fit)==4
     goalstat_HH=data2fit{4};    
 end
 
-minRT = goalstat_LL.minRT;
 
 Ntrials= totalTrials(data2fit);
 
@@ -21,9 +20,11 @@ BIC=0;
 f_error=0;
 % model_param=struct('N',N,'B',{param(1:B_num).*ones(1,N)},'C0',param(B_num+1),'Ame',{[param(B_num+2:(N+B_num)+1) ]},'Astd',param(N+B_num+2),'T0',param(N+B_num+3));
 
-[num_param,parLL,parHL,parLH,parHH]=getModelParam_cell_RDK(mod_feature,2,param);
+% get general parameters (i.e. parameters for HL) and generate parameters
+% for all the conditions
+%[num_param,parLL,parHL,parLH,parHH]=getModelParam_PA_cell_RDK(mod_feature,4,param);%#ok
 
-
+[num_param,parLL,parHL,parLH,parHH,ratio]=getModelParam_PA_cell_RDK(mod_feature,4,param);%#ok
 
 
 qobs=cell(1,4);
@@ -36,12 +37,17 @@ elseif sum(parLL.B<=parLL.C0) || sum(parHL.B<=parHL.C0) || sum(parLH.B<=parLH.C0
     f_error=1000000;  % Threshold is smaller than starting point
     BIC=1000000;
     return;
+elseif any(param(ratio)<=0 | param(ratio)>=1)
+    
+    f_error=1000000;  % Ratio out of bound
+    BIC=1000000;
+    return;
     
 else    
 %%     
     % Choice: Low PU
     pmod_LH = nan; priorMod_LH = nan;%#ok
-    [pmod_LH,priorMod_LH,qobs{3}]=mod_stats_sim('LBA_spec_FT3_c_even_template',parLH,1,goalstat_LH.allObs(:,1),2,0); %,goalstat_free_norep.cond_ratio);
+    [pmod_LH,priorMod_LH,qobs{3}]=mod_stats_sim('LBA_spec_FT3_c_even_template',parLH,1,goalstat_LH.allObs(:,1),3,0); %,goalstat_free_norep.cond_ratio);
     
     f_error=f_error+2*sum(goalstat_LH.allObs(:,4).*log(goalstat_LH.allObs(:,3)./pmod_LH'));
     BIC=BIC-2*sum(goalstat_LH.allObs(:,4).*log(pmod_LH'));
@@ -54,12 +60,11 @@ else
     
     % Choice: High PU
     pmod_HH =nan;priorMod_HH=nan;%#ok
-    [pmod_HH,priorMod_HH,qobs{4}]=mod_stats_sim('LBA_spec_FT3_c_even_template',parHH,1,goalstat_HH.allObs(:,1),2,0); %,goalstat_free_norep.cond_ratio);
+    [pmod_HH,priorMod_HH,qobs{4}]=mod_stats_sim('LBA_spec_FT3_c_even_template',parHH,1,goalstat_HH.allObs(:,1),3,0); %,goalstat_free_norep.cond_ratio);
     
     f_error=f_error+2*sum(goalstat_HH.allObs(:,4).*log(goalstat_HH.allObs(:,3)./pmod_HH'));
     BIC=BIC-2*sum(goalstat_HH.allObs(:,4).*log(pmod_HH'));
-    
-    for i=1:numel(goalstat_HH.priorProb)
+    for i=1:parHH.N
         f_error=f_error+2*sum(goalstat_HH.priorProb{i}(2).*log(goalstat_HH.priorProb{i}(1)./priorMod_HH(i)));
         BIC=BIC-2*sum(goalstat_HH.priorProb{i}(2).*log(priorMod_HH(i)));
     end
@@ -67,14 +72,14 @@ else
     %%
     % Specified: Low PU 
     pmod_LL =nan;priorMod_LL=nan;%#ok
-    [pmod_LL,foo1,qobs{1}]=mod_stats_sim('LBA_spec_FT3_c_even_template',parLL,1,goalstat_LL.allObs(:,1),2,0); %#ok ,goalstat_spec_norep.cond_ratio);
+    [pmod_LL,foo1,qobs{1}]=mod_stats_sim('LBA_spec_c_even_template',parLL,1,goalstat_LL.allObs(:,1),1,0); %#ok ,goalstat_spec_norep.cond_ratio);
     
     f_error=f_error+2*sum(goalstat_LL.allObs(:,4).*log(goalstat_LL.allObs(:,3)./pmod_LL'));
     BIC=BIC-2*sum(goalstat_LL.allObs(:,4).*log(pmod_LL'));    
         
     % Specified: High PU
     pmod_HL =nan;priorMod_HL=nan;%#ok    
-    [pmod_HL,foo2,qobs{2}]=mod_stats_sim('LBA_spec_FT3_c_even_template',parHL,1,goalstat_HL.allObs(:,1),2,0); %#ok ,goalstat_spec_norep.cond_ratio);
+    [pmod_HL,foo2,qobs{2}]=mod_stats_sim('LBA_spec_c_even_template',parHL,1,goalstat_HL.allObs(:,1),1,0); %#ok ,goalstat_spec_norep.cond_ratio);
     
     f_error=f_error+2*sum(goalstat_HL.allObs(:,4).*log(goalstat_HL.allObs(:,3)./pmod_HL'));
     BIC=BIC-2*sum(goalstat_HL.allObs(:,4).*log(pmod_HL'));    

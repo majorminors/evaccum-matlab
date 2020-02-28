@@ -2,16 +2,18 @@
 
 %% Set parameters
 
+% these are all the model variants we want to test - different combinations
+% of free parameters
 design_space={[1,3],[1,4],[1,3,4],[1,3,4,5],[1,2],[1,2,3],[1,2,4],[1,2,3,4],[1,2,3,4,5],[1,5],[1,3,5],[1,4,5],[1,2,5],[1,2,3,5],[1,2,4,5]};
 %design_space={[1,5],[1,3,5],[1,4,5],[1,2,5],[1,2,3,5],[1,2,4,5]};
-settings.randiter  = 100;%random search iters before optimization
-settings.nosession = 25;%optimization iterations
+settings.randiter  = 100 % random search iters before optimization
+settings.nosession = 25; % optimization iterations - more equals less chance of ending up in a local minimum
 settings.overwrite = 0;
 
 savename = '/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/Model/fitBehav/results/Mod_%s_PD_LBA_rtc_1.mat';
-droot = '/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/Behav/';
+droot = '/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/Behav/'; % root of behavioural data
 
-
+% add necessary folder scripts
 addpath(genpath('/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/Preprocessing/'));
 addpath(genpath('/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/Model/'));
 addpath(genpath('/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/Behav/'));

@@ -1,29 +1,36 @@
-function obs_stats=data_stats(inpData)
-% produces observed data
-% 
+function obs_stats=data_stats_cond(inpData)
 %   Input:
 %       inpData: column 1 -response
 %       inpData: column 2 -response time
+%       inpData: column 3 -condition
 %   Output:
 %       allObs: observations across responses
 %       indvObs: observations for individual response
 %       priorProb: probability for individual response and number of trials for individual response
 
 
+qobs_all=data_stats_simple(inpData(:,2));
 
-qobs_all=data_stats_simple(inpData(:,2)); % just RT
-meanRT=mean(inpData(:,2));
 resSet=unique(inpData(:,1));
 
+% historical code for 3-choice decisions
+ava_cond=[0 0 0 0];  %[8 7 6 5]
+num_ava=zeros(1,length(ava_cond));
+for i=1:size(inpData,1)
+    num_ava=num_ava+1;
+    num_ava(ava_cond==inpData(i,3))=num_ava(ava_cond==inpData(i,3))-1;
+end
+    
+    
+
 for i=1:length(resSet)  % loop for statistics of each response
-    prob_each{i}=[sum(inpData(:,1)==resSet(i))/size(inpData,1) sum(inpData(:,1)==resSet(i))];          % probability for each response
+    prob_each{i}=[sum(inpData(:,1)==resSet(i))/num_ava(i) sum(inpData(:,1)==resSet(i))];          % probability for each response
     qobs_each{i}=data_stats_simple(inpData(inpData(:,1)==resSet(i),2));
     rt_median{i}=[median(inpData(inpData(:,1)==resSet(i),2)) sum(inpData(:,1)==resSet(i))];
-    rt_mean(i)=[mean(inpData(inpData(:,1)==resSet(i),2))];
-    prob_avail(i)=prob_each{i}(1);
+    prob_noavail(i)=length(find(inpData(:,3)==ava_cond(i)))/size(inpData,1);
 end
 
-obs_stats=struct('allObs',qobs_all,'indvObs',{qobs_each},'priorProb',{prob_each},'indvObs_med',{rt_median},'cond_ratio',{prob_avail},'meanRT',{meanRT},'meanRT_indv',{rt_mean});
+obs_stats=struct('allObs',qobs_all,'indvObs',{qobs_each},'priorProb',{prob_each},'indvObs_med',{rt_median},'cond_ratio',{prob_noavail});
 
 end
 
@@ -59,3 +66,10 @@ qobs(2:end,3)=diff(qobs(:,2));
 qobs(:,4)=qobs(:,3)*length(rt_data);
 end
 
+% 
+% figure;
+% plot(data_to_fit_free_rep{1}.allObs(1:end-1,1),'r')
+% hold on
+% plot(data_to_fit_free_norep{1}.allObs(1:end-1,1))
+% plot(data_to_fit_spec_norep{1}.allObs(1:end-1,1),'g')
+% plot(data_to_fit_spec_rep{1}.allObs(1:end-1,1),'k')

@@ -1,6 +1,4 @@
 function obs_stats=data_stats(inpData)
-% produces observed data
-% 
 %   Input:
 %       inpData: column 1 -response
 %       inpData: column 2 -response time
@@ -11,7 +9,7 @@ function obs_stats=data_stats(inpData)
 
 
 
-qobs_all=data_stats_simple(inpData(:,2)); % just RT
+qobs_all=data_stats_simple(inpData(:,2));
 meanRT=mean(inpData(:,2));
 resSet=unique(inpData(:,1));
 

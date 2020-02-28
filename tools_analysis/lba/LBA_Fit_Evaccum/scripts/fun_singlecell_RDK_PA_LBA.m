@@ -1,35 +1,25 @@
-function fun_fitbehav_LBA_PD(settings)
+function fun_singlecell_RDK_PA_LBA(settings)
 % Fit LBA model to RDK-tapping task
 % Use for  3-choice task: CONDITIONS segregated
 % JZ 15/10/2014 - 4-choice tapping task
 % AT 17/02/2016 adapted to 3-choice RDK task
-rseed = settings.rseed;
-rng(rseed,'twister') % for reproducibility
+
+rng(17,'twister') % for reproducibility
 
 %clear all
 %%
-
-% these are just in case it didn't work in the previous script
-droot = '/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/Behav/';
-datafld = '/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/Model/fitBehav/results/';
+droot = '/imaging/at07/Matlab/Projects/CBU2015/RDKUnc/MEGData/';
+datafld = '/imaging/at07/Matlab/Projects/CBU2015/RDKUnc/Behav/ModelData/';
+stemf = '%s_LBAbehav.mat';
 savename = settings.savename;
 
-addpath(genpath('/imaging/at07/Matlab/Projects/CBU2016/RDKPD/'));
+addpath(genpath('/imaging/at07/Matlab/Projects/CBU2015/RDKUnc/Process_code/'));
 
-Model_Feature = settings.modfeat; % model variant for this job
+Model_Feature = settings.modfeat;
 
 condLabs = {'pLaL','pHaL','pLaH','pHaH'};
 
-% optional but doesn't save time (thought it would be faster than normal
-% gradient descent, but isn't)
-if ~isfield(settings,'bayesOptim')
-    bayesian = 0;
-else
-    bayesian = settings.bayesOptim;
-    if bayesian
-        addpath(genpath('/imaging/at07/Matlab/Toolboxes/bads'));
-    end
-end
+
 
 
 % experimental designs
@@ -38,79 +28,69 @@ end
 
 %contrasts = 1:4;
 
-sname = settings.sname;
 
+%% Get sample IDs
+% --------------------
+sname = at_getsubjs(droot);
 
 %initialise cells
 data2fit={};Ava_opt = {}; dataRaw = {}; CohLevs = {};%#ok
 
 for idxsubj = 1:length(sname)   
-    %%
-    clear MEG_RT LocStim  rt conds badT resp loc % clear vars from behavioural data to avoid reading mixed subject data
     
-    load([droot,sname{idxsubj}],'MEG_RT','LocStim')
-    fprintf('loading %s \n',sname{idxsubj})
+    clear ResponseArray LocStim muRT rt conds badT resp loc
+    
+    load(sprintf([datafld stemf],sname{idxsubj}))
+    fprintf(['loading ' stemf '\n'],sname{idxsubj})
     
 
 
 
 % do descriptive stats
 
-% REMOVES NANs for INCOMPLETE SESSIONS - i don't think 
-[rt,loc,conds,badT,resp,acc] = prepare_data(MEG_RT,LocStim);
+rt    = muRT(1).megRT(:);
+loc   = muRT(1).LocStim;
+if size(rt,1)~=size(loc,1);
+    fprintf('%s: correcting number of loc \n',sname{idxsubj});
+    loc = loc(1:size(rt,1),:);
+end
+conds = muRT(1).cond;
+badT  = muRT(1).badtrials;
+badT  = unique([badT;find(rt==0)]);
+resp  = muRT(1).finger; %note fingers inverted in MEG: 4 = index
 
-minRT(idxsubj) = min(rt(rt>=0.1)); % not used
 
 %remove bad trials
 if ~isempty(badT)
     disp([sname{idxsubj}, ' invalid trials (',num2str(length(badT)),'/',num2str(length(rt)), '):',num2str(badT')]);
     
-    resp(badT) = [];rt(badT) = []; conds(badT)=[];loc(badT,:)=[]; % delete the content of variables for bad trials
+    resp(badT) = [];rt(badT) = []; conds(badT)=[];loc(badT,:)=[];
     
 end
-%shortest RT
-%minRT(idxsubj) = min(rt);
 
-
-%check responses (related to location stuff - you don't need)
-clear check
-check = [];
-for i = 1:size(loc,1)
-    try
-    check(i) =loc(i,resp(i));
-    catch
-    check(i) = 1;    
-    end
-end
+%check responses
+check = [];for i = 1:size(loc,1);check(i) =loc(i,resp(i));end%#ok
 if sum(check)~=size(loc,1); error('stim location and response do not correspond!');end
 
-%%
+
 %Pool conditions according to design matrix & calculate stats
-  for levels = 1:4 % four conditions
+  for levels = 1:4
        
         
-        trialn = conds == levels;
+        trialn = strcmp(conds,condLabs(levels));%identify condition
         dataRaw{idxsubj,levels}  = [resp(trialn) rt(trialn)]; %#ok
         
-        % don't need this - you're not changing what you're doing between
-        % the four conditions (other than the four condition types)
-        if  sum(ismember(levels,[1 2]))%single stim
+        if  sum(ismember(levels,[1 2]));%single stim
             data2fit{idxsubj,levels} = data_stats(dataRaw{idxsubj,levels});%#ok
         else
-            tmp = loc(trialn,:);tmp(:,5) = nan;for i = 1:size(tmp,1);tmp(i,5)=find(tmp(i,:)==0);end 
+            tmp = loc(trialn,:);tmp(:,5) = nan;for i = 1:size(tmp,1);tmp(i,5)=find(tmp(i,:)==0);end
             dataRaw{idxsubj,levels}(:,3) = tmp(:,5);%#ok
             data2fit{idxsubj,levels}     = data_stats_FT4RDK(dataRaw{idxsubj,levels});%#ok
              
         end
-        
-        % add some info to data2fit (the condition labels as a string, and
-        % the minRT - in the case that the min rt is smaller than the
-        % non-decision time - let's leave this for now, just in case)
-        data2fit{idxsubj,levels}.cond = condLabs(levels);%#ok
-        data2fit{idxsubj,levels}.minRT= round(minRT(idxsubj),2);
-        %parange(end,1) = round(minRT(idxsubj),2);%constrain the lower bound of T0 to the shortest RT
+        data2fit{idxsubj,levels}.cond= condLabs(levels);%#ok
    end
-%%
+
 end
 
 
@@ -146,39 +126,22 @@ nosession = settings.nosession;
 %%
 
 
-numParam   =getModelParam_cell_RDK(Model_Feature,2); % you will change this 4 to two - reflects response options
-parange=[zeros(1,numParam);zeros(1,numParam)+10]';
-
+numParam            =getModelParam_PA_cell_RDK(Model_Feature,4);
+parange             =[zeros(1,numParam);zeros(1,numParam)+10]';
+  [~,~,~,~,~,ratios]  =getModelParam_PA_cell_RDK(Model_Feature,4,parange(:,1)');
+  parange(ratios ,:) = repmat([0.01 0.99],[numel(ratios),1]);%P ratio needs to be constrainted between 0 and 1;
+%  parange(ratios+1 ,:) = repmat([0.01 0.99],[numel(ratios),1]);%P ratio needs to be constrainted between 0 and 1;
 
 for idxsubj = 1:length(sname)
-         
-    [bestpar{idxsubj,1},bestval{idxsubj,1},BIC{idxsubj,1}]=fitparams_refine_template_RDK('fiterror_cell_RDK',Model_Feature,{data2fit{idxsubj,1:4}},randiter,nosession,[],parange,bayesian);%#ok
+          
+    [bestpar{idxsubj,1},bestval{idxsubj,1},BIC{idxsubj,1}]=fitparams_refine_template_RDK('fiterror_cell_PA_RDK',Model_Feature,{data2fit{idxsubj,1:4}},randiter,nosession,[],parange);%#ok
    
 end  
 
-save(savename,'bestpar','bestval','BIC','rseed','settings');%,'bestpar_PA','bestval_PA','BIC_PA')
+save(savename,'bestpar','bestval','BIC','settings');%,'bestpar_PA','bestval_PA','BIC_PA')
 
 end
 
-
-function [rt,loc,conds,badT,resp,acc] = prepare_data(MEG_RT,LocStim)
-
-rt    = MEG_RT(:,8);
-
-acc   = MEG_RT(:,7);
-resp  = MEG_RT(:,6); %note fingers inverted in MEG: 4 = index
-
-%badT  = find(isinf(rt) | rt<=0 | acc < 1 | isnan(resp));%LBA is fitted only to correct responses
-badT  = find(isinf(rt) | rt<0.1 | acc < 1 | isnan(resp));%LBA is fitted only to correct responses
-
-% deal with locations
-
-loc = LocStim;
-
-% deal with conditions
-conds = MEG_RT(:,4);
-
-end
 % 
 % 
 % for idxsubj = 1:length(sname)    % Best mdoel
@@ -205,7 +168,23 @@ end
 %     [pmod_FT_H{idxsubj,1},priorMod_FT_H{idxsubj,1},qobs_Free_H{idxsubj, 1},foo3H{idxsubj,1},cumRT_Free_H{idxsubj,1}]=mod_stats_sim('LBA_spec_FT3_c_even_template',par_FreeH(idxsubj,1),1,data2fit{idxsubj, 2}.allObs(:,1),3,1);%#ok %,goalstat_free_norep.cond_ratio);
 %     [pmod_spec_norep_H{idxsubj,1},foo2H{idxsubj,1},qobs_Spec_H{idxsubj,1},foo4H{idxsubj,1},cumRT_Spec_H{idxsubj,1}]=mod_stats_sim('LBA_spec_c_even_template',par_SpecH(idxsubj,1),1,data2fit{idxsubj, 4}.allObs(:,1),4,1);%#ok %,goalstat_spec_norep.cond_ratio);
 %         
-%     
+%      [~,~,~,~,cumRTLL]=mod_stats_sim('LBA_spec_c_even_template',paramLL,1,data2fit{1,1}.allObs(:,1),1,1);
+%      [~,~,~,~,cumRTHL]=mod_stats_sim('LBA_spec_c_even_template',paramHL,1,data2fit{1,2}.allObs(:,1),1,1);
+%      
+%      [~,~,~,~,cumRTLH]=mod_stats_sim('LBA_spec_FT3_c_even_template',paramLH,1,data2fit{1,3}.allObs(:,1),3,1);
+%      [~,~,~,~,cumRTHH]=mod_stats_sim('LBA_spec_FT3_c_even_template',paramHH,1,data2fit{1,4}.allObs(:,1),3,1);     
+% 
+%      figure;
+%      subplot(2,2,1)
+%      plot(data2fit{1,1}.allObs(1:end-1,1),data2fit{1,1}.allObs(1:end-1,2),'ko');hold on;plot(data2fit{1,1}.allObs(1:end-1,1),cumRTLL(1:end-1),'r*');hold on;
+%         subplot(2,2,2)
+%      plot(data2fit{1,2}.allObs(1:end-1,1),data2fit{1,2}.allObs(1:end-1,2),'ko');hold on;plot(data2fit{1,2}.allObs(1:end-1,1),cumRTHL(1:end-1),'r*');hold on;
+%         subplot(2,2,3)
+%      plot(data2fit{1,3}.allObs(1:end-1,1),data2fit{1,3}.allObs(1:end-1,2),'ko');hold on;plot(data2fit{1,3}.allObs(1:end-1,1),cumRTLH(1:end-1),'r*');hold on;
+%         subplot(2,2,4)
+%      plot(data2fit{1,4}.allObs(1:end-1,1),data2fit{1,4}.allObs(1:end-1,2),'ko');hold on;plot(data2fit{1,4}.allObs(1:end-1,1),cumRTHH(1:end-1),'r*');hold on;
+%      
+     
 % end
 % 
 % for s = 1:numel(sname)

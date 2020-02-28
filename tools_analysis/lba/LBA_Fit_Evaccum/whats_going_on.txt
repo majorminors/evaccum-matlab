@@ -1,0 +1,13 @@
+So we start in:
+
+run_fitbehav_PD
+change the paths for everything, and pull the data from the place we want (sample IDs)
+we need the updates scheduler code from Ale, although for testing it won't matter, because we'll debug locally.
+create the jobs, then have a switch to test locally, or on the scheduler (running fun_fitbehav instead of the bash script at the bottom).
+
+fun_fitbehav_LBA_PD
+you don't need to worry about references to locstim. Maybe remove?
+
+getModelParam_cell_RDK
+fitparams_refine_template_RDK
+firerror_cell_RDK (which gets the error and BIC from each condition and then combines it to a global BIC for the model to optimise)

@@ -56,7 +56,7 @@ for idxsubj = 1:length(sname)
 
 % do descriptive stats
 
-% REMOVES NANs for INCOMPLETE SESSIONS - i don't think 
+% REMOVES NANs for INCOMPLETE SESSIONS - I don't think we need this
 [rt,loc,conds,badT,resp,acc] = prepare_data(MEG_RT,LocStim);
 
 minRT(idxsubj) = min(rt(rt>=0.1)); % not used
