@@ -14,26 +14,48 @@ fprintf('setting up %s\n', mfilename);
 p = struct(); % for parameters
 t = struct(); % for temp vars
 
-% set up variables
+%% set up variables
+
+% required if not testing
 rootdir = 'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code';%'\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % root directory - used to inform directory mappings
 datadir = fullfile(rootdir,'data\behav_pilot_2');
+lbadatadir = fullfile(datadir,'lba_fit'); % expects to find your data here and will save results in a sub-folder here
+p.data_name = 'prepped_data.mat'; % data file name
+
 p.save_name = 'Model_%s.mat';
 p.rng_seed = 17; % the rng seed number - fixed for reproducibility
-p.testing = 1; % if you want to use the testing data, then switch to 1 and add the data folder to the path, else to 0
+t.local = 1; % run locally? Or 0 will use cbu scheduler
+p.testing = 1; % if you want to use testing data, then switch to 1 and add the data folder to the path, else to 0. will save to pwd/test_results/
 t.subject = 1; % if testing, which subject do you want to run?
+t.test_data_name = 'lba_test_data.mat'; % name of your test data
+
+% these are all the model variants we want to test - different combinations of free parameters
+p.design_space={[1,3],[1,4],[1,3,4],[1,3,4,5],[1,2],[1,2,3],[1,2,4],[1,2,3,4],[1,2,3,4,5],[1,5],[1,3,5],[1,4,5],[1,2,5],[1,2,3,5],[1,2,4,5]};
+settings.randiter  = 100; % random search iters before optimization
+settings.nosession = 1; % optimization iterations - more equals less chance of ending up in a local minimum
+settings.overwrite = 1;
 
 % directory mappings
-addpath(genpath(fullfile(rootdir, 'tools_analysis'))); % add tools folder to path (includes LBA scripts)
-lbadatadir = fullfile(datadir,'lba_fit'); % find directory with prepped data
-p.save_path = fullfile(lbadatadir, 'results');
+if ~p.testing
+    addpath(genpath(fullfile(rootdir, 'tools_analysis'))); % add tools folder to path (includes LBA scripts)
+    p.save_path = fullfile(lbadatadir, 'results');
+    if ~exist(p.save_path,'dir')
+        mkdir(p.save_path);
+    end
+end
 
 % get the data
 if p.testing
-   warning('you are running in test mode');
-   t.alldata = load('lba_test_data.mat');
+   warning('you are running in test mode; saving into current folder');
+   p.save_path = fullfile(pwd,'test_results');
+   if ~exist(p.save_path,'dir')
+       mkdir(p.save_path);
+   end
+   
+   t.alldata = load(t.test_data_name);
    t.data = t.alldata.d.subjects(t.subject,:);
 else
-    t.fileinfo = dir(fullfile(lbadatadir,'prepped_data.mat'));
+    t.fileinfo = dir(fullfile(lbadatadir,p.data_name));
     t.datapath = fullfile(lbadatadir,t.fileinfo.name);
     
     % get the data
@@ -43,20 +65,8 @@ end
 
 %% enter the data
 data = t.data; % here's the data
-
-%% Set model parameters
-fprintf('establishing model parameters for %s\n', mfilename);
-
-% these are all the model variants we want to test - different combinations of free parameters
-p.design_space={[1,3],[1,4],[1,3,4],[1,3,4,5],[1,2],[1,2,3],[1,2,4],[1,2,3,4],[1,2,3,4,5],[1,5],[1,3,5],[1,4,5],[1,2,5],[1,2,3,5],[1,2,4,5]};
-
-settings.randiter  = 100; % random search iters before optimization
-settings.nosession = 25; % optimization iterations - more equals less chance of ending up in a local minimum
-settings.overwrite = 0;
-
-
 %% Prepare for parallel processing
-if ~p.testing
+if ~p.testing && ~t.local
     fprintf('prepping for parallel processing %s\n', mfilename);
     % OUT OF DATE 28 FEB 2020
     S = cbu_scheduler();
@@ -110,8 +120,11 @@ end; clear imod ind;
 fprintf('submitting jobs from %s\n', mfilename);
 
 if p.testing % test on one subject
-    warning('you are testing locally');
+    warning('you are testing locally on subject %1.0f',t.subject);
     fun_fitbehav_LBA_PD(J(t.subject).input_args{1},data(t.subject))
+elseif t.local && ~p.testing % run locally
+    warning('you are running locally');
+    fun_fitbehav_LBA_PD(J.input_args{1},data)
 else % submit the jobs to the cluster
     % remove any hanging temp files from previous runs with bash script
     !rm -r '/home/at07/matlab/jobs/LBA/*'
@@ -119,4 +132,5 @@ else % submit the jobs to the cluster
 end
 
 % [status, id]=debrief_cluster(S.JobStorageLocation);
+
 

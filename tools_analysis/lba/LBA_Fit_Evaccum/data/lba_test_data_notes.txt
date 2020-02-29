@@ -1,3 +1,3 @@
 d.fileinfo = information about matlab files read in 
-d.subjects = rowwise subject data, with subject id in first column and lba-relevent data organised thus: 
+d.subjects = rowise subject data, with subject id in first field and lba-relevent data in second field organised thus: 
 condition | condition number | button pressed | reaction time (ms) | accuracy | trial type (1-64) | condition (LcLr,LcHr,HcLr,HcHr)

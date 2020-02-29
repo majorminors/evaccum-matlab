@@ -10,8 +10,8 @@
 % produces:
 % 
 % d.fileinfo = information about matlab files read in
-% d.subjects = rowwise subject data, with subject id in first column and
-%             lba-relevent data organised thus:
+% d.subjects = rowise subject data, with subject id in first field and
+%             lba-relevent data in second field organised thus:
 %             condition | condition number | button press | reaction time (in ms) | accuracy | trial type | 
 %
 %             trial type (1-64) is each unique trial condition - 2
@@ -40,7 +40,7 @@ datadir = fullfile(rootdir,'data\behav_pilot_2');
 p.datafilepattern = '*_EvAccum.mat';
 p.savefilename = 'prepped_data';
 p.notesfilename = [p.savefilename,'_notes.txt'];
-p.notes = 'd.fileinfo = information about matlab files read in \r\nd.subjects = rowwise subject data, with subject id in first column and lba-relevent data organised thus: \r\ncondition | condition number | button pressed | reaction time (ms) | accuracy | trial type (1-64) | condition (LcLr,LcHr,HcLr,HcHr)';
+p.notes = 'd.fileinfo = information about matlab files read in \r\nd.subjects = rowise subject data, with subject id in first field and lba-relevent data in second field organised thus: \r\ncondition | condition number | button pressed | reaction time (ms) | accuracy | trial type (1-64) | condition (LcLr,LcHr,HcLr,HcHr)';
 t.conditions = {'LcLr','LcHr','HcLr','HcHr'}; % 2x2 coherence and rule
 t.conditioncodes = {1,2,3,4};
 
