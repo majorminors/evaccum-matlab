@@ -93,7 +93,7 @@ paramHH=paramLH;
 if ~isempty(feature_indx{3})
     paramLL.B=paramLL.B*param(feature_indx{3}(1));%note: Low is a proportion of High
     paramHL.B=paramHL.B*param(feature_indx{3}(2));%note: Low is a proportion of High
-%     paramHH.B=paramHH.B*param(feature_indx{3}(3));%note: Low is a proportion of High
+    paramHH.B=paramHH.B*param(feature_indx{3}(3));%note: Low is a proportion of High
 
 end
 % param_Frep.alpha=1;
@@ -102,7 +102,7 @@ end
 if ~isempty(feature_indx{4})
     paramLL.Ame=paramLL.Ame*param(feature_indx{4}(1));
     paramHL.Ame=paramHL.Ame*param(feature_indx{4}(2));
-%     paramHH.Ame=paramHH.Ame*param(feature_indx{4}(3));
+    paramHH.Ame=paramHH.Ame*param(feature_indx{4}(3));
     
 end
 % param_Frep.beta=1;
@@ -111,7 +111,7 @@ end
 if ~isempty(feature_indx{5})
     paramLL.T0=paramLL.T0*param(feature_indx{5}(1));
     paramHL.T0=paramHL.T0*param(feature_indx{5}(2));
-%     paramHH.T0=paramHH.T0*param(feature_indx{5}(3));
+    paramHH.T0=paramHH.T0*param(feature_indx{5}(3));
     
 end
 % param_Frep.theta=1;

@@ -1,4 +1,4 @@
-function [f_error, BIC, pmod_LL,pmod_HL, pmod_LH,pmod_HH,priorMod_HA,qobs] = fiterror_cell_RDK (param, mod_feature, data2fit)
+function [f_error, BIC, pmod_LL,pmod_HL, pmod_LH,pmod_HH,priorMod_HA,qobs,params] = fiterror_cell_RDK (param, mod_feature, data2fit)
 % fit the model to freechoice and specified selection
 % param [boundary, X0 range, drift 1, drift 2, drift 3, drift 4, drift std,
 % T0, theta,alpha] 
@@ -23,7 +23,11 @@ f_error=0;
 
 [num_param,parLL,parHL,parLH,parHH]=getModelParam_cell_RDK(mod_feature,2,param);
 
-
+params = struct();
+params.LL = parLL;
+params.HL = parHL;
+params.LH = parLH;
+params.HH = parHH;
 
 
 qobs=cell(1,4);

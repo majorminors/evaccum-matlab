@@ -12,6 +12,10 @@ Exp script edits
 
 Analysis script edits
 ----------------
+- LBA - plotting (and saving output)
+- LBA - recovering parameters via simulation (Ale)
+- LBA - run and select model scripts
+
 - update to use actual number of blocks completed (d.blocks_completed) instead of 'block'
 - update to reflect new MEG trigger values
 - LBA update to use response key code (d.resp_keycode) which records actual key pressed rather than coding it directly in a_dataprep

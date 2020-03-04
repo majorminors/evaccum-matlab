@@ -27,7 +27,7 @@ end
 num_subjs = sum(~cellfun('isempty',{data.id})); % get the number of not empty arrays from the first field of the 'data' structure
 
 %initialise cells
-data2fit={}; ;%#ok
+data2fit={};
 
 for idxsubj = 1:length(num_subjs)
     %%
@@ -50,7 +50,7 @@ for idxsubj = 1:length(num_subjs)
     conds = dataValid(:,1);
     resp = dataValid(:,2);
     rt = dataValid(:,3);
-    acc = dataValid(:,4);    
+    acc = dataValid(:,4);
     
     % do descriptive stats    
     minRT(idxsubj) = min(rt(rt>=0.1)); % not used
@@ -58,7 +58,8 @@ for idxsubj = 1:length(num_subjs)
 
     %%
     %Pool conditions according to design matrix & calculate stats
-    for level = 1:4 % four conditions
+    unique_conds = unique(conds);
+    for level = 1:length(unique_conds) % for all conditions
         
         trialn = conds == level;
         dataRaw{idxsubj,level}  = [resp(trialn) rt(trialn)];
@@ -107,8 +108,7 @@ nosession = settings.nosession;
 
 %%
 
-
-numParam   = getModelParam_cell_RDK(Model_Feature,2); % you will change this 4 to two - reflects response options
+numParam   = getModelParam_cell_RDK(Model_Feature,2); % the 2 here reflects response options
 parange=[zeros(1,numParam);zeros(1,numParam)+10]';
 
 
@@ -120,28 +120,45 @@ end
 
 save(savename,'bestpar','bestval','BIC','rseed','settings');%,'bestpar_PA','bestval_PA','BIC_PA')
 
+% you need to pull this stuff from fiterror_cell_RDK I think. Have made
+% some modifications there but no idea how to get it to here
+params = struct():
+params(1) = ;
+params(2) = ;
+params(3) = ;
+params(4) = ;
+
+% I think this will break with multiple participants - may need an index
+% for subjects
+probmod = []; cumRT = [];
+for level = 1:length(unique_conds) % for all conditions
+    [~,probmod(level),~,~,cumRT(:,level)]=mod_stats_sim('LBA_spec_FT3_c_even_template',params(level),1,data2fit{:,level}.allObs(:,1),2,1);
+end
+
 % Plotting...
-% for iplot = 1:length(data2fit)
-%     
-%     figure; hold on;
-%     plot(data2fit{iplot}.allObs(1:end-1,1),data2fit{iplot}.allObs(1:end-1,2),'k','Marker','o');
-%     plot(data2fit{iplot}.allObs(1:end-1,1),cumRT_Free(1:end-1),'r','Marker','*');
-%     legend({'data','model'},'Location','SouthEast');
-%     % title({['Model params (B, A, Astd,To): [' num2str(bestpar(best_indx,:),2) ']'] });
-%     title('Chosen condition');
-%     ylim([0 1]);
-%     % xlim([0.2,0.6]);
-%     ylabel('Cumulative probability');
-%     xlabel('Response Time (s)');
-%     
-%     figure; hold on;
-%     temp=[data2fit{iplot}.priorProb{1:end}];
-%     choiceProb=[temp;priorMod_FT];
-%     bar(choiceProb');
-%     legend({'data','model'});
-%     set(gca,'XTick',[1:2]);
-%     set(gca,'XTickLabel',{'Button 1' 'Button 2'});
-%     title('Choice probability');
-% end; clear iplot;
+if length(unique_conds) ~= length(data2fit); error('you dont appear to have as many conditions as sets of data2fit'); end % sanity check
+for level = 1:length(unique_conds) % for all conditions
+    
+        figure; hold on;
+        plot(data2fit{level}.allObs(1:end-1,1),data2fit{level}.allObs(1:end-1,2),'k','Marker','o');
+        plot(data2fit{level}.allObs(1:end-1,1),cumRT(1:end-1,level),'r','Marker','*');
+        legend({'data','model'},'Location','SouthEast');
+        % title({['Model params (B, A, Astd,To): [' num2str(bestpar(best_indx,:),2) ']'] });
+        title('Chosen condition');
+        ylim([0 1]);
+        % xlim([0.2,0.6]);
+        ylabel('Cumulative probability');
+        xlabel('Response Time (s)');
+        
+        figure; hold on;
+        temp=[data2fit{level}.priorProb{1:end}];
+        choiceProb=[temp;probmod(level)];
+        bar(choiceProb');
+        legend({'data','model'});
+        set(gca,'XTick',[1:2]);
+        set(gca,'XTickLabel',{'Button 1' 'Button 2'});
+        title('Choice probability');
+    
+end; clear level;
 
 end
