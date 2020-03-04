@@ -16,8 +16,10 @@ t = struct(); % for temp vars
 
 %% set up variables
 
-% required if not testing
+% required
 rootdir = 'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code';%'\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % root directory - used to inform directory mappings
+
+% only required if not testing
 datadir = fullfile(rootdir,'data\behav_pilot_2');
 lbadatadir = fullfile(datadir,'lba_fit'); % expects to find your data here and will save results in a sub-folder here
 p.data_name = 'prepped_data.mat'; % data file name
@@ -121,10 +123,14 @@ fprintf('submitting jobs from %s\n', mfilename);
 
 if p.testing % test on one subject
     warning('you are testing locally on subject %1.0f',t.subject);
-    fun_fitbehav_LBA_PD(J(t.subject).input_args{1},data(t.subject))
+    for ijob = 1:length(J)
+        fun_fitbehav_LBA_PD(J(ijob).input_args{1},data(t.subject))
+    end; clear ijob;
 elseif t.local && ~p.testing % run locally
-    warning('you are running locally');
-    fun_fitbehav_LBA_PD(J.input_args{1},data)
+    warning('you are running locally, on all participants');
+    for ijob = 1:length(J)
+        fun_fitbehav_LBA_PD(J(ijob).input_args{1},data)
+    end; clear ijob;
 else % submit the jobs to the cluster
     % remove any hanging temp files from previous runs with bash script
     !rm -r '/home/at07/matlab/jobs/LBA/*'
