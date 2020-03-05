@@ -20,7 +20,7 @@ t = struct(); % for temp vars
 %% set up variables
 
 % required
-rootdir = 'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code';%'\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % root directory - used to inform directory mappings
+rootdir = '/group/woolgar-lab/projects/Dorian/EvAccum'; %'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code';%'\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % root directory - used to inform directory mappings
 
 % only required if not testing
 datadir = fullfile(rootdir,'data','behav_pilot_2');
@@ -30,8 +30,8 @@ jobdir = fullfile(lbadatadir,'scheduled_jobs'); % where you'll save any schedule
 toolsdir = fullfile(rootdir, 'tools_analysis','lba','LBA_Fit_Evaccum','scripts'); % where are all your scripts/tools?
 
 p.save_name = 'Model_%s.mat';
-p.rng_seed = 17; % the rng seed number - fixed for reproducibility
-t.local = 1; % run locally? Or 0 will use cbu scheduler
+p.rng_seed = 19; % the rng seed number - fixed for reproducibility
+t.local = 0; % run locally? Or 0 will use cbu scheduler
 p.testing = 0; % if you want to use testing data, then switch to 1 and add the data folder to the path, else to 0. will save to pwd/test_results/
 t.subject = 1; % if testing, which subject do you want to run?
 t.test_data_name = 'lba_test_data.mat'; % name of your test data
@@ -74,7 +74,7 @@ end
 data = t.data; % here's the data
 %% Prepare for parallel processing
 if ~p.testing && ~t.local
-    fprintf('prepping for parallel processing %s\n', mfilename);
+    fprintf('prepping %s for parallel processing\n', mfilename);
 
     S = cbu_scheduler('custom',{'compute',30,5,36000});
     if ~exist(jobdir,'dir')

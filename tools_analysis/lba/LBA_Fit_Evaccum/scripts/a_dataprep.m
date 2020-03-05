@@ -35,7 +35,7 @@ d = struct(); % set up a structure for the data info
 t = struct(); % set up a structure for temp data
 
 % set up variables
-rootdir = 'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code';%'\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % root directory - used to inform directory mappings
+rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; %'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code'; % root directory - used to inform directory mappings
 datadir = fullfile(rootdir,'data\behav_pilot_2');
 p.datafilepattern = '*_EvAccum.mat';
 p.savefilename = 'prepped_data';
