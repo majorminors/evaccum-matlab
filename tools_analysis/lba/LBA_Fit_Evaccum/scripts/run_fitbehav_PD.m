@@ -4,6 +4,11 @@
 %
 % path to saved file can be found in p.save_path
 
+% to run go to matlab opened terminal and run:
+% squeue -u username (dm06)
+
+% do 100 optimisations
+
 %% set up
 
 close all;
@@ -71,23 +76,21 @@ data = t.data; % here's the data
 if ~p.testing && ~t.local
     fprintf('prepping for parallel processing %s\n', mfilename);
     % OUT OF DATE 28 FEB 2020
-    S = cbu_scheduler();
-    S.NumWorkers = 37;
-    S.SubmitArguments = '-l mem=20GB -l walltime=96:00:00';
-    S.JobStorageLocation = '/home/at07/matlab/jobs/LBA/';
+    S = cbu_scheduler('custom',{'compute',30,5,36000});
+    jobdir = ''; error('fix this');
+    if ~exist(jobdir,'dir')
+        mkdir(jobdir);
+    else
+        eval(sprintf('!rm -r --interactive=never %s*',jobdir));
+    end
+    
+    S.JobStorageLocation = jobdir;
+    
     
     % up to date - tells the scheduler the directories needed for the analysis
     % (so will need to duplicate your own genpaths)
-    dependencies_path = {
-        '/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/Preprocessing/'
-        '/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/Preprocessing/lib/'
-        
-        '/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/Behav/'
-        '/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/Behav/MEGBehav/'
-        '/imaging/at07/Matlab/Projects/CBU2016/RDKUnc/Model/'
-        '/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/Model/fitBehav/'
-        '/imaging/at07/Matlab/Projects/CBU2015/RDKUnc/Model/LBA/Templates/'
-        
+    error('be generous')
+    dependencies_path = {  cant genpath - must add each individually?      
         };
 end
 
@@ -105,14 +108,14 @@ for imod = 1:length(p.design_space) % for the number of combinations of free par
         settings.savename = fullfile(p.save_path,t.subj_file_name);  
         settings.modfeat  = p.design_space{imod}; % saves the model (which free parameters)
         settings.rseed = p.rng_seed; % fixed for reproducibility
+        settings.data = data;
 
         % then, depending on overwrite setting, add this job
         if ~exist(settings.savename,'file')||settings.overwrite
             ind = ind + 1;
             J(ind).task = funanon; % run the fitting function as the task
             J(ind).n_return_values = 0;
-            J(ind).input_args{1} = settings;
-            J(ind).input_args{2} = data;
+            J(ind).input_args = {settings};
             J(ind).depends_on = 0; % if this requires previous scripts to be run (i.e. 'ind' =1 needs be be done before 'ind' =2)
         end
 
@@ -132,8 +135,6 @@ elseif t.local && ~p.testing % run locally
         fun_fitbehav_LBA_PD(J(ijob).input_args{1},data)
     end; clear ijob;
 else % submit the jobs to the cluster
-    % remove any hanging temp files from previous runs with bash script
-    !rm -r '/home/at07/matlab/jobs/LBA/*'
     cbu_qsub(J, S, dependencies_path) % then submit
 end
 

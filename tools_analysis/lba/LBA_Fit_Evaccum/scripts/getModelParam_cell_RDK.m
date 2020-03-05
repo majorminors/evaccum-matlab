@@ -27,10 +27,12 @@ basic_param=N+2;  %[B \mu_1 : \mu_4, t0] - mu = response options (accumulators r
 
 varC0 =ismember(2,mod_feature);
 
+% so the below (at 3) is saying we need 3 additional parameters above the
+% one we will generate
 if varC0
-    feature_space=[N N 2 2 2 0 0; 1 0 0 0 0 0 0]; % [feature ticked; feature unticked]
+    feature_space=[N N 3 3 3 0 0; 1 0 0 0 0 0 0]; % [feature ticked; feature unticked]
 else
-    feature_space=[N 0 2 2 2 0 0; 1 0 0 0 0 0 0];
+    feature_space=[N 0 3 3 3 0 0; 1 0 0 0 0 0 0];
     defaultC0 = 0.1;
 end
 % get indexfor feature from param vector: mod_feature selects what feature
@@ -60,7 +62,7 @@ end
 
 feature_indx=cell(1,size(feature_space,2));
 for i=1:length(feature_len)
-    if feature_len(i)~=0;
+    if feature_len(i)~=0
         feature_indx{i}=basic_param+sum(feature_len(1:(i-1)))+(1:feature_len(i)); % C0, B, \mu ratio, t0, \mu in spec trials
     end
 end
