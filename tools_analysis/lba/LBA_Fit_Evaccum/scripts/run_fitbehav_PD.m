@@ -76,7 +76,7 @@ data = t.data; % here's the data
 if ~p.testing && ~t.local
     fprintf('prepping %s for parallel processing\n', mfilename);
 
-    S = cbu_scheduler('custom',{'compute',30,5,36000});
+    S = cbu_scheduler('custom',{'compute',30,20,345600});
     if ~exist(jobdir,'dir')
         mkdir(jobdir);
     else
@@ -105,8 +105,8 @@ ind = 0;
 
 for imod = 1:length(p.design_space) % for the number of combinations of free parameters you specified earlier (model variants)
     p.numfile = num2str(imod);
-    t.subj_file_name = sprintf(p.save_name,p.numfile);
-    settings.savename = fullfile(p.save_path,t.subj_file_name);
+    t.model_file_name = sprintf(p.save_name,p.numfile);
+    settings.savename = fullfile(p.save_path,t.model_file_name);
     settings.modfeat  = p.design_space{imod}; % saves the model (which free parameters)
     settings.rseed = p.rng_seed; % fixed for reproducibility
     if p.testing
