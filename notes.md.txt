@@ -13,7 +13,7 @@ Exp script edits
 Analysis script edits
 ----------------
 - LBA - plotting (and saving output)
-- LBA - recovering parameters via simulation (Ale)
+	- consider saving data2fit or else running the plotting after the function
 - LBA - run and select model scripts
 
 - update to use actual number of blocks completed (d.blocks_completed) instead of 'block'
