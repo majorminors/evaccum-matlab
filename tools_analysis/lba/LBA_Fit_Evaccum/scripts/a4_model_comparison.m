@@ -26,6 +26,7 @@ addpath(genpath(toolsdir)); % add tools folder to path
 % 4 - Drift rate differ across conditions 
 % 5 - t0 differ across conditions 
 
+error('change this -- maybe pull it out and have it saved with the models?')
 design_space={[1,3],[1,4],[1,3,4],[1,3,4,5],[1,2],[1,2,3],[1,2,4],[1,2,3,4],[1,2,3,4,5],[1,5],[1,3,5],[1,4,5],[1,2,5],[1,2,3,5],[1,2,4,5]};
 
 mod_num = 2;
@@ -35,6 +36,7 @@ Model_Feature = design_space{mod_num};
 
 flabs = fullfile(rootdir,'Model_%s.mat');
 %%
+error('change this')
 BIC_all =[];
 for m = [1:4 6:15]%1:length(design_space)
     try
@@ -69,6 +71,7 @@ end
 
 
 %% plot results
+error('change this')
 BIC_all(5,:)=[]
 [posterior_all, out_all] = VBA_groupBMC(BIC_all) ;
 %out_pd;
@@ -102,6 +105,7 @@ pos2 = [205   429   912   377];
      set(gcf,'Color','white')
 %     
 %     %export_fig(['ProbModComp','.png'],'-png','-transparent','-painters')
+error('change this')
 export_fig( '/imaging/at07/Matlab/Figures/PD_LBA/Model/mod_comp.jpeg','-transparent');
 % 
 % plot frequencies
@@ -141,6 +145,7 @@ set(hp,'FaceColor',[0.3843    0.4784    0.6157],'LineStyle','none')
      h = get(gca,'Children');
      set(gca,'Children',[h(3) h(2) h(1) h(4)]);
 %     %export_fig(['ProbModComp','.png'],'-png','-transparent','-painters')
+error('change this')
 export_fig( '/imaging/at07/Matlab/Figures/PD_LBA/Model/mod_freq.jpeg','-transparent');
 % plot CTR attributions
 fig76 = figure(76);
@@ -170,6 +175,7 @@ hc = colorbar('peer',gca,'location','NorthOutside');
  set(gcf,'Color','white')
 %     
 %     %export_fig(['ProbModComp','.png'],'-png','-transparent','-painters')
+error('change this')
 export_fig( '/imaging/at07/Matlab/Figures/PD_LBA/Model/ctr_attributions.jpeg','-transparent');
 % 
 
