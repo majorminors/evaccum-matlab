@@ -89,7 +89,7 @@ end; clear idxsubj;
 %% get model data
 
 d.fileinfo = dir(fullfile(modeldir, p.datafilepattern)); % find all the datafiles and get their info
-for i = 1:length(d.fileinfo) % loop through each
+for i = 1%:length(d.fileinfo) % loop through each
     t.path = fullfile(modeldir, d.fileinfo(i).name);% get the full path to the file
     fprintf(1, 'working with %s\n', t.path); % print that so you can check
     
@@ -112,10 +112,9 @@ for i = 1:length(d.fileinfo) % loop through each
         t.params(4) = parHH;
         clear parLL parLH parHL parHH
         
-        error('you are here: mod_stats_sim producing 6 outputs and cumRT is only a single number');
         t.probmod = []; t.cumRT = [];
         for level = 1:length(unique_conds) % for all conditions
-            [~,t.probmod(level),~,~,t.cumRT(:,level)]=mod_stats_sim('LBA_spec_FT3_c_even_template',t.params(level),1,t.data2fit{:,level}.allObs(:,1),2,1);
+            [~,t.probmod(:,level),~,~,t.cumRT(:,level)]=mod_stats_sim('LBA_spec_FT3_c_even_template',t.params(level),1,t.data2fit{:,level}.allObs(:,1),2,1);
         end; clear level;
         
         % Plotting...
@@ -134,8 +133,8 @@ for i = 1:length(d.fileinfo) % loop through each
             xlabel('Response Time (s)');
             
             figure; hold on;
-            temp=[t.data2fit{level}.priorProb{1:end}];
-            t.choiceProb=[temp;t.probmod(level)];
+            temp=[t.data2fit{level}.priorProb{1,1}(1),t.data2fit{level}.priorProb{1,2}(1)];
+            t.choiceProb=[temp;t.probmod(:,level)'];
             bar(t.choiceProb');
             legend({'data','model'});
             set(gca,'XTick',[1:2]);

@@ -1,17 +1,32 @@
-General Improvements
-====================
+To Dos
+======
+
 Testing reqs.
 -------------
 - test new triggers are working
 - test that d.resp_keycode works as expected (i.e. records a code for the key pressed)
 - test that d.blocks_completed works as expected (i.e. records the actual number of blocks completed)
 
+LBA:
+----
+- plot winning model and model that wins when winning model removed
+- plot B  between conditions
+- plot t0 for subjects (between 200-600ms) - find a ref for this
+- do some stats?
+ - Jasper
+ - rm anova
+ - bayesian?
+
+
+General Improvements
+====================
+
 Exp script edits
------------
+-----------------
 
 
 Analysis script edits
-----------------
+----------------------
 - LBA - plotting (and saving output)
 	- consider saving data2fit or else running the plotting after the function
 - LBA - run and select model scripts

@@ -5,7 +5,7 @@ function [dname,idnum] = getnames(droot,dlength,condstring)
 %dlength max length of file/directory names.
 %condstring is the argument for dir(*condstring)
 
-if droot(end) ~= '/';droot(end+1)='/';end
+if droot(end) ~= filesep;droot(end+1)=filesep;end
 
 if ~exist('dlength','var') || isempty(dlength)
     dlength = 1000;
