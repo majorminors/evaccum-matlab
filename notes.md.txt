@@ -9,6 +9,7 @@ Testing reqs.
 
 LBA:
 ----
+- familiarise yourself with what you did - https://mbb-team.github.io/VBA-toolbox/wiki/BMS-for-group-studies/
 - plot winning model and model that wins when winning model removed
 - plot B  between conditions
 - plot t0 for subjects (between 200-600ms) - find a ref for this
