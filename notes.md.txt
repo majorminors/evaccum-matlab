@@ -30,7 +30,8 @@ Analysis script edits
 ----------------------
 - LBA - plotting (and saving output)
 	- consider saving data2fit or else running the plotting after the function
-- LBA - run and select model scripts
+- LBA - selecting model
+	- pull design-space out automatically for reading later (maybe put in settings)
 
 - update to use actual number of blocks completed (d.blocks_completed) instead of 'block'
 - update to reflect new MEG trigger values

@@ -26,9 +26,7 @@ addpath(genpath(toolsdir)); % add tools folder to path
 % 4 - Drift rate differ across conditions 
 % 5 - t0 differ across conditions 
 
-error('change this -- maybe pull it out and have it saved with the models?')
 design_space={[1,3],[1,4],[1,3,4],[1,3,4,5],[1,2],[1,2,3],[1,2,4],[1,2,3,4],[1,2,3,4,5],[1,5],[1,3,5],[1,4,5],[1,2,5],[1,2,3,5],[1,2,4,5]};
-
 mod_num = 2;
 Model_Feature = design_space{mod_num};
 
@@ -36,9 +34,8 @@ Model_Feature = design_space{mod_num};
 
 flabs = fullfile(rootdir,'Model_%s.mat');
 %%
-error('change this')
 BIC_all =[];
-for m = [1:4 6:15]%1:length(design_space)
+for m = 1:length(design_space)% [1:4 6:15]%
     try
     flabs =  sprintf('Model_%s.mat',num2str(m)); 
     flabs = fullfile(modeldir,flabs);    
@@ -71,8 +68,7 @@ end
 
 
 %% plot results
-error('change this')
-BIC_all(5,:)=[]
+%BIC_all(5,:)=[] % delete removed models
 [posterior_all, out_all] = VBA_groupBMC(BIC_all) ;
 %out_pd;
 %out_ctr;
@@ -105,8 +101,7 @@ pos2 = [205   429   912   377];
      set(gcf,'Color','white')
 %     
 %     %export_fig(['ProbModComp','.png'],'-png','-transparent','-painters')
-error('change this')
-export_fig( '/imaging/at07/Matlab/Figures/PD_LBA/Model/mod_comp.jpeg','-transparent');
+export_fig(fullfile(modeldir,'model_comparison.jpeg'),'-transparent');
 % 
 % plot frequencies
 fig75 = figure(75);
@@ -145,69 +140,67 @@ set(hp,'FaceColor',[0.3843    0.4784    0.6157],'LineStyle','none')
      h = get(gca,'Children');
      set(gca,'Children',[h(3) h(2) h(1) h(4)]);
 %     %export_fig(['ProbModComp','.png'],'-png','-transparent','-painters')
-error('change this')
-export_fig( '/imaging/at07/Matlab/Figures/PD_LBA/Model/mod_freq.jpeg','-transparent');
-% plot CTR attributions
-fig76 = figure(76);
-pos2 = [ 183   257   876   638];
-   %set(fig75,'Render','OpenGL','Units','pixels','Color',[.95 .95 .95], 'Position', [100 100 650 525],'PaperPosition',[100 100 500 375])
-   set(fig76,'Render','OpenGL','Units','pixels','Color',[.95 .95 .95], 'Position',pos2 ,'PaperPosition',[-2.2767  1.4323 13.0521 8.1354])
-   
-   hi = imagesc(posterior_ctr.r');
-   axis('square')
-   xlabel('models')
-ylabel('subjects')
-title('model attributions')
-set(gca,'xlim',[0.5,K+0.5],'xtick',[1:K],'ylim',[0.5,n+0.5],'ytick',[1:n],'ydir','reverse','clim',[0 1])
-if ~isempty(out_ctr.options.modelNames)
-    set(gca,'xticklabel',out_ctr.options.modelNames)
-end
-set(gca,'visible','on')
-colormap(gca,flipud(bone))   
-blues = cbrewer('seq','Blues',100);   
-colormap(gca,(blues))   
-hc = colorbar('peer',gca,'location','NorthOutside');
-
-   
- set(gca,'FontName','Helvetica','Fontsize',19);
-    
-%   
- set(gcf,'Color','white')
-%     
-%     %export_fig(['ProbModComp','.png'],'-png','-transparent','-painters')
-error('change this')
-export_fig( '/imaging/at07/Matlab/Figures/PD_LBA/Model/ctr_attributions.jpeg','-transparent');
+export_fig(fullfile(modeldir,'model_freq.jpeg'),'-transparent');
+% % plot CTR attributions
+% fig76 = figure(76);
+% pos2 = [ 183   257   876   638];
+%    %set(fig75,'Render','OpenGL','Units','pixels','Color',[.95 .95 .95], 'Position', [100 100 650 525],'PaperPosition',[100 100 500 375])
+%    set(fig76,'Render','OpenGL','Units','pixels','Color',[.95 .95 .95], 'Position',pos2 ,'PaperPosition',[-2.2767  1.4323 13.0521 8.1354])
+%    
+%    hi = imagesc(posterior_ctr.r');
+%    axis('square')
+%    xlabel('models')
+% ylabel('subjects')
+% title('model attributions')
+% set(gca,'xlim',[0.5,K+0.5],'xtick',[1:K],'ylim',[0.5,n+0.5],'ytick',[1:n],'ydir','reverse','clim',[0 1])
+% if ~isempty(out_ctr.options.modelNames)
+%     set(gca,'xticklabel',out_ctr.options.modelNames)
+% end
+% set(gca,'visible','on')
+% colormap(gca,flipud(bone))   
+% blues = cbrewer('seq','Blues',100);   
+% colormap(gca,(blues))   
+% hc = colorbar('peer',gca,'location','NorthOutside');
 % 
-
-% plot PD attributions
-fig76 = figure(76);
-clf
-pos2 = [ 183   257   876   638];
-   %set(fig75,'Render','OpenGL','Units','pixels','Color',[.95 .95 .95], 'Position', [100 100 650 525],'PaperPosition',[100 100 500 375])
-   set(fig76,'Render','OpenGL','Units','pixels','Color',[.95 .95 .95], 'Position',pos2 ,'PaperPosition',[-2.2767  1.4323 13.0521 8.1354])
-   
-   hi = imagesc(posterior_pd.r');
-   axis('square')
-   xlabel('models')
-ylabel('subjects')
-title('model attributions')
-set(gca,'xlim',[0.5,K+0.5],'xtick',[1:K],'ylim',[0.5,n+0.5],'ytick',[1:n],'ydir','reverse','clim',[0 1])
-if ~isempty(out_pd.options.modelNames)
-    set(gca,'xticklabel',out_pd.options.modelNames)
-end
-set(gca,'visible','on')
-%colormap(gca,flipud(bone))   
-blues = cbrewer('seq','Blues',100);   
-colormap(gca,(blues))   
-hc = colorbar('peer',gca,'location','NorthOutside');
-
-   
- set(gca,'FontName','Helvetica','Fontsize',19);
-    
-%   
- set(gcf,'Color','white')
+%    
+%  set(gca,'FontName','Helvetica','Fontsize',19);
 %     
-%     %export_fig(['ProbModComp','.png'],'-png','-transparent','-painters')
-export_fig( '/imaging/at07/Matlab/Figures/PD_LBA/Model/pd_attributions.jpeg','-transparent');
+% %   
+%  set(gcf,'Color','white')
+% %     
+% %     %export_fig(['ProbModComp','.png'],'-png','-transparent','-painters')
+% export_fig(fullfile(modeldir,'ctr_attributions.jpeg'),'-transparent');
+% % 
 % 
+% % plot PD attributions
+% fig76 = figure(76);
+% clf
+% pos2 = [ 183   257   876   638];
+%    %set(fig75,'Render','OpenGL','Units','pixels','Color',[.95 .95 .95], 'Position', [100 100 650 525],'PaperPosition',[100 100 500 375])
+%    set(fig76,'Render','OpenGL','Units','pixels','Color',[.95 .95 .95], 'Position',pos2 ,'PaperPosition',[-2.2767  1.4323 13.0521 8.1354])
+%    
+%    hi = imagesc(posterior_pd.r');
+%    axis('square')
+%    xlabel('models')
+% ylabel('subjects')
+% title('model attributions')
+% set(gca,'xlim',[0.5,K+0.5],'xtick',[1:K],'ylim',[0.5,n+0.5],'ytick',[1:n],'ydir','reverse','clim',[0 1])
+% if ~isempty(out_pd.options.modelNames)
+%     set(gca,'xticklabel',out_pd.options.modelNames)
+% end
+% set(gca,'visible','on')
+% %colormap(gca,flipud(bone))   
+% blues = cbrewer('seq','Blues',100);   
+% colormap(gca,(blues))   
+% hc = colorbar('peer',gca,'location','NorthOutside');
+% 
+%    
+%  set(gca,'FontName','Helvetica','Fontsize',19);
+%     
+% %   
+%  set(gcf,'Color','white')
+% %     
+% %     %export_fig(['ProbModComp','.png'],'-png','-transparent','-painters')
+% export_fig( fullfile(modeldir,'pd_attributions.jpeg'),'-transparent');
+% % 
 close all
