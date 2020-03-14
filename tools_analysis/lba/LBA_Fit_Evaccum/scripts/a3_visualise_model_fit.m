@@ -10,7 +10,7 @@ d = struct(); % set up a structure for the data info
 t = struct(); % set up a structure for temp data
 
 % set up variables
-rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; %'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code'; % root directory - used to inform directory mappings
+rootdir = 'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code'; %'\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % % root directory - used to inform directory mappings
 
 datadir = fullfile(rootdir,'data','behav_pilot_2');
 
@@ -119,31 +119,57 @@ for i = 1%:length(d.fileinfo) % loop through each
         
         % Plotting...
         if length(unique_conds) ~= length(t.data2fit); error('you dont appear to have as many conditions as sets of t.data2fit'); end % sanity check
+        
+        % hold onto T0 to plot later
+        non_dec_time(idxsubj) = t.params.T0;
+        
+%         % plot parameters
+%         %   t.params(1) = LL; t.params(2) = LH; t.params(3) = HL; t.params(4) = HH;
+%         %   param names = B C0 Ame Astd T0
+%         figure; hold on;
+%         temp=[mean(t.params(1).B),mean(t.params(2).B),mean(t.params(3).B),mean(t.params(4).B)];
+%         bar(temp');
+%         ylim([min(temp)-1 max(temp)+1]);
+%         %legend({'Decision Boundary'});
+%         set(gca,'XTick',[1:4]);
+%         set(gca,'XTickLabel',{'LL' 'LH' 'HL' 'HH'});
+%         title('Decision Boundary');
+        
         for level = 1:length(unique_conds) % for all conditions
-            
-            figure; hold on;
-            plot(t.data2fit{level}.allObs(1:end-1,1),t.data2fit{level}.allObs(1:end-1,2),'k','Marker','o');
-            plot(t.data2fit{level}.allObs(1:end-1,1),t.cumRT(1:end-1,level),'r','Marker','*');
-            legend({'data','model'},'Location','SouthEast');
-            % title({['Model params (B, A, Astd,To): [' num2str(t.model_results.bestpar(t.id,:),2) ']'] });
-            title('Chosen condition');
-            ylim([0 1]);
-            % xlim([0.2,0.6]);
-            ylabel('Cumulative probability');
-            xlabel('Response Time (s)');
-            
-            figure; hold on;
-            temp=[t.data2fit{level}.priorProb{1,1}(1),t.data2fit{level}.priorProb{1,2}(1)];
-            t.choiceProb=[temp;t.probmod(:,level)'];
-            bar(t.choiceProb');
-            legend({'data','model'});
-            set(gca,'XTick',[1:2]);
-            set(gca,'XTickLabel',{'Button 1' 'Button 2'});
-            title('Choice probability');
+
+%             % plot quintiles
+%             figure; hold on;
+%             plot(t.data2fit{level}.allObs(1:end-1,1),t.data2fit{level}.allObs(1:end-1,2),'k','Marker','o');
+%             plot(t.data2fit{level}.allObs(1:end-1,1),t.cumRT(1:end-1,level),'r','Marker','*');
+%             legend({'data','model'},'Location','SouthEast');
+%             % title({['Model params (B, A, Astd,To): [' num2str(t.model_results.bestpar(t.id,:),2) ']'] });
+%             title('Chosen condition');
+%             ylim([0 1]);
+%             % xlim([0.2,0.6]);
+%             ylabel('Cumulative probability');
+%             xlabel('Response Time (s)');
+%             
+%             % plot choices
+%             figure; hold on;
+%             temp=[t.data2fit{level}.priorProb{1,1}(1),t.data2fit{level}.priorProb{1,2}(1)];
+%             t.choiceProb=[temp;t.probmod(:,level)'];
+%             bar(t.choiceProb');
+%             legend({'data','model'});
+%             set(gca,'XTick',[1:2]);
+%             set(gca,'XTickLabel',{'Button 1' 'Button 2'});
+%             title('Choice probability');
             
         end; clear level;
     end; clear idxsubj;
     
+    % plot T0
+    figure; hold on;
+    bar(non_dec_time);
+    ylim([min(non_dec_time)-0.5 max(non_dec_time)+0.5]);
+    %legend({'Decision Boundary'});
+    set(gca,'XTick',[1:length(non_dec_time)]);
+    %set(gca,'XTickLabel',{'LL' 'LH' 'HL' 'HH'});
+    title('Non-Decision Time');
     
 end; clear i;
 

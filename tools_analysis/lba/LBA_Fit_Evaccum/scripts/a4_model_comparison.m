@@ -10,7 +10,7 @@ d = struct(); % set up a structure for the data info
 t = struct(); % set up a structure for temp data
 
 % set up variables
-rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; %'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code'; % root directory - used to inform directory mappings
+rootdir = 'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code'; %'\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % root directory - used to inform directory mappings
 
 datadir = fullfile(rootdir,'data','behav_pilot_2');
 
@@ -35,7 +35,7 @@ Model_Feature = design_space{mod_num};
 flabs = fullfile(rootdir,'Model_%s.mat');
 %%
 BIC_all =[];
-for m = 1:length(design_space)% [1:4 6:15]%
+for m = [1:4 6:15]%1:length(design_space)% 
     try
     flabs =  sprintf('Model_%s.mat',num2str(m)); 
     flabs = fullfile(modeldir,flabs);    
@@ -68,7 +68,7 @@ end
 
 
 %% plot results
-%BIC_all(5,:)=[] % delete removed models
+BIC_all(5,:)=[]; % delete removed models
 [posterior_all, out_all] = VBA_groupBMC(BIC_all) ;
 %out_pd;
 %out_ctr;
