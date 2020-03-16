@@ -96,7 +96,7 @@ for i = 1%:length(d.fileinfo) % loop through each
     t.model_results = load(t.path); % load in the data
     
     %% plotting
-    
+    t.save_params = []
     for idxsubj = 1:num_subjs
         [~,t.id] = min(t.model_results.bestval{idxsubj});
         t.bestparams = t.model_results.bestpar{idxsubj}(t.id,:);
@@ -123,17 +123,19 @@ for i = 1%:length(d.fileinfo) % loop through each
         % hold onto T0 to plot later
         non_dec_time(idxsubj) = t.params.T0;
         
-%         % plot parameters
-%         %   t.params(1) = LL; t.params(2) = LH; t.params(3) = HL; t.params(4) = HH;
-%         %   param names = B C0 Ame Astd T0
-%         figure; hold on;
-%         temp=[mean(t.params(1).B),mean(t.params(2).B),mean(t.params(3).B),mean(t.params(4).B)];
-%         bar(temp');
-%         ylim([min(temp)-1 max(temp)+1]);
-%         %legend({'Decision Boundary'});
-%         set(gca,'XTick',[1:4]);
-%         set(gca,'XTickLabel',{'LL' 'LH' 'HL' 'HH'});
-%         title('Decision Boundary');
+        % plot parameters
+        %   t.params(1) = LL; t.params(2) = LH; t.params(3) = HL; t.params(4) = HH;
+        %   param names = B C0 Ame Astd T0
+        figure; hold on;
+        temp=[mean(t.params(1).B),mean(t.params(2).B),mean(t.params(3).B),mean(t.params(4).B)];
+        bar(temp');
+        ylim([min(temp)-1 max(temp)+1]);
+        %legend({'Decision Boundary'});
+        set(gca,'XTick',[1:4]);
+        set(gca,'XTickLabel',{'LL' 'LH' 'HL' 'HH'});
+        title('Decision Boundary');
+
+        t.save_params(idxsubj,:) = temp;
         
         for level = 1:length(unique_conds) % for all conditions
 

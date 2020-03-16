@@ -1,13 +1,16 @@
-%% prep data for input to LBA fitting
+%% prep data for running descriptives
 % Dorian Minors
-% Created: FEB20
-% Last Edit: FEB20
+% Created: MAR20
+% Last Edit: MAR20
 %
 % 
-% you specify your datadir and it will save prepped data into datadir\lba_fit
-% as whatever you specify as p.savefilename
-%
+% you specify your datadir and it will save prepped data into
+% datadir\descriptives (can change in 'outdir') as whatever you specify as p.savefilename
 % produces:
+%
+% d.subjects struct saved as .mat file
+% d.allsubjs matrix saved as .csv file
+% notes file describing output in .txt
 % 
 % d.fileinfo = information about matlab files read in
 % d.subjects = rowise subject data, with subject id in first field and
@@ -22,6 +25,8 @@
 %               LcHr = 2 = low coherence, hard matching (hard rule)
 %               HcLr = 3 = high coherence, easy matching (low rule)
 %               HcHr = 4 = high coherence, hard matching (hard rule)
+% d.allsubjs = rowise subject data, but with all subjects collated in one matrix, and
+%              subject id appended as first column
 
 %% set up
 
@@ -30,39 +35,42 @@ clearvars;
 clc;
 
 fprintf('setting up %s\n', mfilename);
-p = struct(); % keep some of our parameters tidy
-d = struct(); % set up a structure for the data info
-t = struct(); % set up a structure for temp data
+p = struct(); % keep some of our parameters tidy - these are things you might want to edit
+d = struct(); % set up a structure for the data info - these are outputs we want to save
+t = struct(); % set up a structure for temp data - these are things that are liable to change throughout the script
 
 % set up variables
-rootdir = 'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code'; %'\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; %% root directory - used to inform directory mappings
-datadir = fullfile(rootdir,'data','behav_pilot_1');
+rootdir = 'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code'; %'\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % % root directory - used to inform directory mappings
+datadir = fullfile(rootdir,'data','behav_pilot_2');
+p.strip_invalid = 1; % will strip invalid responses from output if 1 from allsubjs (can't get individual subjs working)
 p.datafilepattern = '*_EvAccum.mat';
-p.savefilename = 'prepped_data';
+p.vars = {'p','d','block'}; % which variables do you need
+p.savefilename = 'data_for_analysis';
 p.notesfilename = [p.savefilename,'_notes.txt'];
-p.notes = 'd.fileinfo = information about matlab files read in \r\nd.subjects = rowise subject data, with subject id in first field and lba-relevent data in second field organised thus: \r\ncondition | condition number | button pressed | reaction time (ms) | accuracy | trial type (1-64) | condition (LcLr,LcHr,HcLr,HcHr)';
+p.notes = 'd.fileinfo = information about matlab files read in \r\nd.subjects = rowise subject data, with subject id in first field and lba-relevent data in second field organised thus: \r\ncondition | condition number | button pressed | reaction time (ms) | accuracy | trial type (1-64) | condition (LcLr,LcHr,HcLr,HcHr)\r\nd.allsubjs saved as csv file as d.subjects but collated into one matrix with id appended as first column';
 p.conditions = {'LcLr','LcHr','HcLr','HcHr'}; % 2x2 coherence and rule
 p.conditioncodes = {1,2,3,4};
 
 % directory mapping
 addpath(genpath(fullfile(rootdir, 'tools_analysis'))); % add tools folder to path (don't think we need this, but in case)
 behavdatadir = fullfile(datadir,'behavioural'); % add matlab behavioural data
-lbadatadir = fullfile(datadir,'lba_fit'); % find or make directory to output lba fit results
-if ~exist(lbadatadir,'dir')
-    mkdir(lbadatadir);
+outdir = fullfile(datadir,'descriptives'); % find or make directory to output lba fit results
+if ~exist(outdir,'dir')
+    mkdir(outdir);
 end
-save_file = fullfile(lbadatadir, p.savefilename);
+save_file = fullfile(outdir,p.savefilename);
 
 %% get that data
 
 d.fileinfo = dir(fullfile(behavdatadir, p.datafilepattern)); % find all the datafiles and get their info
-for i = 1:14%length(d.fileinfo) % loop through each
+d.allsubjs = {}; % create this so we can work with it
+for i = 1:length(d.fileinfo) % loop through each
   t.path = fullfile(behavdatadir, d.fileinfo(i).name); % get the full path to the file
   fprintf(1, 'working with %s\n', t.path); % print that so you can check
   
-  t.alldata = load(t.path); % load in the data
+  t.alldata = load(t.path,p.vars{:}); % load in the data
   
-  t.id = i%t.alldata.d.participant_id;
+  t.id = t.alldata.d.participant_id;
   t.blocks = t.alldata.block; % how many blocks?
   
   t.data = {}; % create this so we can work with it
@@ -70,7 +78,7 @@ for i = 1:14%length(d.fileinfo) % loop through each
       t.rts = t.alldata.d.rt(block,:)';
       t.accuracy = t.alldata.d.correct(block,:)';
       % this is the wrong button - correct button t.button = t.alldata.d.stim_mat_all(:,7,block); % pull the correct button
-      %t.trialtype = t.alldata.d.stim_mat_all(:,9,block);
+      t.trialtype = t.alldata.d.stim_mat_all(:,9,block);
       
       for icond = 1:length(t.alldata.d.stim_mat_all(:,5,block))
           % get the button pressed
@@ -105,7 +113,7 @@ for i = 1:14%length(d.fileinfo) % loop through each
       t.consolidata(:,3) = num2cell(t.button);
       t.consolidata(:,4) = num2cell(t.rts);
       t.consolidata(:,5) = num2cell(t.accuracy);
-      %t.consolidata(:,6) = num2cell(t.trialtype);
+      t.consolidata(:,6) = num2cell(t.trialtype);
       
       % stack it up
       t.data = [t.data;t.consolidata];  
@@ -114,13 +122,59 @@ for i = 1:14%length(d.fileinfo) % loop through each
   
   d.subjects(i).id = t.id;
   d.subjects(i).data = t.data;
-
+  
+  t.idcolumn = ones(length(d.subjects(i).data),1)*t.id;
+  
+  t.thissubj = [num2cell(t.idcolumn) d.subjects(i).data];
+  
+  d.allsubjs = [d.allsubjs;t.thissubj];
 end
 clear i
 
+%% strip invalid
+if p.strip_invalid
+    for i = 1:size(d.allsubjs,1)
+        t.invalid(i,:) = d.allsubjs{i,6} < 0;
+    end; clear i;
+    d.allsubjs(t.invalid,:) = []; clear t.invalid;
+    % for d.subjects
+%     t.subjdata = [];
+%     for subj = 1:length(d.subjects)
+%         t.subjdata = d.subjects(subj).data;
+%         for i = 1:size(t.subjdata,1)
+%             t.invalid(i,:) = t.subjdata{i,5} < 0;
+%         end; clear i;
+%         t.subjdata(t.invalid,:) = []; clear t.invalid;
+%         d.subjects(subj).data = t.subjdata;
+%     end; clear subj;
+end
+
+%% get some descriptives
+% for subj = 1:length(d.fileinfo)
+%     for i = 1:4
+%         for trialidx = 1:size(d.subjects(subj).data,1)
+%             condidx(trialidx,:) = d.subjects(subj).data{trialidx,2} == i;
+%         end; clear trialidx;
+%         d.subjects(subj).mean(i) = nanmean(d.subjects(subj).data(condidx,4));
+%         d.subjects(subj).sem(i) = nansem(d.subjects(subj).data(condidx,4));
+%     end; clear condidx;
+% end
+
 %% saving data and notes
 fprintf('saving output and notes from %s\n', mfilename);
-txtfile = fopen(fullfile(lbadatadir,p.notesfilename),'w');
+txtfile = fopen(fullfile(outdir,p.notesfilename),'w');
 fprintf(txtfile,p.notes);
 fclose(txtfile); clear txtfile;
-save(save_file,'d'); % save all data to a .mat file
+save(save_file,'-struct','d'); % save all data to a .mat file
+writecell(d.allsubjs,[save_file '.csv'])
+
+
+%% sem function
+function semval = nansem(vector_data)
+% Recall that s.e.m. = std(x)/sqrt(length(x));
+nonan_std = nanstd(vector_data);
+nonan_len = length(vector_data(~isnan(vector_data)));
+% Plug in values
+semval = nonan_std / sqrt(nonan_len);
+end
+  

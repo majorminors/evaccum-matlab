@@ -1,5 +1,19 @@
 To Dos
 ======
+- preprocessing:
+	- work through powerstuff
+	- work through decoding
+
+wlts on why this is different
+
+Backgound
+---------
+- baysian information criterion penalises heavily addition of parameters that don't add anything
+	- not that their criteria are zero, but that it's not as high. If we plotted the BIC it would be scattered.
+- no way to bias: so start bias doesn't make sense
+- decision boundary alterations reflect accumulation of more evidence - it's a measure of difficulty
+	- could be related to the speed accuracy trade off - boundary and power (Frank?)
+
 
 Testing reqs.
 -------------
@@ -9,12 +23,13 @@ Testing reqs.
 
 LBA:
 ----
+- plot BIC underneath
+- run models on easy rule (both coherence) and hard rule (both coherence)
+- run models on behav 1
 - familiarise yourself with what you did - https://mbb-team.github.io/VBA-toolbox/wiki/BMS-for-group-studies/
 - t0 for subjects should be between 200-600ms - find a ref for this
 - do some stats?
- - Jasper
  - rm anova
- - bayesian?
 
 
 General Improvements
