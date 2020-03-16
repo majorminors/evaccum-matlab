@@ -105,12 +105,12 @@ for i = 1%:length(d.fileinfo) % loop through each
             t.data2fit{level} = d.data2fit{idxsubj,level};
         end
         
-        [~,parLL,parHL,parLH,parHH]=getModelParam_cell_RDK(t.model_results.settings.modfeat,2,t.bestparams);
-        t.params(1) = parLL;
-        t.params(2) = parLH;
-        t.params(3) = parHL;
+        [~,parEE,parHE,parEH,parHH]=getModelParam_cell_RDK(t.model_results.settings.modfeat,2,t.bestparams);
+        t.params(1) = parEE;
+        t.params(2) = parEH;
+        t.params(3) = parHE;
         t.params(4) = parHH;
-        clear parLL parLH parHL parHH
+        clear parEE parEH parHE parHH
         
         t.probmod = []; t.cumRT = [];
         for level = 1:length(unique_conds) % for all conditions
@@ -170,7 +170,7 @@ for i = 1%:length(d.fileinfo) % loop through each
     ylim([min(non_dec_time)-0.5 max(non_dec_time)+0.5]);
     %legend({'Decision Boundary'});
     set(gca,'XTick',[1:length(non_dec_time)]);
-    %set(gca,'XTickLabel',{'LL' 'LH' 'HL' 'HH'});
+    %set(gca,'XTickLabel',{'EE' 'EH' 'HE' 'HH'});
     title('Non-Decision Time');
     
 end; clear i;

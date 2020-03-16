@@ -1,4 +1,4 @@
-function [num_param,paramLL,paramHL,paramLH,paramHH]=getModelParam_cell_RDK(mod_feature,N,param)
+function [num_param,paramEE,paramHE,paramEH,paramHH]=getModelParam_cell_RDK(mod_feature,N,param)
 % generate model parameter for difference conditions
 % total free parameter for a particular design
 % if param is null, will return the number of free parameters that satistfy
@@ -78,23 +78,23 @@ end
 % values to the other three conditions so all have the same starting
 % parameters
 if varC0
-    paramLH=struct('N',N,'B',{ones(1,N)*param(1)},'C0',param(feature_indx{2}).*ones(1,N),'Ame',{param(2:(basic_param-1))},'Astd',{param(feature_indx{1}).*ones(1,N)},'T0',param(basic_param));
+    paramEH=struct('N',N,'B',{ones(1,N)*param(1)},'C0',param(feature_indx{2}).*ones(1,N),'Ame',{param(2:(basic_param-1))},'Astd',{param(feature_indx{1}).*ones(1,N)},'T0',param(basic_param));
 else
     
-    paramLH=struct('N',N,'B',{ones(1,N)*param(1)},'C0',defaultC0.*ones(1,N),'Ame',{param(2:(basic_param-1))},'Astd',{param(feature_indx{1}).*ones(1,N)},'T0',param(basic_param));
+    paramEH=struct('N',N,'B',{ones(1,N)*param(1)},'C0',defaultC0.*ones(1,N),'Ame',{param(2:(basic_param-1))},'Astd',{param(feature_indx{1}).*ones(1,N)},'T0',param(basic_param));
 end
 
 
-paramLL=paramLH;
-paramHL=paramLH;
-paramHH=paramLH;
+paramEE=paramEH;
+paramHE=paramEH;
+paramHH=paramEH;
 
 
 % construct model parameters
 % change B
 if ~isempty(feature_indx{3})
-    paramLL.B=paramLL.B*param(feature_indx{3}(1));%note: Low is a proportion of High
-    paramHL.B=paramHL.B*param(feature_indx{3}(2));%note: Low is a proportion of High
+    paramEE.B=paramEE.B*param(feature_indx{3}(1));%note: Low is a proportion of High
+    paramHE.B=paramHE.B*param(feature_indx{3}(2));%note: Low is a proportion of High
     paramHH.B=paramHH.B*param(feature_indx{3}(3));%note: Low is a proportion of High
 
 end
@@ -102,8 +102,8 @@ end
 
 % change mu
 if ~isempty(feature_indx{4})
-    paramLL.Ame=paramLL.Ame*param(feature_indx{4}(1));
-    paramHL.Ame=paramHL.Ame*param(feature_indx{4}(2));
+    paramEE.Ame=paramEE.Ame*param(feature_indx{4}(1));
+    paramHE.Ame=paramHE.Ame*param(feature_indx{4}(2));
     paramHH.Ame=paramHH.Ame*param(feature_indx{4}(3));
     
 end
@@ -111,8 +111,8 @@ end
 
 % change t0
 if ~isempty(feature_indx{5})
-    paramLL.T0=paramLL.T0*param(feature_indx{5}(1));
-    paramHL.T0=paramHL.T0*param(feature_indx{5}(2));
+    paramEE.T0=paramEE.T0*param(feature_indx{5}(1));
+    paramHE.T0=paramHE.T0*param(feature_indx{5}(2));
     paramHH.T0=paramHH.T0*param(feature_indx{5}(3));
     
 end

@@ -85,49 +85,4 @@ end
 
 save(savename,'bestpar','bestval','BIC','rseed','settings');%,'bestpar_PA','bestval_PA','BIC_PA')
 
-% this needs to come out of this script - just do it for the winning model
-% [~,id] = min(bestval);
-% bestparams = bestpar(id,:);
-% 
-% [~,parLL,parHL,parLH,parHH]=getModelParam_cell_RDK(mod_feature,2,bestparams);
-% params = struct();
-% params{1} = parLL; % not sure brace indexing is the go, might need normal
-% - we'll see
-% params{2} = parLH;
-% params{3} = parHL;
-% params{4} = parHH;
-% 
-% % I think this will break with multiple participants - may need an index
-% % for subjects
-% probmod = []; cumRT = [];
-% for level = 1:length(unique_conds) % for all conditions
-%     [~,probmod(level),~,~,cumRT(:,level)]=mod_stats_sim('LBA_spec_FT3_c_even_template',params{level},1,data2fit{:,level}.allObs(:,1),2,1);
-% end
-% 
-% % Plotting...
-% if length(unique_conds) ~= length(data2fit); error('you dont appear to have as many conditions as sets of data2fit'); end % sanity check
-% for level = 1:length(unique_conds) % for all conditions
-%     
-%         figure; hold on;
-%         plot(data2fit{level}.allObs(1:end-1,1),data2fit{level}.allObs(1:end-1,2),'k','Marker','o');
-%         plot(data2fit{level}.allObs(1:end-1,1),cumRT(1:end-1,level),'r','Marker','*');
-%         legend({'data','model'},'Location','SouthEast');
-%         % title({['Model params (B, A, Astd,To): [' num2str(bestpar(best_indx,:),2) ']'] });
-%         title('Chosen condition');
-%         ylim([0 1]);
-%         % xlim([0.2,0.6]);
-%         ylabel('Cumulative probability');
-%         xlabel('Response Time (s)');
-%         
-%         figure; hold on;
-%         temp=[data2fit{level}.priorProb{1:end}];
-%         choiceProb=[temp;probmod(level)];
-%         bar(choiceProb');
-%         legend({'data','model'});
-%         set(gca,'XTick',[1:2]);
-%         set(gca,'XTickLabel',{'Button 1' 'Button 2'});
-%         title('Choice probability');
-%     
-% end; clear level;
-
 end

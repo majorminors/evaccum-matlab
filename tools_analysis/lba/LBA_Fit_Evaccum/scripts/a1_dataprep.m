@@ -18,10 +18,10 @@
 %               coherence levels x 2 matching difficulties x 8 coherence
 %               directions x 2 button presses
 %             conditions are:
-%               LcLr = 1 = low coherence, easy matching (low rule)
-%               LcHr = 2 = low coherence, hard matching (hard rule)
-%               HcLr = 3 = high coherence, easy matching (low rule)
-%               HcHr = 4 = high coherence, hard matching (hard rule)
+%               EcEr = 1 = easy coherence, easy matching
+%               EcHr = 2 = easy coherence, hard matching
+%               HcEr = 3 = hard coherence, easy matching
+%               HcHr = 4 = hard coherence, hard matching
 
 %% set up
 
@@ -36,12 +36,12 @@ t = struct(); % set up a structure for temp data
 
 % set up variables
 rootdir = 'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code'; %'\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; %% root directory - used to inform directory mappings
-datadir = fullfile(rootdir,'data','behav_pilot_1');
+datadir = fullfile(rootdir,'data','behav_pilot_2');
 p.datafilepattern = '*_EvAccum.mat';
 p.savefilename = 'prepped_data';
 p.notesfilename = [p.savefilename,'_notes.txt'];
-p.notes = 'd.fileinfo = information about matlab files read in \r\nd.subjects = rowise subject data, with subject id in first field and lba-relevent data in second field organised thus: \r\ncondition | condition number | button pressed | reaction time (ms) | accuracy | trial type (1-64) | condition (LcLr,LcHr,HcLr,HcHr)';
-p.conditions = {'LcLr','LcHr','HcLr','HcHr'}; % 2x2 coherence and rule
+p.notes = 'd.fileinfo = information about matlab files read in \r\nd.subjects = rowise subject data, with subject id in first field and lba-relevent data in second field organised thus: \r\ncondition | condition number | button pressed | reaction time (ms) | accuracy | trial type (1-64) | condition (EcEr,EcHr,HcEr,HcHr)';
+p.conditions = {'EcEr','EcHr','HcEr','HcHr'}; % 2x2 coherence and rule
 p.conditioncodes = {1,2,3,4};
 
 % directory mapping
@@ -56,21 +56,20 @@ save_file = fullfile(lbadatadir, p.savefilename);
 %% get that data
 
 d.fileinfo = dir(fullfile(behavdatadir, p.datafilepattern)); % find all the datafiles and get their info
-for i = 1:14%length(d.fileinfo) % loop through each
+for i = 1:length(d.fileinfo) % loop through each
   t.path = fullfile(behavdatadir, d.fileinfo(i).name); % get the full path to the file
   fprintf(1, 'working with %s\n', t.path); % print that so you can check
   
   t.alldata = load(t.path); % load in the data
   
-  t.id = i%t.alldata.d.participant_id;
+  t.id = t.alldata.d.participant_id;
   t.blocks = t.alldata.block; % how many blocks?
   
   t.data = {}; % create this so we can work with it
   for block = 1:t.blocks % go through each block of data
       t.rts = t.alldata.d.rt(block,:)';
       t.accuracy = t.alldata.d.correct(block,:)';
-      % this is the wrong button - correct button t.button = t.alldata.d.stim_mat_all(:,7,block); % pull the correct button
-      %t.trialtype = t.alldata.d.stim_mat_all(:,9,block);
+      t.trialtype = t.alldata.d.stim_mat_all(:,9,block);
       
       for icond = 1:length(t.alldata.d.stim_mat_all(:,5,block))
           % get the button pressed
@@ -105,7 +104,7 @@ for i = 1:14%length(d.fileinfo) % loop through each
       t.consolidata(:,3) = num2cell(t.button);
       t.consolidata(:,4) = num2cell(t.rts);
       t.consolidata(:,5) = num2cell(t.accuracy);
-      %t.consolidata(:,6) = num2cell(t.trialtype);
+      t.consolidata(:,6) = num2cell(t.trialtype);
       
       % stack it up
       t.data = [t.data;t.consolidata];  
