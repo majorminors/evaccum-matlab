@@ -53,6 +53,18 @@ for idxsubj = 1:num_subjs
     
     % converting again to readable variables
     conds = dataValid(:,1);
+    easyOrHard = [];
+    for i = 1:length(conds)
+        if conds(i) == 2
+            easyOrHard = 2;
+            conds(i) = 1;
+        elseif conds(i) == 3
+            easyOrHard = 1;
+            conds(i) = 2;
+        elseif conds(i) == 4
+            conds(i) = 2;
+        end
+    end
     resp = dataValid(:,2);
     rt = dataValid(:,3);
     acc = dataValid(:,4);
@@ -79,8 +91,11 @@ for idxsubj = 1:num_subjs
         %parange(end,1) = round(minRT(idxsubj),2);%constrain the lower bound of T0 to the shortest RT
     end
     %% fit the model
-    [bestpar{idxsubj,1},bestval{idxsubj,1},BIC{idxsubj,1}]=fitparams_refine_template_RDK('fiterror_cell_RDK',Model_Feature,{data2fit{idxsubj,1:4}},randiter,nosession,[],parange,bayesian);%#ok
-    
+    if easyOrHard == 2
+        [bestpar{idxsubj,1},bestval{idxsubj,1},BIC{idxsubj,1}]=fitparams_refine_template_RDK('fiterror_cell_HARD',Model_Feature,{data2fit{idxsubj,1:2}},randiter,nosession,[],parange,bayesian);%#ok
+    elseif easyOrHard == 1
+        [bestpar{idxsubj,1},bestval{idxsubj,1},BIC{idxsubj,1}]=fitparams_refine_template_RDK('fiterror_cell_EASY',Model_Feature,{data2fit{idxsubj,1:2}},randiter,nosession,[],parange,bayesian);%#ok
+    end
 end
 
 save(savename,'bestpar','bestval','BIC','rseed','settings');%,'bestpar_PA','bestval_PA','BIC_PA')

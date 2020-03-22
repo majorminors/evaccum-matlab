@@ -12,7 +12,7 @@ t = struct(); % set up a structure for temp data
 % set up variables
 rootdir = 'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code'; %'\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % % root directory - used to inform directory mappings
 
-datadir = fullfile(rootdir,'data','behav_pilot_2');
+datadir = fullfile(rootdir,'data','behav_pilot_1');
 
 modeldir = fullfile(datadir,'lba_fit','results'); % expects to find your modelling results here
 toolsdir = fullfile(rootdir, 'tools_analysis'); % where are all your scripts/tools?

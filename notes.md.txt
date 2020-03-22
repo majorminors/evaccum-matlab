@@ -1,5 +1,13 @@
 To Dos
 ======
+
+After splitting:
+conditions in funFitBehav 
+- (line 55)
+- line 91
+	- fiterror_cell
+	- data2fit 1:2 = 1:4
+
 - preprocessing:
 	- work through powerstuff
 	- work through decoding
