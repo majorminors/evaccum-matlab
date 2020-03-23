@@ -12,7 +12,7 @@ t = struct(); % set up a structure for temp data
 % set up variables
 rootdir = 'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code'; %'\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % root directory - used to inform directory mappings
 
-datadir = fullfile(rootdir,'data','behav_pilot_2');
+datadir = fullfile(rootdir,'data','behav_pilot_1');
 
 modeldir = fullfile(datadir,'lba_fit','results'); % expects to find your modelling results here
 toolsdir = fullfile(rootdir, 'tools_analysis'); % where are all your scripts/tools?
@@ -45,7 +45,7 @@ for m = [1:4 6:15]%1:length(design_space)%
     end
 
     bestfit = []; bestfitIdx =[];iict=0;iipd=0;
-    for i = 1:6
+    for i = 1:14
         
         [bestfit(i,1) bestfitIdx(i,1)]= min(bestval{i});
         
@@ -78,11 +78,12 @@ n = size(BIC_all,2);
 
 % plot BICs by model (transpose BIC_all to group by subjects)
 figure; b = bar(BIC_all'*-0.5,'FaceColor',[0 0.4470 0.7410]);
+ylim([1300 1410]);
 b(1).FaceColor = [.25 0 .25];
 b(2).FaceColor = [.5 0 .5];
 % b(5).FaceColor = [.9 0 .9];
-b(9).FaceColor = [.5 0 .5];
-%b(10).FaceColor = [.5 0 .5];
+% b(9).FaceColor = [.5 0 .5];
+b(10).FaceColor = [.5 0 .5];
 
 %plot BIC (mean)
 for i = 1:K
@@ -92,12 +93,12 @@ for i = 1:K
 end
 
 figure; b = bar(meanBIC);
-ylim([min(meanBIC)-300 max(meanBIC)+300]);
+ylim([min(meanBIC)-10 max(meanBIC)+10]);
 b.FaceColor = 'flat';
 b.CData(1,:) = [.25 0 .25];
 b.CData(2,:) = [.5 0 .5];
-b.CData(5,:) = [.9 0 .9];
-b.CData(10,:) = [.5 0 .5];
+b.CData(9,:) = [.9 0 .9];
+% b.CData(10,:) = [.5 0 .5];
 hold on
 er = errorbar(1:K,meanBIC,semBIC,semBIC);
 er.Color = [0 0 0];                            
