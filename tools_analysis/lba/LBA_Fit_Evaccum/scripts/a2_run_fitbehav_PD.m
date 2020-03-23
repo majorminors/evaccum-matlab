@@ -23,9 +23,9 @@ t = struct(); % for temp vars
 rootdir = '/group/woolgar-lab/projects/Dorian/EvAccum'; %'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code';%'\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % root directory - used to inform directory mappings
 
 % only required if not testing
-datadir = fullfile(rootdir,'data','behav_pilot_2-e');
+datadir = fullfile(rootdir,'data','behav_pilot_1-h');
 lbadatadir = fullfile(datadir,'lba_fit'); % expects to find your data here and will save results in a sub-folder here
-p.data_name = 'easy_data.mat'; % data file name
+p.data_name = 'hard_data.mat'; % data file name
 jobdir = fullfile(lbadatadir,'scheduled_jobs'); % where you'll save any scheduled jobs (i.e. running on the scheduler)
 toolsdir = fullfile(rootdir, 'tools_analysis','lba','LBA_Fit_Evaccum','scripts'); % where are all your scripts/tools?
 
