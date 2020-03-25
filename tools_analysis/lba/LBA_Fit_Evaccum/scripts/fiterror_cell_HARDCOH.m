@@ -1,14 +1,14 @@
-function [f_error, BIC,pmod_LH,pmod_HH,priorMod_HA,qobs] = fiterror_cell_HARD (param, mod_feature, data2fit)
+function [f_error, BIC, pmod_HL, pmod_HH,priorMod_HA,qobs] = fiterror_cell_HARDCOH(param, mod_feature, data2fit)
 % fit the model to freechoice and specified selection
 % param [boundary, X0 range, drift 1, drift 2, drift 3, drift 4, drift std,
 % T0, theta,alpha] 
 
 if length(data2fit)==2
-    goalstat_LH=data2fit{1};
-    goalstat_HH=data2fit{2};
+    goalstat_HL=data2fit{1};
+    goalstat_HH=data2fit{2};    
 end
 
-minRT = goalstat_LH.minRT;
+minRT = goalstat_HL.minRT;
 
 Ntrials= totalTrials(data2fit);
 
@@ -19,8 +19,7 @@ BIC=0;
 f_error=0;
 % model_param=struct('N',N,'B',{param(1:B_num).*ones(1,N)},'C0',param(B_num+1),'Ame',{[param(B_num+2:(N+B_num)+1) ]},'Astd',param(N+B_num+2),'T0',param(N+B_num+3));
 
-[num_param,parLH,parHH]=getModelParam_cell_HARD(mod_feature,2,param);
-
+[num_param,~,parHL,~,parHH]=getModelParam_cell_RDK(mod_feature,2,param);
 
 qobs=cell(1,4);
 
@@ -28,24 +27,14 @@ if sum(param<0)>0
     f_error=1000000;  % negative parameter
     BIC=1000000;
     return;
-elseif sum(parLH.B<=parLH.C0) || sum(parHH.B<=parHH.C0)
+elseif sum(parHL.B<=parHL.C0) || sum(parHH.B<=parHH.C0)
     f_error=1000000;  % Threshold is smaller than starting point
     BIC=1000000;
     return;
     
 else    
 %%     
-    % Choice: Low PU
-    pmod_LH = nan; priorMod_LH = nan;%#ok
-    [pmod_LH,priorMod_LH,qobs{3}]=mod_stats_sim('LBA_spec_FT3_c_even_template',parLH,1,goalstat_LH.allObs(:,1),2,0); %,goalstat_free_norep.cond_ratio);
-    
-    f_error=f_error+2*sum(goalstat_LH.allObs(:,4).*log(goalstat_LH.allObs(:,3)./pmod_LH'));
-    BIC=BIC-2*sum(goalstat_LH.allObs(:,4).*log(pmod_LH'));
-    for i=1:parLH.N
-        f_error=f_error+2*sum(goalstat_LH.priorProb{i}(2).*log(goalstat_LH.priorProb{i}(1)./priorMod_LH(i)));
-        BIC=BIC-2*sum(goalstat_LH.priorProb{i}(2).*log(priorMod_LH(i)));
-    end
-    
+
     
     
     % Choice: High PU
@@ -61,7 +50,15 @@ else
     end
 
     %%
+  
+        
+    % Specified: High PU
+    pmod_HL =nan;priorMod_HL=nan;%#ok    
+    [pmod_HL,foo2,qobs{2}]=mod_stats_sim('LBA_spec_FT3_c_even_template',parHL,1,goalstat_HL.allObs(:,1),2,0); %#ok ,goalstat_spec_norep.cond_ratio);
     
+    f_error=f_error+2*sum(goalstat_HL.allObs(:,4).*log(goalstat_HL.allObs(:,3)./pmod_HL'));
+    BIC=BIC-2*sum(goalstat_HL.allObs(:,4).*log(pmod_HL'));    
+  
 %%    
     %error is zero unless special conditions hold, as above;
     %gaolstat_H.allObs refers to the prob of the RT quanitles for the

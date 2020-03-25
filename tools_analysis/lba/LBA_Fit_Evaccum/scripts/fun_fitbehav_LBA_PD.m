@@ -56,11 +56,10 @@ for idxsubj = 1:num_subjs
     easyOrHard = [];
     for i = 1:length(conds)
         if conds(i) == 2
+            easyOrHard = 1;
+        elseif conds(i) == 3
             easyOrHard = 2;
             conds(i) = 1;
-        elseif conds(i) == 3
-            easyOrHard = 1;
-            conds(i) = 2;
         elseif conds(i) == 4
             conds(i) = 2;
         end
@@ -92,9 +91,9 @@ for idxsubj = 1:num_subjs
     end
     %% fit the model
     if easyOrHard == 2
-        [bestpar{idxsubj,1},bestval{idxsubj,1},BIC{idxsubj,1}]=fitparams_refine_template_RDK('fiterror_cell_HARD',Model_Feature,{data2fit{idxsubj,1:2}},randiter,nosession,[],parange,bayesian);%#ok
+        [bestpar{idxsubj,1},bestval{idxsubj,1},BIC{idxsubj,1}]=fitparams_refine_template_RDK('fiterror_cell_HARDCOH',Model_Feature,{data2fit{idxsubj,1:2}},randiter,nosession,[],parange,bayesian);%#ok
     elseif easyOrHard == 1
-        [bestpar{idxsubj,1},bestval{idxsubj,1},BIC{idxsubj,1}]=fitparams_refine_template_RDK('fiterror_cell_EASY',Model_Feature,{data2fit{idxsubj,1:2}},randiter,nosession,[],parange,bayesian);%#ok
+        [bestpar{idxsubj,1},bestval{idxsubj,1},BIC{idxsubj,1}]=fitparams_refine_template_RDK('fiterror_cell_EASYCOH',Model_Feature,{data2fit{idxsubj,1:2}},randiter,nosession,[],parange,bayesian);%#ok
     end
 end
 

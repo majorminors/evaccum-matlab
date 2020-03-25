@@ -32,7 +32,7 @@ toolsdir = fullfile(rootdir, 'tools_analysis','lba','LBA_Fit_Evaccum','scripts')
 p.save_name = 'Model_%s.mat';
 p.rng_seed = 19; % the rng seed number - fixed for reproducibility
 t.local = 0; % run locally? Or 0 will use cbu scheduler
-p.testing = 0; % if you want to use testing data, then switch to 1 and add the data folder to the path, else to 0. will save to pwd/test_results/
+p.testing = 1; % if you want to use testing data, then switch to 1 and add the data folder to the path, else to 0. will save to pwd/test_results/
 t.subject = 1; % if testing, which subject do you want to run?
 t.test_data_name = 'lba_test_data.mat'; % name of your test data
 
