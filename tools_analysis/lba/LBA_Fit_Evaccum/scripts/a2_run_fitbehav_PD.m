@@ -23,16 +23,16 @@ t = struct(); % for temp vars
 rootdir = '/group/woolgar-lab/projects/Dorian/EvAccum'; %'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code';%'\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % root directory - used to inform directory mappings
 
 % only required if not testing
-datadir = fullfile(rootdir,'data','behav_pilot_1-h');
+datadir = fullfile(rootdir,'data','behav_pilot_2-hc');
 lbadatadir = fullfile(datadir,'lba_fit'); % expects to find your data here and will save results in a sub-folder here
-p.data_name = 'hard_data.mat'; % data file name
+p.data_name = 'hard_coh_data.mat'; % data file name
 jobdir = fullfile(lbadatadir,'scheduled_jobs'); % where you'll save any scheduled jobs (i.e. running on the scheduler)
 toolsdir = fullfile(rootdir, 'tools_analysis','lba','LBA_Fit_Evaccum','scripts'); % where are all your scripts/tools?
 
 p.save_name = 'Model_%s.mat';
 p.rng_seed = 19; % the rng seed number - fixed for reproducibility
 t.local = 0; % run locally? Or 0 will use cbu scheduler
-p.testing = 1; % if you want to use testing data, then switch to 1 and add the data folder to the path, else to 0. will save to pwd/test_results/
+p.testing = 0; % if you want to use testing data, then switch to 1 and add the data folder to the path, else to 0. will save to pwd/test_results/
 t.subject = 1; % if testing, which subject do you want to run?
 t.test_data_name = 'lba_test_data.mat'; % name of your test data
 
