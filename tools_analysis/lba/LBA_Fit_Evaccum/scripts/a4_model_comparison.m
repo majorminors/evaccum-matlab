@@ -1,4 +1,4 @@
-ri3vern%% set up
+%% set up
 
 close all;
 clearvars;
@@ -10,10 +10,10 @@ d = struct(); % set up a structure for the data info
 t = struct(); % set up a structure for temp data
 
 % set up variables
-rootdir = 'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code'; %'\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % root directory - used to inform directory mappings
+rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; %'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code'; %
 
-datadir = fullfile(rootdir,'data','behav_pilot_2-h');
-num_subjects = 6;
+datadir = fullfile(rootdir,'data','behav_pilot_1-hr');
+num_subjects = 14;
 
 modeldir = fullfile(datadir,'lba_fit','results'); % expects to find your modelling results here
 toolsdir = fullfile(rootdir, 'tools_analysis'); % where are all your scripts/tools?
@@ -77,7 +77,7 @@ BIC_all(5,:)=[]; % delete removed models
 K = size(BIC_all,1);
 n = size(BIC_all,2);
 
-% plot BICs by model (transpose BIC_all to group by subjects)
+% plot BICs by subject
 figure; b = bar(BIC_all'*-0.5,'FaceColor',[0 0.4470 0.7410]);
 % ylim([1300 1410]);
 b(1).FaceColor = [.25 0 .25];
@@ -85,6 +85,11 @@ b(2).FaceColor = [.5 0 .5];
 % b(5).FaceColor = [.9 0 .9];
 b(9).FaceColor = [.5 0 .5];
 % b(10).FaceColor = [.5 0 .5];
+export_fig(fullfile(modeldir,'subjectBICs.jpeg'),'-transparent');
+
+% plot BICs by model
+figure; b = bar(BIC_all*-0.5,'FaceColor',[0 0.4470 0.7410]);
+export_fig(fullfile(modeldir,'modelBICs.jpeg'),'-transparent');
 
 %plot BIC (mean)
 for i = 1:K
@@ -94,7 +99,7 @@ for i = 1:K
 end
 
 figure; b = bar(meanBIC);
-ylim([min(meanBIC)-300 max(meanBIC)+300]);
+ylim([min(meanBIC)-10 max(meanBIC)+10]);
 b.FaceColor = 'flat';
 b.CData(1,:) = [.25 0 .25];
 b.CData(2,:) = [.5 0 .5];
@@ -104,7 +109,8 @@ b.CData(9,:) = [.5 0 .5];
 hold on
 er = errorbar(1:K,meanBIC,semBIC,semBIC);
 er.Color = [0 0 0];                            
-er.LineStyle = 'none';  
+er.LineStyle = 'none';
+export_fig(fullfile(modeldir,'meanBICs.jpeg'),'-transparent');
 
 fig75 = figure(75);
 pos2 = [205   429   912   377];
