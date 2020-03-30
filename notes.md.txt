@@ -31,10 +31,9 @@ Testing reqs.
 
 LBA:
 ----
-- plot BIC underneath
-- run models on easy rule (both coherence) and hard rule (both coherence)
-- run models on behav 1
+- get model frequencies thing from plot
 - familiarise yourself with what you did - https://mbb-team.github.io/VBA-toolbox/wiki/BMS-for-group-studies/
+- consolidate datasummaries
 - t0 for subjects should be between 200-600ms - find a ref for this
 - do some stats?
  - rm anova
