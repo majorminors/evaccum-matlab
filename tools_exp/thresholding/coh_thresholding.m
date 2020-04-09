@@ -1,56 +1,43 @@
-%% coherence threshold analysis
-
+function [easy_threshold,hard_threshold,overview,summary] = coh_thresholding(p,d,save_file)
+% function [easy_value,hard_value] = coh_thresholding(p,d)
+%
+% coherence threshold analysis
+%
+% finds coherence value to achieve a specified percent correct for a
+% participant
+% 
+% requires:
+%    various test parameters (expects to find in structure 'p')
+%    various saved outputs of test (expects to find in structure 'd')
+%    the full path to the saved data (so it can use the same save directory
+%       and savename conventions (save_file)
+%
+% specify in this function your desired percent correct for thresholding (low_threshold_pc,
+%   high_threshold_pc)
+% 
 % produces:
-
+%
+% easy_threshold = value to achieve your higher percent correct
+% hard_threshold = value to achieve your lower percent correct
+%
 % 'overview' which is four rows:
-%   1) point condition per trial
-%   2) correct/incorrect (1/0) per trial
-%   3) coherence value per trial
-%   4) rt for each trial
-
+%   point condition per trial | correct/incorrect (1/0) per trial | coherence value per trial | rt for each trial
+%
 % summary is four rows:
-%   1) point condition
-%   2) coherence value
-%   3) percent correct
-%   4) average rt for correct trials
-
+%   point condition | coherence value | percent correct | average rt for correct trials
+%
 %  will compute a sinusoid for the data, save parameters as 'sineparams'
 %  and produce a figure
 %    figure is x(top) - coherence
 %              y      - percent correct
-
-% will save all vars and figs into a folder in data named after the filename which
-% starts with the participant number
+%
+% will save figs using the full path save_file
 
 %% set up
 
-close all;
-clearvars;
-clc;
-
-% enter filename
-data_file = 'S06_EvAccum_coherence_threshold_test';
-vars = {'p','d'}; % which variables do you need
-% enter your thresholds
-low_threshold_pc = 0.7;
-high_threshold_pc = 0.9;
-
-% directory mapping
-rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum';
-addpath(genpath(fullfile(rootdir, 'tools'))) % add tools to path for analysis (req. psignifit)
-datadir = fullfile(rootdir, 'data');
-backupdir = fullfile(datadir, 'backup');
-if ~exist(fullfile(datadir, data_file),'dir') % make a folder for the paricipant data in 'datadir' if none exist
-    mkdir(fullfile(datadir, data_file));
-end
-if ~exist(backupdir,'dir')
-    mkdir(backupdir);
-end
-
-
-% load file
-load(fullfile(datadir,[data_file '.mat']),vars{:});
-save(fullfile(backupdir, [data_file '_backup'])); % backup subject data before we mess with it
+% enter your desired thresholds
+low_threshold_pc = 0.7; % low coherence/lower percent correct = hard
+high_threshold_pc = 0.9; % high coherence/higher percent correct = easy
 
 % create matrix specifying stimulus conditions per trial:
 %    1)  cue direction (1-4) - evenly allocates trials to cues
@@ -87,8 +74,6 @@ summary = [1:p.num_points;p.coh_points;pc';av_corr_rts];
 %   3) percent correct
 %   4) average rt for correct trials
 
-save(fullfile(datadir, data_file, [data_file '_summary']), 'summary');
-
 % prep data for psignifit
 temp=[d.stim_mat_all(:,6) d.correct']; % pull required data (coherence and correct) into temp
 temp = sortrows(temp,1); % sort by coherence
@@ -113,22 +98,22 @@ hold on
 % find the x value for proportion correct:
 [~, low_threshold_idx] = min(abs(plotline.YData-low_threshold_pc(1))); % first find the index of the value closest to the threshold pc
 [~, high_threshold_idx] = min(abs(plotline.YData-high_threshold_pc(1)));
-low_threshold = plotline.XData(low_threshold_idx) % then find the value using the index and print that in the command window
-high_threshold = plotline.XData(high_threshold_idx)
+low_threshold = plotline.XData(low_threshold_idx); % then find the values using the index
+high_threshold = plotline.XData(high_threshold_idx);
 % add plot lines at the threshold value on y:
 plot([0 1], [low_threshold_pc low_threshold_pc], '-', 'Color',[1 0 0])
 plot([0 1], [high_threshold_pc high_threshold_pc], '-', 'Color',[0 1 0])
 % add plot lines at the threshold value on x:
 plot([low_threshold low_threshold], [0.3 1], '-', 'Color',[1 0 0])
 plot([high_threshold high_threshold], [0.3 1], '-', 'Color',[0 1 0])
-savefig(sigmoid,fullfile(datadir, data_file, [data_file '_sigmoid']));
+savefig(sigmoid,[save_file '_sigmoid']);
 hold off
 % diplay rts on a figure
 rts = figure('visible','off');
 plot(summary(2,:),summary(4,:),'ro:')
-savefig(rts,fullfile(datadir, data_file, [data_file '_rts']));
+savefig(rts,[save_file '_rts']);
 % load those figures into variables
-%sigmoid=hgload(fullfile(datadir, data_file, [data_file '_sigmoid.fig']));
+%sigmoid=hgload(fullfile(datadir, save_file, [data_file '_sigmoid.fig']));
 %rts=hgload(fullfile(datadir, data_file, [data_file '_rts.fig']));
 
 % prepare subplots
@@ -141,4 +126,10 @@ copyobj(allchild(get(rts,'CurrentAxes')),visualise(2));
 % add a legend
 t(1)=title(visualise(1),'percent correct');
 t(2)=title(visualise(2),'reaction time');
+
+% make the output a little less confusing to understand
+easy_threshold = high_threshold;
+hard_threshold = low_threshold;
+
+return
 

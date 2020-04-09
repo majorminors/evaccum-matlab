@@ -51,17 +51,21 @@ p = struct(); % est structure for parameter values
 d = struct(); % est structure for trial data
 t = struct(); % another structure for untidy trial specific floating variables that we might want to interrogate later if we mess up
 
-rootdir = 'Z:\projects\EvAccum'; % root directory - used to inform directory mappings
+% initial settings
+rootdir = pwd; % root directory - used to inform directory mappings
+p.training_enabled = 0; % if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
+p.coherence_spread = 1; % 1 is an even spread from 0-1, 2 has a more specified coherence values for people who are good at this - see trial settings
+
+% general settings
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
-p.training_enabled = 0; % if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
 p.fix_trial_time = 0; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
-p.coherence_spread = 1; % 1 is an even spread from 0-1, 2 has specified coherence values - see trial settings
 p.num_blocks = 1; % currently only one block is interpretable, although potential to do more
 
+% for use in MEG
 p.MEG_enabled = 0;
-MEG = 0;
+MEG = 0; 
 
 % check set up
 if ~ismember(p.fullscreen_enabled,[0,1]); error('invalid value for p.fullscreen_enabled'); end % check if valid or error
@@ -96,7 +100,7 @@ if p.testing_enabled == 1
     p.PTBsynctests = 1; % PTB will skip synctests if 1
     p.PTBverbosity = 1; % PTB will only display critical warnings with 1
 elseif p.testing_enabled == 0
-    p.PTBsynctests = 0;
+    p.PTBsynctests = 1;
     p.PTBverbosity = 3; % default verbosity for PTB
 end
 Screen('Preference', 'SkipSyncTests', p.PTBsynctests);
@@ -493,6 +497,16 @@ try
     KbQueueRelease(); %KbReleaseWait();
     clear block i ans; % clear specific indexes and stuff
     Screen('Close',p.win);
+    
+    %% run analysis
+    if ~p.training_enabled
+        [d.easy_threshold,d.hard_threshold,d.test_overview,d.test_summary] = coh_thresholding(p,d,save_file);
+    end
+    
+    % save the analysis results
+    save(save_file); % save all data in '.mat' format
+    
+    %% finish
     
     fprintf('done running %s\n', mfilename);
     
