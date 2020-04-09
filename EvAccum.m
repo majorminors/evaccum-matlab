@@ -3,6 +3,10 @@
 % Created: JUN19
 % Last Edit: FEB20
 
+% expects coherence and matching thresholds to be saved in datadir, with specific naming
+%   convention and variable names. see "set up participant info and save"
+%   section of script
+
 % trial settings all saved in 'p'
 
 % data related information saved in 'd'
@@ -66,8 +70,11 @@ p = struct(); % est structure for parameter values
 d = struct(); % est structure for trial data
 t = struct(); % another structure for untidy trial specific floating variables that we might want to interrogate later if we mess up
 
-% set up variables
-rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum';%'C:\Users\doria\Google Drive\04 Research\05 Evidence Accumulation\01 EvAccum Code';%'\\cbsu\data\Group\Woolgar-Lab\projects\EvAccum'; % root directory - used to inform directory mappings
+% initial settings
+rootdir = pwd; % root directory - used to inform directory mappings
+
+% general settings
+p.manually_set_coherence = 0; % if 1, will include prompts to set coherence manually
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
@@ -78,7 +85,7 @@ p.feedback_type = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 th
 p.num_blocks = 36;
 p.breakblocks = [7,13,19,25,31]; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
 p.keyswap = 1; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
-p.MEG_enabled = 1; % using MEG
+p.MEG_enabled = 0; % using MEG
 p.MEG_emulator_enabled = 0; % using the emulator - be aware we can't quit using the quitkey with emulator
 
 % check set up
@@ -131,21 +138,36 @@ KbName('UnifyKeyNames'); % makes key mappings compatible (mac/win)
 rng('shuffle'); % seed rng using date and time
 
 % set up participant info and save
-t.prompt = {'enter participant number:',... % prompt a dialog to enter subject info
-    'enter easy coherence threshold(fm 0-1, higher is easier)',...
-    'enter hard coherence threshold (fm 0-1, lower is harder)',...
-    'enter hard matching threshold (between 0 and 90 degrees from cued direction)'};%',...
-% 'enter easy matching threshold (between 0 and 90 degrees from cued direction)',...
-% 'enter hard matching threshold (between 0 and 90 degrees from cued direction)'};
-t.prompt_defaultans = {num2str(99), num2str(0.75), num2str(0.25), num2str(80)}; % default answers corresponding to prompts
-t.prompt_rsp = inputdlg(t.prompt, 'enter participant info', 1, t.prompt_defaultans); % save dialog responses
-d.participant_id = str2double(t.prompt_rsp{1}); % add subject number to 'd'
-d.easy_coherence = str2double(t.prompt_rsp{2}); % add participant coherence thresholds to 'd'
-d.hard_coherence = str2double(t.prompt_rsp{3}); % add participant coherence thresholds to 'd'
-d.hard_rule = str2double(t.prompt_rsp{4}); % add participant matching thresholds to 'd'
-d.easy_rule = 90-d.hard_rule; % add participant matching thresholds to 'd' - in this case, the easy rule is the inverse of the hard rule
-% d.easy_rule = str2double(t.prompt_rsp{4}); % add participant matching thresholds to 'd'
-% d.hard_rule = str2double(t.prompt_rsp{5}); % add participant matching thresholds to 'd'
+if p.manually_set_coherence
+    t.prompt = {'enter participant number:',... % prompt a dialog to enter subject info
+        'enter easy coherence threshold(fm 0-1, higher is easier)',...
+        'enter hard coherence threshold (fm 0-1, lower is harder)',...
+        'enter hard matching threshold (between 0 and 90 degrees from cued direction)'};%',...
+    % 'enter easy matching threshold (between 0 and 90 degrees from cued direction)',...
+    % 'enter hard matching threshold (between 0 and 90 degrees from cued direction)'};
+    t.prompt_defaultans = {num2str(99), num2str(0.75), num2str(0.25), num2str(80)}; % default answers corresponding to prompts
+    t.prompt_rsp = inputdlg(t.prompt, 'enter participant info', 1, t.prompt_defaultans); % save dialog responses
+    d.participant_id = str2double(t.prompt_rsp{1}); % add subject number to 'd'
+    d.easy_coherence = str2double(t.prompt_rsp{2}); % add participant coherence thresholds to 'd'
+    d.hard_coherence = str2double(t.prompt_rsp{3}); % add participant coherence thresholds to 'd'
+    d.hard_rule = str2double(t.prompt_rsp{4}); % add participant matching thresholds to 'd'
+    d.easy_rule = 90-d.hard_rule; % add participant matching thresholds to 'd' - in this case, the easy rule is the inverse of the hard rule
+    % d.easy_rule = str2double(t.prompt_rsp{4}); % add participant matching thresholds to 'd'
+    % d.hard_rule = str2double(t.prompt_rsp{5}); % add participant matching thresholds to 'd'
+elseif ~p.manually_set_coherence
+    t.prompt = {'enter participant number:'}; % prompt a dialog to enter subject info
+    t.prompt_defaultans = {num2str(99)}; % default answers corresponding to prompts
+    t.prompt_rsp = inputdlg(t.prompt, 'enter participant info', 1, t.prompt_defaultans); % save dialog responses
+    d.participant_id = str2double(t.prompt_rsp{1}); % add subject number to 'd'
+    tmp = load(fullfile(datadir,[num2str(d.participant_id,'S%02d'),'_EvAccum_coherence_threshold_test.mat']),'d');
+    d.easy_coherence = tmp.d.easy_threshold;
+    d.hard_coherence = tmp.d.hard_threshold;
+    clear tmp;
+    tmp = load(fullfile(datadir,[num2str(d.participant_id,'S%02d'),'_EvAccum_matching_threshold_test.mat']),'d');
+    d.hard_rule = tmp.d.easy_threshold;
+    d.easy_rule = tmp.d.hard_threshold;
+    clear tmp;
+end
 
 % check participant info has been entered correctly for the script
 if isnan(d.participant_id)

@@ -66,6 +66,7 @@ rootdir = pwd; % root directory - used to inform directory mappings
 p.training_enabled = 0; % if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below. will also suppress pre-block information about whether it's a hard or easy test
 
 % general settings
+p.manually_set_coherence = 0; % if 1, will include prompts to set coherence manually
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
@@ -121,24 +122,23 @@ KbName('UnifyKeyNames'); % makes key mappings compatible (mac/win)
 rng('shuffle'); % seed rng using date and time
 
 % set up participant info and save
-% we'll leave this in case we want to be able to enter the numbers
-%   ourselves
-% t.prompt = {'enter participant number:','enter easy coherence threshold (fm 0-1, higher is easier)','enter hard coherence threshold (fm 0-1, lower is harder)'}; % prompt a dialog to enter subject info
-% t.prompt_defaultans = {num2str(99), num2str(0.75), num2str(0.25)}; % default answers corresponding to prompts
-% t.prompt_rsp = inputdlg(t.prompt, 'enter participant info', 1, t.prompt_defaultans); % save dialog responses
-% d.participant_id = str2double(t.prompt_rsp{1}); % add subject number to 'd'
-% d.easy_coherence = str2double(t.prompt_rsp{2}); % add participant coherence thresholds to 'd'
-% d.hard_coherence = str2double(t.prompt_rsp{3}); % add participant coherence thresholds to 'd'
-
-% set up participant info and save
-t.prompt = {'enter participant number:'}; % prompt a dialog to enter subject info
-t.prompt_defaultans = {num2str(99)}; % default answers corresponding to prompts
-t.prompt_rsp = inputdlg(t.prompt, 'enter participant info', 1, t.prompt_defaultans); % save dialog responses
-d.participant_id = str2double(t.prompt_rsp{1}); % add subject number to 'd'
-tmp = load(fullfile(datadir,[num2str(d.participant_id,'S%02d'),'_EvAccum_coherence_threshold_test.mat']),'d');
-d.easy_coherence = tmp.d.easy_threshold;
-d.hard_coherence = tmp.d.hard_threshold;
-clear tmp;
+if p.manually_set_coherence
+    t.prompt = {'enter participant number:','enter easy coherence threshold (fm 0-1, higher is easier)','enter hard coherence threshold (fm 0-1, lower is harder)'}; % prompt a dialog to enter subject info
+    t.prompt_defaultans = {num2str(99), num2str(0.75), num2str(0.25)}; % default answers corresponding to prompts
+    t.prompt_rsp = inputdlg(t.prompt, 'enter participant info', 1, t.prompt_defaultans); % save dialog responses
+    d.participant_id = str2double(t.prompt_rsp{1}); % add subject number to 'd'
+    d.easy_coherence = str2double(t.prompt_rsp{2}); % add participant coherence thresholds to 'd'
+    d.hard_coherence = str2double(t.prompt_rsp{3}); % add participant coherence thresholds to 'd'
+elseif ~p.manually_set_coherence
+    t.prompt = {'enter participant number:'}; % prompt a dialog to enter subject info
+    t.prompt_defaultans = {num2str(99)}; % default answers corresponding to prompts
+    t.prompt_rsp = inputdlg(t.prompt, 'enter participant info', 1, t.prompt_defaultans); % save dialog responses
+    d.participant_id = str2double(t.prompt_rsp{1}); % add subject number to 'd'
+    tmp = load(fullfile(datadir,[num2str(d.participant_id,'S%02d'),'_EvAccum_coherence_threshold_test.mat']),'d');
+    d.easy_coherence = tmp.d.easy_threshold;
+    d.hard_coherence = tmp.d.hard_threshold;
+    clear tmp;
+end
 
 % check participant info has been entered correctly for the script
 if isnan(d.participant_id)
