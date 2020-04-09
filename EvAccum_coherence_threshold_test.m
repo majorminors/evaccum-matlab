@@ -62,6 +62,7 @@ p.screen_distance = 50; % Screen distance from participant in cm
 p.coherence_spread = 2; % 1 is an even spread from 0-1, 2 has a more specified coherence values for people who are good at this - see trial settings
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
+p.skip_synctests = 0; % force psychtoolbox to skip synctests. not advised. autoskipped during testing
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
 p.fix_trial_time = 0; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 p.num_blocks = 1; % currently only one block is interpretable, although potential to do more
@@ -103,7 +104,11 @@ if p.testing_enabled == 1
     p.PTBsynctests = 1; % PTB will skip synctests if 1
     p.PTBverbosity = 1; % PTB will only display critical warnings with 1
 elseif p.testing_enabled == 0
-    p.PTBsynctests = 0;
+    if p.skip_synctests
+        p.PTBsynctests = 1;
+    elseif ~p.skip_synctests
+        p.PTBsynctests = 0;
+    end
     p.PTBverbosity = 3; % default verbosity for PTB
 end
 Screen('Preference', 'SkipSyncTests', p.PTBsynctests);
