@@ -9,7 +9,10 @@
 %           makes things messier - have to set the minimum number of trials in the training protocol to be higher
 %           than p.training_trials_per_level when you start assessing the
 %           percent correct
-%
+
+% expects coherence thresholds to be saved in datadir, with specific naming
+%   convention and variable names. see "set up participant info and save"
+%   section of script
 
 % data related information saved in 'd'
 %   d.stim_mat_all contains trial condition matrices for each block
@@ -58,15 +61,18 @@ p = struct(); % est structure for parameter values
 d = struct(); % est structure for trial data
 t = struct(); % another structure for untidy trial specific floating variables that we might want to interrogate later if we mess up
 
-% set up variables
-rootdir = 'Z:\projects\EvAccum'; % root directory - used to inform directory mappings
+% initial settings
+rootdir = pwd; % root directory - used to inform directory mappings
+p.training_enabled = 0; % if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below. will also suppress pre-block information about whether it's a hard or easy test
+
+% general settings
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
-p.training_enabled = 0; % if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below. will also suppress pre-block information about whether it's a hard or easy test
 p.fix_trial_time = 0; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 p.num_blocks = 2; % each block currently feeds the two coherence values (block 1 is easy, block 2 is hard)
 
+% for use in MEG
 p.MEG_enabled = 0;
 MEG = 0;
 
@@ -115,12 +121,24 @@ KbName('UnifyKeyNames'); % makes key mappings compatible (mac/win)
 rng('shuffle'); % seed rng using date and time
 
 % set up participant info and save
-t.prompt = {'enter participant number:','enter easy coherence threshold (fm 0-1, higher is easier)','enter hard coherence threshold (fm 0-1, lower is harder)'}; % prompt a dialog to enter subject info
-t.prompt_defaultans = {num2str(99), num2str(0.75), num2str(0.25)}; % default answers corresponding to prompts
+% we'll leave this in case we want to be able to enter the numbers
+%   ourselves
+% t.prompt = {'enter participant number:','enter easy coherence threshold (fm 0-1, higher is easier)','enter hard coherence threshold (fm 0-1, lower is harder)'}; % prompt a dialog to enter subject info
+% t.prompt_defaultans = {num2str(99), num2str(0.75), num2str(0.25)}; % default answers corresponding to prompts
+% t.prompt_rsp = inputdlg(t.prompt, 'enter participant info', 1, t.prompt_defaultans); % save dialog responses
+% d.participant_id = str2double(t.prompt_rsp{1}); % add subject number to 'd'
+% d.easy_coherence = str2double(t.prompt_rsp{2}); % add participant coherence thresholds to 'd'
+% d.hard_coherence = str2double(t.prompt_rsp{3}); % add participant coherence thresholds to 'd'
+
+% set up participant info and save
+t.prompt = {'enter participant number:'}; % prompt a dialog to enter subject info
+t.prompt_defaultans = {num2str(99)}; % default answers corresponding to prompts
 t.prompt_rsp = inputdlg(t.prompt, 'enter participant info', 1, t.prompt_defaultans); % save dialog responses
 d.participant_id = str2double(t.prompt_rsp{1}); % add subject number to 'd'
-d.easy_coherence = str2double(t.prompt_rsp{2}); % add participant coherence thresholds to 'd'
-d.hard_coherence = str2double(t.prompt_rsp{3}); % add participant coherence thresholds to 'd'
+tmp = load(fullfile(datadir,[num2str(d.participant_id,'S%02d'),'_EvAccum_coherence_threshold_test.mat']),'d');
+d.easy_coherence = tmp.d.easy_threshold;
+d.hard_coherence = tmp.d.hard_threshold;
+clear tmp;
 
 % check participant info has been entered correctly for the script
 if isnan(d.participant_id)
@@ -341,6 +359,9 @@ try
             %% present cue and response mapping
             if i == 1 || p.stim_mat(i,1) ~= p.stim_mat(i-1,1) || ~mod(i-1,8) %|| i > p.act_trial_num-1 && ~mod(i,8) && p.stim_mat(i+1,1) == p.stim_mat(i,1) % if first trial, or cue changes (as currently blocked), or every 8 trials unless we're about to change cue then display cue
                 
+                % save the trial data
+                save(save_file); % save all data in '.mat' format
+                
                 % make the texture and scale it
                 p.cue_tex = Screen('MakeTexture', p.win, p.cue);
                 [t.tex_size1, t.tex_size2, t.tex_size3] = size(p.cue_tex); % get size of texture
@@ -521,14 +542,14 @@ try
             % clear the response queue for the next trial and related floating variables
             KbQueueRelease();
             
-            % save the trial data
-            save(save_file); % save all data in '.mat' format
-            
         end % trial loop
         
     end % end block loop
     
     %% wrap up
+    
+    % save the trial data
+    save(save_file); % save all data in '.mat' format
     
     % tell them it's over
     DrawFormattedText(p.win,'done!', 'center', 'center', p.text_colour); %display feedback
@@ -541,6 +562,16 @@ try
     KbQueueRelease(); %KbReleaseWait();
     clear block i ans; % clear specific indexes and stuff
     Screen('Close',p.win);
+    
+    %% run analysis
+    if ~p.training_enabled
+        [d.easy_threshold,d.hard_threshold,d.test_overview,d.test_summary] = match_thresholding(p,d,save_file);
+    end
+    
+    % save the analysis results
+    save(save_file); % save all data in '.mat' format
+    
+    %% finish
     
     fprintf('done running %s\n', mfilename);
     

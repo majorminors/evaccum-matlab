@@ -54,7 +54,7 @@ t = struct(); % another structure for untidy trial specific floating variables t
 % initial settings
 rootdir = pwd; % root directory - used to inform directory mappings
 p.training_enabled = 0; % if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
-p.coherence_spread = 1; % 1 is an even spread from 0-1, 2 has a more specified coherence values for people who are good at this - see trial settings
+p.coherence_spread = 2; % 1 is an even spread from 0-1, 2 has a more specified coherence values for people who are good at this - see trial settings
 
 % general settings
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
@@ -100,7 +100,7 @@ if p.testing_enabled == 1
     p.PTBsynctests = 1; % PTB will skip synctests if 1
     p.PTBverbosity = 1; % PTB will only display critical warnings with 1
 elseif p.testing_enabled == 0
-    p.PTBsynctests = 1;
+    p.PTBsynctests = 0;
     p.PTBverbosity = 3; % default verbosity for PTB
 end
 Screen('Preference', 'SkipSyncTests', p.PTBsynctests);
@@ -313,6 +313,9 @@ try
             %% present cue and response mapping
             if i == 1 || p.stim_mat(i,1) ~= p.stim_mat(i-1,1) || ~mod(i-1,8) %|| i > p.act_trial_num-1 && ~mod(i,8) && p.stim_mat(i+1,1) == p.stim_mat(i,1) % if first trial, or cue changes (as currently blocked), or every 8 trials unless we're about to change cue then display cue
                 
+                % save the trial data
+                save(save_file); % save all data in '.mat' format
+                
                 % make the texture and scale it
                 p.cue_tex = Screen('MakeTexture', p.win, p.cue);
                 [t.tex_size1, t.tex_size2, t.tex_size3] = size(p.cue_tex); % get size of texture
@@ -477,14 +480,14 @@ try
             % clear the response queue for the next trial and related floating variables
             KbQueueRelease();
             
-            % save the trial data
-            save(save_file); % save all data in '.mat' format
-            
         end % trial loop
         
     end % end block loop
     
     %% wrap up
+    
+    % save the trial data
+    save(save_file); % save all data in '.mat' format
     
     % tell them it's over
     DrawFormattedText(p.win,'done!', 'center', 'center', p.text_colour); %display feedback
