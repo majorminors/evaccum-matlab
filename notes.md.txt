@@ -26,7 +26,6 @@ Backgound
 Testing reqs.
 -------------
 - test new triggers are working
-- test that d.resp_keycode works as expected (i.e. records a code for the key pressed)
 - test that d.blocks_completed works as expected (i.e. records the actual number of blocks completed)
 
 LBA:

@@ -85,7 +85,7 @@ p.training_enabled = 0; % if 0 (or any other than 1) will do nothing, if 1, init
 p.fix_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anything other than 1) will not do iti
 p.feedback_type = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
-p.num_blocks = 20;
+p.num_blocks = 1;
 p.breakblocks = 0; %[7,13,19,25,31]; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
 p.keyswap = 1; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
 p.MEG_enabled = 0; % using MEG
@@ -129,7 +129,7 @@ if p.testing_enabled == 1
     p.PTBsynctests = 1; % PTB will skip synctests if 1
     p.PTBverbosity = 1; % PTB will only display critical warnings with 1
 elseif p.testing_enabled == 0
-    p.PTBsynctests = 0;
+    p.PTBsynctests = 1;
     p.PTBverbosity = 3; % default verbosity for PTB
 end
 Screen('Preference', 'SkipSyncTests', p.PTBsynctests);
@@ -642,10 +642,11 @@ try
                 d.resp_key_name(block,i) = t.firstPress{1}; % get response key from array
                 d.rt(block,i) = t.firstPress{2}; % get response time from array - don't need to minus dots onset here because we're using the MEG timing functions
             end
+            
             % save the response key (as a code)
-            if string(d.resp_key_name(block,i)) == p.resp_keys{1}
+            if cell2mat(d.resp_key_name(block,i)) == p.resp_keys{1}
                 d.resp_keycode(block,i) = 1; % code response 1 pressed
-            elseif string(d.resp_key_name(block,i)) == p.resp_keys{2}
+            elseif cell2mat(d.resp_key_name(block,i)) == p.resp_keys{2}
                 d.resp_keycode(block,i) = 2; % code response 2 pressed
             else
                 d.resp_keycode(block,i) = 0; % code invalid response
@@ -748,7 +749,7 @@ try
     if p.MEG_enabled == 1; MEG.delete; end % stop MEG from limiting button presses
     clear block i ans; % clear specific indexes and stuff
     Screen('Close',p.win);
-    
+       
     fprintf('done running %s\n', mfilename);
     
 catch err
