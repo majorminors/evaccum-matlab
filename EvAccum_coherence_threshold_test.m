@@ -54,9 +54,12 @@ t = struct(); % another structure for untidy trial specific floating variables t
 % initial settings
 rootdir = pwd; % root directory - used to inform directory mappings
 p.training_enabled = 0; % if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
-p.coherence_spread = 2; % 1 is an even spread from 0-1, 2 has a more specified coherence values for people who are good at this - see trial settings
+p.screen_width = 35;   % Screen width in cm
+p.screen_height = 50;    % Screen height in cm
+p.screen_distance = 50; % Screen distance from participant in cm
 
 % general settings
+p.coherence_spread = 2; % 1 is an even spread from 0-1, 2 has a more specified coherence values for people who are good at this - see trial settings
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
@@ -163,16 +166,11 @@ end
 % define display info
 p.bg_colour = [0 0 0]; % needs to be the same as the cue stimuli background colour (unless transparent)
 p.text_colour= [255 255 255]; % colour of instructional text
-p.cue_colour_blue = [121 181 240]; % colour of cue, for text formatting
-p.cue_colour_orange = [240 181 121]; % colour of cue, for text formatting
-p.matching_cue_1 = 'BLUE'; % variable used to indicate response keys - this the upward arrow of the doublesided arrow cue in stimdir
-p.matching_cue_2 = 'ORANGE'; % variable used to indicate response keys - this the downward arrow of the doublesided arrow cue in stimdir
+p.cue_colour_one = [255 255 255]; %[121 181 240]; % colour of cue, for text formatting
+p.cue_colour_two = [255 255 255]; %[240 181 121]; % colour of cue, for text formatting
 p.text_size = 40; % size of text
 p.window_size = [0 0 1200 800]; % size of window when ~p.fullscreen_enabled
-p.screen_width = 35;   % Screen width in cm
-p.screen_height = 50;    % Screen height in cm
-p.screen_distance = 50; % Screen distance from participant in cm
-p.visual_angle_cue = 15; % visual angle of the cue expressed as a decimal - determines size
+p.visual_angle_cue = 10; % visual angle of the cue expressed as a decimal - determines size
 p.visual_angle_dots = 0.15; % visual angle of the dots expressed as a decimal - determines size
 
 % timing info
@@ -201,7 +199,7 @@ if length(p.coh_points) ~= p.num_points; error('number of coherence points is no
 fprintf('defining stimuli params for %s\n', mfilename);
 
 % read in stimulus file for the cue
-p.cue = imread(fullfile(stimdir, 'arrows_cue_colours_with_line.png'));
+p.cue = imread(fullfile(stimdir, 'arrows_cue_with_line.png'));
 
 % create matrix specifying stimulus conditions per trial:
 %    1)  cue direction (1-4) - evenly allocates trials to cues
@@ -330,34 +328,34 @@ try
                 % then display cue and response mapping
                 Screen('DrawTexture', p.win, p.cue_tex, [], t.rect, p.stim_mat(i,2)); % draws the cue in the orientation specified in column 2 of p.stim_mat for the current trial
                 if p.stim_mat(i,1) == 1
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_one);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_two);
                 elseif p.stim_mat(i,1) == 2
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_one);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_two);
                 elseif p.stim_mat(i,1) == 3
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_one);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_two);
                 elseif p.stim_mat(i,1) == 4
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_one);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_two);
                 end
                 d.cue_onset(block,i) = Screen('Flip', p.win); % pull the time of the screen flip from the flip function while flipping
                 WaitSecs(p.min_cue_time);
                 Screen('DrawTexture', p.win, p.cue_tex, [], t.rect, p.stim_mat(i,2)); % redraws the cue
                 DrawFormattedText(p.win, sprintf('\n press either button to continue\n'), 'center', t.rect(RectBottom)*1.1, p.text_colour);
                 if p.stim_mat(i,1) == 1
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_one);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_two);
                 elseif p.stim_mat(i,1) == 2
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_one);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_two);
                 elseif p.stim_mat(i,1) == 3
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectLeft)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_one);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectRight)*1.01, t.rect(RectTop)*1.01, p.cue_colour_two);
                 elseif p.stim_mat(i,1) == 4
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_blue);
-                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_orange);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{1}), t.rect(RectLeft)*1.01, t.rect(RectTop)*1.01, p.cue_colour_one);
+                    DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_keys{2}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_two);
                 end
                 Screen('Flip', p.win);
                 t.waiting = []; % wait for user input

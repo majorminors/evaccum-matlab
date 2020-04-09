@@ -72,6 +72,9 @@ t = struct(); % another structure for untidy trial specific floating variables t
 
 % initial settings
 rootdir = pwd; % root directory - used to inform directory mappings
+p.screen_width = 40;   % Screen width in cm
+p.screen_height = 30;    % Screen height in cm
+p.screen_distance = 50; % Screen distance from participant in cm
 
 % general settings
 p.manually_set_coherence = 0; % if 1, will include prompts to set coherence manually
@@ -82,8 +85,8 @@ p.training_enabled = 0; % if 0 (or any other than 1) will do nothing, if 1, init
 p.fix_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anything other than 1) will not do iti
 p.feedback_type = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
-p.num_blocks = 36;
-p.breakblocks = [7,13,19,25,31]; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
+p.num_blocks = 20;
+p.breakblocks = 0; %[7,13,19,25,31]; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
 p.keyswap = 1; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
 p.MEG_enabled = 0; % using MEG
 p.MEG_emulator_enabled = 0; % using the emulator - be aware we can't quit using the quitkey with emulator
@@ -121,7 +124,7 @@ p.training_interval = 2; % how many trials should we train on before reducing th
 
 % test variables
 p.num_test_trials = 3;
-p.num_test_blocks = 4;
+p.num_test_blocks = 2;
 if p.testing_enabled == 1
     p.PTBsynctests = 1; % PTB will skip synctests if 1
     p.PTBverbosity = 1; % PTB will only display critical warnings with 1
@@ -219,7 +222,7 @@ elseif p.MEG_enabled == 1 % what keys in the MEG
         p.resp_keys = {'LY','RB'}; % LY and RB correspond to a and s on the keyboard
     end
 end
-p.resp_key_names = {'Left','Right'};
+p.resp_key_names = {'a','s'};
 p.no_participant_response = 0; % turn this off for response_waiter function to work
 p.quitkey = {'q'}; % this is watched by KbqQueue regardless of p.MEG_enabled
 p.continuekey = {'c'}; % this is watched by KbQueue regardless of p.MEG_enabled
@@ -240,9 +243,6 @@ p.cue_colour_one = [255 255 255]; % colour of cue, for text formatting
 p.cue_colour_two = [255 255 255]; % colour of cue, for text formatting
 p.text_size = 40; % size of text
 p.window_size = [0 0 1200 800]; % size of window when ~p.fullscreen_enabled
-p.screen_width = 46;   % Screen width in cm
-p.screen_height = 37;    % Screen height in cm
-p.screen_distance = 137; % Screen distance from participant in cm
 p.visual_angle_cue = 10; % visual angle of the cue expressed as a decimal - determines size
 p.visual_angle_dots = 0.15; % visual angle of the dots expressed as a decimal - determines size
 
@@ -643,9 +643,9 @@ try
                 d.rt(block,i) = t.firstPress{2}; % get response time from array - don't need to minus dots onset here because we're using the MEG timing functions
             end
             % save the response key (as a code)
-            if d.resp_key_name(block,i) == p.resp_keys{1}
+            if string(d.resp_key_name(block,i)) == p.resp_keys{1}
                 d.resp_keycode(block,i) = 1; % code response 1 pressed
-            elseif d.resp_key_name(block,i) == p.resp_keys{2}
+            elseif string(d.resp_key_name(block,i)) == p.resp_keys{2}
                 d.resp_keycode(block,i) = 2; % code response 2 pressed
             else
                 d.resp_keycode(block,i) = 0; % code invalid response
