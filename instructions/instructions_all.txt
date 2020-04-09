@@ -51,7 +51,7 @@ is fine - press 'y' to continue.
 Other keys are disabled.
 - On completion of the test, MATLAB will close all screens, and begin 
 running analysis scripts. Eventually a few figures will pop up on the 
-screen and you can see your performance on the left.
+screen and you can see your performance on the left if you're interested.
 x = coherence level (from 0-100%)
 y = accuracy (from 50-100%)
 
@@ -60,7 +60,7 @@ your reaction time.
 x = coherence level (from 0-100%)
 y = reaction time (secs)
 
-As the coherence level increases, your reaction tims should decrease.
+As the coherence level increases, your reaction time should decrease.
 
 Close the plots.
 
@@ -132,7 +132,7 @@ Other keys are disabled.
 
 Three
 =====
-Please now go into EvAccum>data and check the following exists:
+Please now go into EvAccum>data and check the following 9 outputs exist:
 Consider that 'xx' reflects your participant number, e.g. 'S03'.
 
 - Sxx_EvAccum.mat
