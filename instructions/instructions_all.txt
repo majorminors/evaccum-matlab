@@ -1,13 +1,13 @@
 One
 ===
 
-Open the 'EvAccum' folder in MATLAB.
+Open the top level directory of the repository (TLD) in MATLAB.
 
-If MATLAB's pwd (current working directory) is not the EvAccum folder, 
+If MATLAB's pwd (present working directory) is not the TLD, 
 switch to that folder. If that's not possible, remember to alter the 
 'rootdir' variable under '% initial settings' in each script to reflect 
-the full path to the EvAccum folder, e.g.:
-rootdir = 'C:\Downloads\Evaccum';
+the full path to the TLD, e.g.:
+rootdir = 'path\to\TLD';
 
 Don't forget the quotations around the path.
 
@@ -20,7 +20,7 @@ You will run the scripts in the following order:
 2. EvAccum_matching_threshold_test.m
 3. Evaccum.m
 
-Coherence thresholding
+1. Coherence thresholding (EvAccum_coherence_threshold_test.m)
 ----------------------
 The coherence threshold test will establish some personalised thresholds 
 that reflect your sensitivity to moving dot stimuli. First you will do
@@ -29,7 +29,7 @@ run until you achieve a certain performance level (less than 5 mins).
 
 - Open the script and look under the '%initial settings' comment (line 54).
 - Ensure the 'rootdir' variable is correct (pwd if MATLAB's working directory
-is the EvAccum folder, or else the full path to the EvAccum folder)
+is the TLD, or else the full path to the TLD)
 - Set the 'p.training_enabled' variable to 1.
 - enter the dimensions of your screen and the distance of your screen 
 from your face in cm
@@ -42,7 +42,7 @@ Other keys are disabled.
 error, which should read that training is complete.
 
 After you have finished training, you will do the test proper (about 5 mins).
-- Under 'initial settings' set the 'p.training_enabled' to 0.
+- Under 'initial settings' set 'p.training_enabled' to 0.
 - run the script.
 - you will be warned that you are going to overwrite the training file. This
 is fine - press 'y' to continue.
@@ -51,14 +51,14 @@ is fine - press 'y' to continue.
 Other keys are disabled.
 - On completion of the test, MATLAB will close all screens, and begin 
 running analysis scripts. Eventually a few figures will pop up on the 
-screen and you can see your performance on the left if you're interested.
-x = coherence level (from 0-100%)
-y = accuracy (from 50-100%)
+screen and you can see your performance on the left plot if you're interested.
+x-axis = coherence level (from 0-100%)
+y-axis = accuracy (from 50-100%)
 
-As the coherence level increases, so should your accuracy. On the right is
-your reaction time.
-x = coherence level (from 0-100%)
-y = reaction time (secs)
+As the coherence level increases, so should your accuracy. On the right plot is
+your reaction times.
+x-axis = coherence level (from 0-100%)
+y-axis = reaction time (secs)
 
 As the coherence level increases, your reaction time should decrease.
 
@@ -66,7 +66,7 @@ Close the plots.
 
 You're finished the coherence test!
 
-Match thresholding
+2. Match thresholding (EvAccum_matching_threshold_test.m)
 -------------------
 The matching threshold test will establish some personalised thresholds 
 that reflect your sensitivity to decision boundaries. First you will do
@@ -76,7 +76,7 @@ a couple of mins).
 
 - Open the script and look under the '%initial settings' comment (line 64).
 - Ensure the 'rootdir' variable is correct (pwd if MATLAB's working directory
-is the EvAccum folder, or else the full path to the EvAccum folder)
+is the TLD, or else the full path to the TLD)
 - Set the 'p.training_enabled' variable to 1.
 - enter the dimensions of your screen and the distance of your screen 
 from your face in cm
@@ -89,7 +89,7 @@ Other keys are disabled.
 error, which should read that training is complete.
 
 After you have finished training, you will do the test proper (about 12 mins).
-- Under 'initial settings' set the 'p.training_enabled' to 0.
+- Under 'initial settings' set 'p.training_enabled' to 0.
 - run the script.
 - you will be warned that you are going to overwrite the training file. This
 is fine - press 'y' to continue.
@@ -105,13 +105,13 @@ results, except for two things:
 in the previous test, and one for the high coherence threshold
 2. the accuracy plot is flipped, so the easier matching is on the left, 
 and the harder matching is on the left. As you go from left to right, your
-performance should decrease.
+performance should decrease and reaction time increase.
 
 Close the plots.
 
 You're finished the matching test!
 
-Experiment
+3. Experiment (Evaccum.m)
 ----------
 The EvAccum experiment will now use the thresholds we obtained to get some
 reaction times. In the experiment, you will only get feedback every now and 
@@ -120,7 +120,7 @@ will go on for a fixed interval. This will take about 40 mins.
 
 - Open the script and look under the '%initial settings' comment (line 64).
 - Ensure the 'rootdir' variable is correct (pwd if MATLAB's working directory
-is the EvAccum folder, or else the full path to the EvAccum folder)
+is the TLD, or else the full path to the TLD)
 - enter the dimensions of your screen and the distance of your screen 
 from your face in cm
 - run the script.
@@ -132,7 +132,7 @@ Other keys are disabled.
 
 Three
 =====
-Please now go into EvAccum>data and check the following 9 outputs exist:
+Please now go into TLD>data and check the following 9 outputs exist:
 Consider that 'xx' reflects your participant number, e.g. 'S03'.
 
 - Sxx_EvAccum.mat
@@ -144,4 +144,6 @@ Consider that 'xx' reflects your participant number, e.g. 'S03'.
 - Sxx_EvAccum_matching_threshold_test_highcohsigmoid.fig
 - Sxx_EvAccum_matching_threshold_test_low_coh_rts.fig
 - Sxx_EvAccum_matching_threshold_test_lowcohsigmoid.fig
+
+If any of these do not exist, please let me know. Something has gone wrong!
 
