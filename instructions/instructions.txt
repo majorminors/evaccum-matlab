@@ -1,5 +1,7 @@
 Thanks so much for volunteering to take part in this!!
 
+If you haven't seen the powerpoint yet, please do that first and then return!
+
 ============================
 = Step One: initial set up =
 ============================
@@ -163,4 +165,13 @@ Consider that 'xx' reflects your participant number, e.g. 'S03'.
 - Sxx_EvAccum_matching_threshold_test_lowcohsigmoid.fig
 
 If any of these do not exist, please let me know. Something has gone wrong!
+
+Once you have these files, please send them back to me:
+
+dorian.minors@mrc-cbu.cam.ac.uk
+
+It's probably best to zip them into an archive first, because sometimes 
+outlook will strip them from the email thinking they're malicious files.
+
+Thanks again!!
 
