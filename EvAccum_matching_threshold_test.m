@@ -67,12 +67,12 @@ p.training_enabled = 0; % if 1, initiates training protocol (reduce dots present
 p.screen_width = 35;   % Screen width in cm
 p.screen_height = 50;    % Screen height in cm
 p.screen_distance = 50; % Screen distance from participant in cm
+p.skip_synctests = 0; % force psychtoolbox to skip synctests. not advised. autoskipped during testing
 
 % general settings
 p.manually_set_coherence = 0; % if 1, will include prompts to set coherence manually
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
-p.skip_synctests = 0; % force psychtoolbox to skip synctests. not advised. autoskipped during testing
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
 p.fix_trial_time = 0; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 p.num_blocks = 2; % each block currently feeds the two coherence values (block 1 is easy, block 2 is hard)

@@ -38,6 +38,21 @@ You will run the scripts in the following order:
 2. EvAccum_matching_threshold_test.m
 3. Evaccum.m
 
+Note: there is a common error on people's personal computers (laptops in 
+particular), where psychtoolbox will close the experiment and complain 
+that it can't measure stuff properly. If you get an error that tells you
+to scroll up to a bunch of output from psychtoolbox, this is the issue. 
+In that case, you can force psychtoolbox to run by altering the variable 
+under 'initial settings' in each script called p.skip_synctests to 1 e.g.:
+
+from:
+p.skip_synctests = 0; % force psychtoolbox to skip synctests. not advised. autoskipped during testing
+
+to:
+p.skip_synctests = 1; % force psychtoolbox to skip synctests. not advised. autoskipped during testing
+
+Let me know with any questions via email: dorian.minors@mrc-cbu.cam.ac.uk.
+
 1. Coherence thresholding (EvAccum_coherence_threshold_test.m)
 ----------------------
 The coherence threshold test will establish some personalised thresholds 
