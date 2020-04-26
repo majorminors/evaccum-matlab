@@ -10,7 +10,7 @@ d = struct(); % set up a structure for the data info
 t = struct(); % set up a structure for temp data
 
 % set up variables
-rootdir = 'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code'; %'\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % % root directory - used to inform directory mappings
+rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % 'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code'; % % root directory - used to inform directory mappings
 
 datadir = fullfile(rootdir,'data','behav_pilot_1');
 
@@ -89,14 +89,14 @@ end; clear idxsubj;
 %% get model data
 
 d.fileinfo = dir(fullfile(modeldir, p.datafilepattern)); % find all the datafiles and get their info
-for i = 1%:length(d.fileinfo) % loop through each
+for i = 5%:length(d.fileinfo) % loop through each
     t.path = fullfile(modeldir, d.fileinfo(i).name);% get the full path to the file
     fprintf(1, 'working with %s\n', t.path); % print that so you can check
     
     t.model_results = load(t.path); % load in the data
     
     %% plotting
-    t.save_params = []
+    t.save_params = [];
     for idxsubj = 1:num_subjs
         [~,t.id] = min(t.model_results.bestval{idxsubj});
         t.bestparams = t.model_results.bestpar{idxsubj}(t.id,:);
@@ -127,9 +127,9 @@ for i = 1%:length(d.fileinfo) % loop through each
         %   t.params(1) = LL; t.params(2) = LH; t.params(3) = HL; t.params(4) = HH;
         %   param names = B C0 Ame Astd T0
         figure; hold on;
-        temp=[mean(t.params(1).B),mean(t.params(2).B),mean(t.params(3).B),mean(t.params(4).B)];
+        temp=[mean(t.params(1).C0),mean(t.params(2).C0),mean(t.params(3).C0),mean(t.params(4).C0)];
         bar(temp');
-        ylim([min(temp)-1 max(temp)+1]);
+        ylim([min(temp)-.1 max(temp)+.1]);
         %legend({'Decision Boundary'});
         set(gca,'XTick',[1:4]);
         set(gca,'XTickLabel',{'LL' 'LH' 'HL' 'HH'});

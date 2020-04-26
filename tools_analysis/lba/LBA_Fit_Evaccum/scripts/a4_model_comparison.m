@@ -12,7 +12,7 @@ t = struct(); % set up a structure for temp data
 % set up variables
 rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; %'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code'; %
 
-datadir = fullfile(rootdir,'data','behav_pilot_1-hr');
+datadir = fullfile(rootdir,'data','behav_pilot_1');
 num_subjects = 14;
 
 modeldir = fullfile(datadir,'lba_fit','results'); % expects to find your modelling results here
