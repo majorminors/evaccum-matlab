@@ -8,8 +8,7 @@ addpath(genpath('/imaging/local/software/spm_cbu_svn/releases/spm12_fil_r7219/')
 %ft_defaults
 %at_loadspm('12')
 
-addpath(genpath('/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/'));
- 
+addpath(genpath('/group/woolgar-lab/projects/Dorian/EvAccum/'));
 
 %get parameters
 behavfile= settings.behav;
@@ -18,7 +17,7 @@ filenames = settings.infname;%number of files
 outfirst= settings.outfirst;%converted files
 savename = settings.ICA;
 subj = settings.dname;
-root =  sprintf('/imaging/at07/Matlab/Projects/CBU2016/RDK_PD/MEGData/%s/MEEG/Preprocess/',subj);
+root =  sprintf('/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/megdata/%s/MEEG/Preprocess/',subj);
 cd(sprintf(root,subj));
 
 %trial files needed for epoching
@@ -137,7 +136,7 @@ modalities = {'MEGMAG', 'MEGPLANAR', 'EEG'};
 
 
 %path for templates
-arttopos = load('/imaging/at07/Matlab/Projects/CBU2015/RDKUnc/Preproc_code/ICA/MEGEEGArtifactTemplateTopographies');
+arttopos = load('/imaging/at07/Matlab/Projects/CBU2015/RDKUnc/Preproc_code/ICA/MEGEEGArtifactTemplateTopographies'); % I don't think I have this
 
 s_ref_chans = {'EOG061','EOG062','ECG063'};%check line 150
 if ~settings.ctr

@@ -12,8 +12,8 @@ t = struct(); % set up a structure for temp data
 % set up variables
 rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; %'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code'; %
 
-datadir = fullfile(rootdir,'data','behav_pilot_1');
-num_subjects = 14;
+datadir = fullfile(rootdir,'data','behav_pilot_2');
+num_subjects = 6;
 
 modeldir = fullfile(datadir,'lba_fit','results'); % expects to find your modelling results here
 toolsdir = fullfile(rootdir, 'tools_analysis'); % where are all your scripts/tools?
@@ -89,6 +89,7 @@ export_fig(fullfile(modeldir,'subjectBICs.jpeg'),'-transparent');
 
 % plot BICs by model
 figure; b = bar(BIC_all*-0.5,'FaceColor',[0 0.4470 0.7410]);
+ylim([1310 1410]);
 export_fig(fullfile(modeldir,'modelBICs.jpeg'),'-transparent');
 
 %plot BIC (mean)

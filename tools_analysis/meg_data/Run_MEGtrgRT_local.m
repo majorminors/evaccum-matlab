@@ -32,49 +32,49 @@ settings.overwrite = 1;
 
 for subi = 3 %:length(dname)
     
-       ID = getMEGID(sprintf('DM_evaccumpilot_%s',IDnum{subi}));
-       
-       settings.bEEG  = ID.bad_eeg;
-       settings.bMEG  = ID.bad_meg;
-       settings.behav = sprintf(behav,bname{subi},bname{subi});
-       settings.svbeh = sprintf(megrt,bname{subi},dname{subi}); 
-  
-       filenames = {};trfiles = {};
-
-        for runi = 1:12 % different runs for each participant
-                       
-                
-                
-                convertedfile= sprintf([tarfld outfirst], dname{subi}, runi, dname{subi});
-                if ~exist(convertedfile,'file')
-                    
-                    fiffile = sprintf([datafld filename], dname{subi}, runi, dname{subi});
-                     if exist(fiffile,'file')
-                        %% convert fif files
-                        S=[];
-                        S.dataset       = fiffile;
-                        S.outfile       = convertedfile;
-                        S.save          = 0;
-                        S.reviewtrials  = 0;
-                        S.channels      = 'all'; 
-                        S.continuous    = 1;
-                        S.checkboundary = 0;
-
-                        % DO IT:
-                        D = spm_eeg_convert(S);
-                    
-                     end
-                    
-                end
-                if exist(convertedfile)
-                filenames{end+1} = convertedfile;
-                trfiles{end+1} = sprintf(trfile,dname{subi},num2str(runi),dname{subi});
-              end
-                
-        end 
+    ID = getMEGID(sprintf('DM_evaccumpilot_%s',IDnum{subi}));
+    
+    settings.bEEG  = ID.bad_eeg;
+    settings.bMEG  = ID.bad_meg;
+    settings.behav = sprintf(behav,bname{subi},bname{subi});
+    settings.svbeh = sprintf(megrt,bname{subi},dname{subi});
+    
+    filenames = {};trfiles = {};
+    
+    for runi = 1:12 % different runs for each participant
         
-        if ~exist(settings.svbeh,'file') || settings.overwrite
-        fun_MEGtrgRT(filenames,settings.behav,settings.svbeh,settings,trfiles)
+        
+        
+        convertedfile= sprintf([tarfld outfirst], dname{subi}, runi, dname{subi});
+        if ~exist(convertedfile,'file')
+            
+            fiffile = sprintf([datafld filename], dname{subi}, runi, dname{subi});
+            if exist(fiffile,'file')
+                %% convert fif files
+                S=[];
+                S.dataset       = fiffile;
+                S.outfile       = convertedfile;
+                S.save          = 0;
+                S.reviewtrials  = 0;
+                S.channels      = 'all';
+                S.continuous    = 1;
+                S.checkboundary = 0;
+                
+                % DO IT:
+                D = spm_eeg_convert(S);
+                
+            end
+            
         end
+        if exist(convertedfile)
+            filenames{end+1} = convertedfile;
+            trfiles{end+1} = sprintf(trfile,dname{subi},num2str(runi),dname{subi});
+        end
+        
+    end
+    
+    if ~exist(settings.svbeh,'file') || settings.overwrite
+        fun_MEGtrgRT(filenames,settings.behav,settings.svbeh,settings,trfiles)
+    end
 end
 

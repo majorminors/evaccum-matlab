@@ -12,7 +12,7 @@ t = struct(); % set up a structure for temp data
 % set up variables
 rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % 'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code'; % % root directory - used to inform directory mappings
 
-datadir = fullfile(rootdir,'data','behav_pilot_1');
+datadir = fullfile(rootdir,'data','behav_pilot_2');
 
 modeldir = fullfile(datadir,'lba_fit','results'); % expects to find your modelling results here
 toolsdir = fullfile(rootdir, 'tools_analysis'); % where are all your scripts/tools?
@@ -89,7 +89,7 @@ end; clear idxsubj;
 %% get model data
 
 d.fileinfo = dir(fullfile(modeldir, p.datafilepattern)); % find all the datafiles and get their info
-for i = 5%:length(d.fileinfo) % loop through each
+for i = 1%:length(d.fileinfo) % loop through each
     t.path = fullfile(modeldir, d.fileinfo(i).name);% get the full path to the file
     fprintf(1, 'working with %s\n', t.path); % print that so you can check
     
@@ -120,21 +120,42 @@ for i = 5%:length(d.fileinfo) % loop through each
         % Plotting...
         if length(unique_conds) ~= length(t.data2fit); error('you dont appear to have as many conditions as sets of t.data2fit'); end % sanity check
         
-        % hold onto T0 to plot later
+        % hold onto params to plot later
         non_dec_time(idxsubj) = t.params.T0;
+        dec_bndry(idxsubj,:) = t.params.B;
+        st_bias(idxsubj,:) = t.params.C0;
+        drift_rate(idxsubj,:) = t.params.Ame;
         
-        % plot parameters
-        %   t.params(1) = LL; t.params(2) = LH; t.params(3) = HL; t.params(4) = HH;
-        %   param names = B C0 Ame Astd T0
-        figure; hold on;
-        temp=[mean(t.params(1).C0),mean(t.params(2).C0),mean(t.params(3).C0),mean(t.params(4).C0)];
-        bar(temp');
-        ylim([min(temp)-.1 max(temp)+.1]);
-        %legend({'Decision Boundary'});
-        set(gca,'XTick',[1:4]);
-        set(gca,'XTickLabel',{'LL' 'LH' 'HL' 'HH'});
-        title('Decision Boundary');
-
+%         % plot parameters
+%         %   t.params(1) = LL; t.params(2) = LH; t.params(3) = HL; t.params(4) = HH;
+%         %   param names = B C0 Ame Astd T0
+%         figure; hold on;
+%         temp=[mean(t.params(1).C0),mean(t.params(2).C0),mean(t.params(3).C0),mean(t.params(4).C0)];
+%         bar(temp');
+%         ylim([min(temp)-.1 max(temp)+.1]);
+%         %legend({'Decision Boundary'});
+%         set(gca,'XTick',[1:4]);
+%         set(gca,'XTickLabel',{'EE' 'EH' 'HE' 'HH'});
+%         title('Start Bias');
+%         
+%         figure; hold on;
+        temp=[mean(t.params(1).B),mean(t.params(2).B),mean(t.params(3).B),mean(t.params(4).B)];
+%         bar(temp');
+%         ylim([min(temp)-.1 max(temp)+.1]);
+%         %legend({'Decision Boundary'});
+%         set(gca,'XTick',[1:4]);
+%         set(gca,'XTickLabel',{'EE' 'EH' 'HE' 'HH'});
+%         title('Decision Boundary');
+%         
+%         figure; hold on;
+%         temp=[mean(t.params(1).Ame),mean(t.params(2).Ame),mean(t.params(3).Ame),mean(t.params(4).Ame)];
+%         bar(temp');
+%         ylim([min(temp)-.1 max(temp)+.1]);
+%         %legend({'Decision Boundary'});
+%         set(gca,'XTick',[1:4]);
+%         set(gca,'XTickLabel',{'EE' 'EH' 'HE' 'HH'});
+%         title('Drift Rate');
+% 
         t.save_params(idxsubj,:) = temp;
         
         for level = 1:length(unique_conds) % for all conditions
@@ -172,6 +193,14 @@ for i = 5%:length(d.fileinfo) % loop through each
     set(gca,'XTick',[1:length(non_dec_time)]);
     %set(gca,'XTickLabel',{'EE' 'EH' 'HE' 'HH'});
     title('Non-Decision Time');
+    
+    temp=[mean(t.save_params(:,1)),mean(t.save_params(:,2)),mean(t.save_params(:,3)),mean(t.save_params(:,4))];
+    figure; hold on;
+    bar(temp,'FaceColor',[0 .502 .502]);
+    ylim([min(temp)-0.05 max(temp)+0.05]);
+    set(gca,'XTick',[1:length(temp)]);
+    set(gca,'XTickLabel',{'EE' 'EH' 'HE' 'HH'});
+    title('Mean Decision Boundaries');
     
 end; clear i;
 
