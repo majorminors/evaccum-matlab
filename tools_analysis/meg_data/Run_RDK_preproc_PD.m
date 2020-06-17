@@ -7,6 +7,8 @@ clc
 addpath /hpc-software/matlab/cbu/
 addpath(genpath('/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/'))
 
+t.local = 1;
+
 root    = '/group/woolgar-lab/projects/Dorian/EvAccum/';
 droot   = fullfile(root, 'data/meg_pilot_1/megdata/');
 infld   = fullfile(droot, '%s/MEEG/MaxfilterOutput/');
@@ -123,18 +125,18 @@ funanon = @fun_rdk_preproc_PD;
 J = [];
 ind = 0;
 
-for subi = 1:length(dname)
+for subi = 3%1:length(dname)
     
        %ID = getMEGID(sprintf('AT_RDK2_%s',IDnum{subi}));
        ID = getMEGID(sprintf('DM_evaccumpilot_%s',IDnum{subi}));
        
        settings.outfname= sprintf([tarfld,outfilename],dname{subi},dname{subi});
        settings.dname = dname{subi};
-       settings.ctr   = ID.ctr;
+       %settings.ctr   = ID.ctr;
        settings.bEEG  = ID.bad_eeg;
        settings.bMEG  = ID.bad_meg;
        settings.behav = sprintf(behav,bname{subi});
-       settings.svbeh = sprintf(megrt,dname{subi}); 
+       settings.svbeh = sprintf(megrt,bname{subi}); 
        settings.ICA   = sprintf(ICA,dname{subi},dname{subi}); 
   
        settings.infname = {};settings.outfirst={};
@@ -187,10 +189,10 @@ if locpar
     
     
 elseif locpar == 0
-    
-    S = cbu_scheduler();
-    S.NumWorkers = 37;
-    S.SubmitArguments = '-l mem=20GB -l walltime=96:00:00'; %20GB 96:00:00 more than 10GB recommended
+    S = cbu_scheduler('custom',{'compute',30,20,345600});
+    %S = cbu_scheduler();
+    %S.NumWorkers = 37;
+    %S.SubmitArguments = '-l mem=20GB -l walltime=96:00:00'; %20GB 96:00:00 more than 10GB recommended
     
     %if ~exist('/home/at07/matlab/jobs/rdkICA/','dir'); mkdir('/home/at07/matlab/jobs/rdkICA/');end
     %S.JobStorageLocation = '/home/at07/matlab/jobs/rdkICA/';
@@ -203,7 +205,14 @@ elseif locpar == 0
     S.JobStorageLocation = jobdir;
     
     %%
-    !rm -r /home/at07/matlab/jobs/rdkICA/*
-    cbu_qsub(J, S, dependencies_path)
+    %!rm -r /home/at07/matlab/jobs/rdkICA/*
+if t.local % run locally
+    warning('you are running locally\n');
+    for ijob = 1:length(J)
+        fun_rdk_preproc_PD(J(ijob).input_args{1}); % specification of {1} is to make sure the settings are entered in the right format
+    end; clear ijob;
+else % submit the jobs to the cluster
+    cbu_qsub(J, S, dependencies_path) % then submit
+end
     
 end

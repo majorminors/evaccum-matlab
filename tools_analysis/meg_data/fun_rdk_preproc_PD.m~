@@ -217,7 +217,7 @@ for m = toDoW %startm:length(modalities)
         all_ica.weights{m} = weights;    
         all_ica.ICs{m} = ICs(1:5000,:);
         %if ~settings.ctr
-        %    all_ica.ICsEMG{m} = ICsEMG(1:5000,:);
+            all_ica.ICsEMG{m} = ICsEMG(1:5000,:);
         %end
         all_ica.sphere{m} = sphere;
         all_ica.chans{m} = chans;    
@@ -383,10 +383,10 @@ spm_jobman('initcfg');
         matlabbatch{1}.spm.meeg.preproc.epoch.prefix = lab;
         matlabbatch{2}.spm.meeg.preproc.prepare.D(1) = cfg_dep('Epoching: Epoched Datafile', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','Dfname'));
         matlabbatch{2}.spm.meeg.preproc.prepare.task{1}.sortconditions.label = {
-            'LcLr'
-            'HcLr'
-            'LcHr'
-            'HcHr'
+            'pLaL'
+            'pHaL'
+            'pLaH'
+            'pHaH'
             }';
 
         matlabbatch{3}.spm.meeg.preproc.downsample.D(1) = cfg_dep('Prepare: Prepared Datafile', substruct('.','val', '{}',{2}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','Dfname'));
