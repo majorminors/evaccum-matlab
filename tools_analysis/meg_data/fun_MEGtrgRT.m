@@ -35,7 +35,7 @@ end
 
 conditions = {'LcLr', 'LcHr','HcLr','HcHr'}; % 2x2 coherence and rule
 
-for runi = 1:3%1:numel(filenames)
+for runi = 1:numel(filenames)
     %%
     clear trl conditionlabels
     D = spm_eeg_load(filenames{runi});
@@ -214,7 +214,7 @@ for runi = 1:3%1:numel(filenames)
                             if runi == 4
                                 trial_type_onset = [trial_type_onset;trigger_onset(length(trial_type_onset)+1:end)];
                             elseif runi == 5
-                                trial_type_onset = trigger+onset;
+                                trial_type_onset = trigger_onset;
                             end
                             
                             %157797 is cue acceptor trigger end
@@ -247,12 +247,16 @@ for runi = 1:3%1:numel(filenames)
         case 'S01'
             figure;plot(trig);hold on;plot(trigger_onset,trig(trigger_onset),'-o');
         otherwise
-            figure;plot(trig);hold on;plot(trial_type_onset,trig(trial_type_onset),'-o');
-    end
+            if runi < 5
+                figure;plot(trig);hold on;plot(trial_type_onset,trig(trial_type_onset),'-o');
+            end
+        end
 
     %check
     if numel(trigger_onset) ~= size(block,1)
+        if runi < 5
         error('Inconsistent number of onset triggers vs trials')
+        end
     end
     switch subjectswitcher
         case 'S01'
@@ -263,9 +267,11 @@ for runi = 1:3%1:numel(filenames)
             end
         otherwise
             if numel(trialID) ~= numel(block(:,10)) || sum(trialID ~= block(:,10))
+              if runi < 5
                 if sum(trialIDtrg ~= block(:,10)) % compare with the d.stim_mat_all column with trigger amplitudes
                     error('Discrepancy between triggers coded conditions and trials')
                 end
+              end
             end
     end
     
@@ -295,18 +301,27 @@ for runi = 1:3%1:numel(filenames)
             end
         otherwise
             for ions = 1:numel(trial_type_onset)
-                
+                if runi < 5
                 if ions < numel(trial_type_onset)
                     tmp    =trig(trial_type_onset(ions):(trial_type_onset(ions+1)-1));
                 else
                     tmp    =trig(trial_type_onset(ions):end);
                 end
+                end
                 
+                if runi < 5
                 tmpres = (find(ismember(diff(tmp),keys),1,'first')+1)';%first to avoid multiple button presses % time of button press within trial period (iti to iti)
-                
+                else
+                    tmpres = [];
+                end
                 if ~isempty(tmpres)
                     responset(ions)  = trial_type_onset(ions)+tmpres-1;%#ok % time of button press within block
-                    tmp_RT(ions)       = ttime(responset(ions))-(ttime(coh_onset(ions))+.034);%#ok 34ms projector's delay % this is reaction time (i.e. time of button press from coherence onset)
+                    if length(coh_onset) < ions
+                        responset(ions) = 0;
+                        tmp_RT(ions) = 0;
+                    else
+                        tmp_RT(ions)       = ttime(responset(ions))-(ttime(coh_onset(ions))+.034);%#ok 34ms projector's delay % this is reaction time (i.e. time of button press from coherence onset)
+                    end
                 else
                     responset(ions) = 0;%#ok
                     tmp_RT(ions)      = 0;%#ok
@@ -345,7 +360,9 @@ for runi = 1:3%1:numel(filenames)
     
     
     if tmp(2,1) <0.99 || isnan(tmp(2,1))   % takes the correlation from the output of corr
-        error('large discrepancy between stim RT and MEG RT!')
+        if runi < 4            
+            error('large discrepancy between stim RT and MEG RT!')
+        end
     end
     
   
@@ -386,7 +403,9 @@ for runi = 1:3%1:numel(filenames)
     end
     
     %MEG_RT = cat(1,MEG_RT,[block(:,[1:4 12 14 15 ]), tmp_RT']);% 1block# 2coh 3act 4cond 5trigger 6resKey 7acc 8rt % compiles matlab trial information with the new MEG generated rts
+    if runi < 5
     MEG_RT = cat(1,MEG_RT,[block(:,[1 3 5 8 10]), conditionlabels, accuracyrow, rts, tmp_RT']);
+    end
     % re-composed matrix looks like:
     %  1)  cue direction (1-4)
     %  2)  dot motion direction condition (1-8)
@@ -417,7 +436,7 @@ for runi = 1:3%1:numel(filenames)
     alltrl = cat(1,alltrl,trl);
     
     tmplabs = cat(1,tmplabs,conditionlabels);
-    
+    conditionlabels = cellstr(conditionlabels); % need to convert for the preprocessing
     save(trfiles{runi},'trl','conditionlabels')
 end
 
@@ -428,11 +447,14 @@ end
 
 %%
 
+% add trial numbers to MEG_RT
+MEG_RT(:,end+1) = 1:length(MEG_RT(:,1));
 %allconditionlabels = {conditions{MEG_RT(:,8)}}';%#ok
 allconditionlabels = MEG_RT(:,6);
 
 %check for consistency
+if runi < 5
 if sum(strcmp(allconditionlabels,tmplabs)) ~= numel(tmplabs); error(['incongruent condition labels:' filenames{runi}]);end
-
+end
 
 save(savebehav,'MEG_RT','settings','alltrl','allconditionlabels')

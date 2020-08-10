@@ -5,17 +5,16 @@ clear classes
 close all
 clc
 addpath /hpc-software/matlab/cbu/
-addpath(genpath('/imaging/at07/Matlab/Projects/Dorian/evaccum2/tools_analysis/'))
+addpath(genpath('/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/'))
 
 t.local = 1;
 
 root    = '/group/woolgar-lab/projects/Dorian/EvAccum/';
-%root	= '/imaging/at07/Matlab/Projects/Dorian/evaccum2';
 droot   = fullfile(root, 'data/meg_pilot_1/megdata/');
 infld   = fullfile(droot, '%s/MEEG/MaxfilterOutput/');
 tarfld  = fullfile(droot, '%s/MEEG/Preprocess/');
-behav   = fullfile(root,'data/meg_pilot_1/behavioural/%s/%s_EvAccum.mat');%at
-megrt   = fullfile(root,'data/meg_pilot_1/behavioural/%s/subj_%s_MEGRTs.mat');%at
+behav   = '/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/behavioural/%s/%s_EvAccum.mat';
+megrt   = '/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/behavioural/%s/%s_MEGRTs.mat';
 ICA     = fullfile(droot, '%s/MEEG/ICAOutput/ICA%s.mat');
 outpt   = fullfile(droot, '%s/MEEG/Preprocess/MSL_%s.mat');
 addpath(droot);
@@ -34,7 +33,7 @@ jobdir = fullfile(droot,'scheduled_jobs'); % where you'll save any scheduled job
 
 
 [dname,IDnum] = getnames(droot,7);
-bname         = getnames('/imaging/at07/Matlab/Projects/Dorian/evaccum2/data/meg_pilot_1/behavioural/',10);
+bname         = getnames('/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/behavioural/',10);
 bname = unique({bname{:}});
 
 %% parallel processing
@@ -136,12 +135,8 @@ for subi = 3%1:length(dname)
        %settings.ctr   = ID.ctr;
        settings.bEEG  = ID.bad_eeg;
        settings.bMEG  = ID.bad_meg;
-       
-       %at- the following two settings were selecting the folder but not
-       %the file.
-       settings.behav = sprintf(behav,bname{str2num(IDnum{subi})},bname{str2num(IDnum{subi})});%at
-       settings.svbeh = sprintf(megrt,bname{str2num(IDnum{subi})},num2str(subi)); %at
-       %%%%
+       settings.behav = sprintf(behav,bname{subi});
+       settings.svbeh = sprintf(megrt,bname{subi}); 
        settings.ICA   = sprintf(ICA,dname{subi},dname{subi}); 
   
        settings.infname = {};settings.outfirst={};

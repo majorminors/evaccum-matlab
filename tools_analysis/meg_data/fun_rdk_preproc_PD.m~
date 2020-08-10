@@ -58,7 +58,6 @@ if ~exist(savebehav,'file')
 end
 
 
-
 %% Line and highpass filter
 for runi = 1:length(outfirst)
     [pathstr,name,ext] = fileparts(outfirst{runi});
@@ -217,7 +216,7 @@ for m = toDoW %startm:length(modalities)
         all_ica.weights{m} = weights;    
         all_ica.ICs{m} = ICs(1:5000,:);
         %if ~settings.ctr
-            all_ica.ICsEMG{m} = ICsEMG(1:5000,:);
+        %    all_ica.ICsEMG{m} = ICsEMG(1:5000,:);
         %end
         all_ica.sphere{m} = sphere;
         all_ica.chans{m} = chans;    
@@ -236,8 +235,9 @@ end
 %% Do preprocessing: downsampling & epoching + label sorting
 %Stimulus locked & Response locked
 
-
-Xfiles=Pipeline(filenames,trls);
+load(savebehav,'MEG_RT');
+numtrials = MEG_RT(:,end);
+Xfiles=Pipeline(filenames,trls,numtrials);
 
 
 %% Run ADJUST to detect EEG artefacts
@@ -364,7 +364,7 @@ spm_unlink('avref_montage.mat')
 
 
 
-function Xfiles=Pipeline(infname,trls)
+function Xfiles=Pipeline(infname,trls,numtrials)
 
 spm_jobman('initcfg');
 
@@ -373,7 +373,10 @@ spm_jobman('initcfg');
     lab = 'SL';
 
 
-    for iff = 1: numel(infname)
+    for iff = 1:numel(infname)
+        
+        clear matlabbatch;
+
         %Epoch+Rearrange labels
         matlabbatch{1}.spm.meeg.preproc.epoch.D(1) = cellstr(infname{iff});
         matlabbatch{1}.spm.meeg.preproc.epoch.trialchoice.trlfile = cellstr(trls{iff});
@@ -381,18 +384,30 @@ spm_jobman('initcfg');
         matlabbatch{1}.spm.meeg.preproc.epoch.bc = 0;
         matlabbatch{1}.spm.meeg.preproc.epoch.eventpadding = 0;
         matlabbatch{1}.spm.meeg.preproc.epoch.prefix = lab;
-        matlabbatch{2}.spm.meeg.preproc.prepare.D(1) = cfg_dep('Epoching: Epoched Datafile', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','Dfname'));
-        matlabbatch{2}.spm.meeg.preproc.prepare.task{1}.sortconditions.label = {
-            'pLaL'
-            'pHaL'
-            'pLaH'
-            'pHaH'
+        
+        output = spm_jobman('run',matlabbatch);
+
+        %% Add  info needed for MVPA 
+        D = spm_eeg_load(output{1}.Dfname{1});
+        %info to store: [trial num, block num, here you can add anything you wish]
+        info = num2cell([numtrials';iff.*ones(1,numel(numtrials))],1);
+        D = trialtag(D, ':', info) ;save(D);
+
+        clear matlabbatch;
+        matlabbatch{1}.spm.meeg.preproc.prepare.D(1) = cellstr(output{1}.Dfname);
+
+        %matlabbatch{2}.spm.meeg.preproc.prepare.D(1) = cfg_dep('Epoching: Epoched Datafile', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','Dfname'));
+        matlabbatch{1}.spm.meeg.preproc.prepare.task{1}.sortconditions.label = {
+            'LcLr'
+            'HcLr'
+            'LcHr'
+            'HcHr'
             }';
 
-        matlabbatch{3}.spm.meeg.preproc.downsample.D(1) = cfg_dep('Prepare: Prepared Datafile', substruct('.','val', '{}',{2}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','Dfname'));
-        matlabbatch{3}.spm.meeg.preproc.downsample.fsample_new = 500;
-        matlabbatch{3}.spm.meeg.preproc.downsample.method = 'resample';
-        matlabbatch{3}.spm.meeg.preproc.downsample.prefix = 'd';
+        matlabbatch{2}.spm.meeg.preproc.downsample.D(1) = cfg_dep('Prepare: Prepared Datafile', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','Dfname'));
+        matlabbatch{2}.spm.meeg.preproc.downsample.fsample_new = 500;
+        matlabbatch{2}.spm.meeg.preproc.downsample.method = 'resample';
+        matlabbatch{2}.spm.meeg.preproc.downsample.prefix = 'd';
         
         
         output = spm_jobman('run',matlabbatch);
@@ -402,12 +417,12 @@ spm_jobman('initcfg');
         
         %get ready for another round
         clear matlabbatch;
-        outfiles{iff} = output{3}.Dfname; %#ok
+        outfiles{iff} = output{1}.Dfname; %#ok
         
         %check that number of trials corresponds
         D = spm_eeg_load(outfiles{iff}{1});
         trl = load(trls{iff},'trl');
-        if numel(D.conditions)~= size(trl.trl,1); error([D.fname,' discrepant number of trials!']);end
+        %if numel(D.conditions)~= size(trl.trl,1); error([D.fname,' discrepant number of trials!']);end
         clear trl D;
         
        

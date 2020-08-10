@@ -15,7 +15,7 @@ droot   = fullfile(root, 'data/meg_pilot_1/megdata/');
 infld   = fullfile(droot, '%s/MEEG/MaxfilterOutput/');
 tarfld  = fullfile(droot, '%s/MEEG/Preprocess/');
 behav   = fullfile(root,'data/meg_pilot_1/behavioural/%s/%s_EvAccum.mat');%at
-megrt   = fullfile(root,'data/meg_pilot_1/behavioural/%s/subj_%s_MEGRTs.mat');%at
+megrt   = fullfile(root,'data/meg_pilot_1/behavioural/%s/%s_MEGRTs.mat');%at
 ICA     = fullfile(droot, '%s/MEEG/ICAOutput/ICA%s.mat');
 outpt   = fullfile(droot, '%s/MEEG/Preprocess/MSL_%s.mat');
 addpath(droot);
@@ -140,7 +140,7 @@ for subi = 3%1:length(dname)
        %at- the following two settings were selecting the folder but not
        %the file.
        settings.behav = sprintf(behav,bname{str2num(IDnum{subi})},bname{str2num(IDnum{subi})});%at
-       settings.svbeh = sprintf(megrt,bname{str2num(IDnum{subi})},num2str(subi)); %at
+       settings.svbeh = sprintf(megrt,bname{str2num(IDnum{subi})},bname{str2num(IDnum{subi})}); %at
        %%%%
        settings.ICA   = sprintf(ICA,dname{subi},dname{subi}); 
   
