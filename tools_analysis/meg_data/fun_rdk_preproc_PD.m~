@@ -236,7 +236,7 @@ end
 %Stimulus locked & Response locked
 
 load(savebehav,'MEG_RT');
-numtrials = MEG_RT(:,end);
+numtrials = MEG_RT(:,end-1:end);
 Xfiles=Pipeline(filenames,trls,numtrials);
 
 
@@ -390,7 +390,9 @@ spm_jobman('initcfg');
         %% Add  info needed for MVPA 
         D = spm_eeg_load(output{1}.Dfname{1});
         %info to store: [trial num, block num, here you can add anything you wish]
-        info = num2cell([numtrials';iff.*ones(1,numel(numtrials))],1);
+        numtrials = str2double(numtrials);
+        thesetrials = numtrials(str2double(find(numtrials(:,1)) == iff),2);
+        info = num2cell([thesetrials';iff.*ones(1,numel(thesetrials))],1);
         D = trialtag(D, ':', info) ;save(D);
 
         clear matlabbatch;

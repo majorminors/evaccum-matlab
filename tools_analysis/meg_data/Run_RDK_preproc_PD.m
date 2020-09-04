@@ -5,7 +5,7 @@ clear classes
 close all
 clc
 addpath /hpc-software/matlab/cbu/
-addpath(genpath('/imaging/at07/Matlab/Projects/Dorian/evaccum2/tools_analysis/'))
+addpath(genpath('/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/'))
 
 t.local = 1;
 
@@ -34,7 +34,7 @@ jobdir = fullfile(droot,'scheduled_jobs'); % where you'll save any scheduled job
 
 
 [dname,IDnum] = getnames(droot,7);
-bname         = getnames('/imaging/at07/Matlab/Projects/Dorian/evaccum2/data/meg_pilot_1/behavioural/',10);
+bname         = getnames(fullfile(root,'data/meg_pilot_1/behavioural/'),10);
 bname = unique({bname{:}});
 
 %% parallel processing
@@ -52,7 +52,7 @@ settings.fld = tarfld;
 
 settings.freshstart = 1;%delete everything before starting again -not needed for 1st preprocessing run
 settings.overwrite = 0;
-settings.ICAoverwrite = 0;
+settings.ICAoverwrite = 1;
 
 dependencies_path = {
     '/neuro/meg_pd_1.2/'
@@ -146,7 +146,7 @@ for subi = 3%1:length(dname)
   
        settings.infname = {};settings.outfirst={};
 
-        for runi = 1:12
+        for runi = 1:3
             
             if exist(sprintf([infld filename], dname{subi}, runi, dname{subi}),'file')
                 settings.infname{end+1} = sprintf([infld filename], dname{subi}, runi, dname{subi});

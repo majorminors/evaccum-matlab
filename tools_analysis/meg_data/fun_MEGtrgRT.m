@@ -403,8 +403,12 @@ for runi = 1:numel(filenames)
     end
     
     %MEG_RT = cat(1,MEG_RT,[block(:,[1:4 12 14 15 ]), tmp_RT']);% 1block# 2coh 3act 4cond 5trigger 6resKey 7acc 8rt % compiles matlab trial information with the new MEG generated rts
+    run_tagger = runi.*ones(length(block(:,1)),1);
     if runi < 5
-    MEG_RT = cat(1,MEG_RT,[block(:,[1 3 5 8 10]), conditionlabels, accuracyrow, rts, tmp_RT']);
+        MEG_RT = cat(1,MEG_RT,[block(:,[1 3 5 8 10]), conditionlabels, accuracyrow, rts, tmp_RT',run_tagger]);
+        if runi == 3
+            MEG_RT(end,:) = [];
+        end
     end
     % re-composed matrix looks like:
     %  1)  cue direction (1-4)
@@ -416,6 +420,8 @@ for runi = 1:numel(filenames)
     %  7)  accuracy (0, 1, or -1 for missed trials)
     %  8)  rts from behavioural data
     %  9)  rts from MEG
+    % 10)  something to tag which run this sequence of data belongs to
+    % 11)  we later add a row of unique numbers to tag each trial
     
     %trial definition for epoching
     
@@ -449,6 +455,8 @@ end
 
 % add trial numbers to MEG_RT
 MEG_RT(:,end+1) = 1:length(MEG_RT(:,1));
+% now use those to create something that we can tag the meeg data with
+
 %allconditionlabels = {conditions{MEG_RT(:,8)}}';%#ok
 allconditionlabels = MEG_RT(:,6);
 
