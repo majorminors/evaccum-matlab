@@ -13,8 +13,8 @@ p = struct(); % est structure for parameter values
 % addpath(); % the MEGSynchClass is in this folder, so you don't need this, but if you move things around, add the directory the class is here
 
 % settings
-p.pausetime = 1; % in seconds
-p.reset_location = 1; % 1 if reset triggers before pause, 2 if reset triggers after pause
+p.pre_reset_pause = 0.005; % in secs
+p.post_reset_pause = 1; % in secs
 p.trigger_values = [1,2,4,8]; % [1:1:255];
 
 % make sure pause is on
@@ -29,18 +29,8 @@ MEG.SendTrigger(0); % reset triggers
 fprintf('beginning test: %s\n', mfilename);
 for i = 1:length(p.trigger_values)
     MEG.SendTrigger(p.trigger_values(i));
-    pauser(p);
+	pause(p.pre_reset_pause)
+	MEG.SendTrigger(0); % reset triggers
+    pause(p.post_reset_pause);
 end
 
-
-
-% function to order pause and reset
-function pauser(p)
-    if p.reset_location == 1
-        MEG.SendTrigger(0); % reset triggers
-        pause(p.pausetime);
-    elseif p.reset_location == 2
-        pause(p.pausetime);
-        MEG.SendTrigger(0); % reset triggers
-    end
-end
