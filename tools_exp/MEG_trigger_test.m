@@ -9,9 +9,6 @@ clc;
 fprintf('setting up %s\n', mfilename);
 p = struct(); % est structure for parameter values
 
-% directory mapping
-% addpath(); % the MEGSynchClass is in this folder, so you don't need this, but if you move things around, add the directory the class is here
-
 % settings
 p.pre_reset_pause = 0.005; % in secs
 p.post_reset_pause = 1; % in secs
