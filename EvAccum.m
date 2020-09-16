@@ -75,10 +75,10 @@ rootdir = pwd; % root directory - used to inform directory mappings
 p.screen_width = 40;   % Screen width in cm
 p.screen_height = 30;    % Screen height in cm
 p.screen_distance = 50; % Screen distance from participant in cm
-p.skip_synctests = 0; % force psychtoolbox to skip synctests. not advised. autoskipped during testing
+p.skip_synctests = 1; % force psychtoolbox to skip synctests. not advised. autoskipped during testing
 
 % general settings
-p.manually_set_coherence = 0; % if 1, will include prompts to set coherence manually
+p.manually_set_coherence = 1; % if 1, will include prompts to set coherence manually
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
@@ -89,7 +89,7 @@ p.feedback_type = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 th
 p.num_blocks = 20;
 p.breakblocks = 0; %[7,13,19,25,31]; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
 p.keyswap = 1; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
-p.MEG_enabled = 0; % using MEG
+p.MEG_enabled = 1; % using MEG
 p.MEG_emulator_enabled = 0; % using the emulator - be aware we can't quit using the quitkey with emulator
 
 % check set up
@@ -220,14 +220,16 @@ fprintf('defining exp params for %s\n', mfilename);
 % define keys
 if p.MEG_enabled == 0
     p.resp_keys = {'a','s'}; % only accepts two response options
+    p.resp_key_names = {'a','s'};
 elseif p.MEG_enabled == 1 % what keys in the MEG
     if p.MEG_emulator_enabled == 0
         p.resp_keys = {'RB','RR'}; % only accepts two response options
+        p.resp_key_names = {'left','right'};
     elseif p.MEG_emulator_enabled == 1
         p.resp_keys = {'LY','RB'}; % LY and RB correspond to a and s on the keyboard
+        p.resp_key_names = {'a','s'};
     end
 end
-p.resp_key_names = {'a','s'};
 p.no_participant_response = 0; % turn this off for response_waiter function to work
 p.quitkey = {'q'}; % this is watched by KbqQueue regardless of p.MEG_enabled
 p.continuekey = {'c'}; % this is watched by KbQueue regardless of p.MEG_enabled
@@ -358,8 +360,8 @@ clear block;
 % MEG trigger info - these need to be sufficiently spaced in an analogue
 %   system to allow you to distinguish them if they don't quite reach their value
 p.MEGtriggers.onset = 1;
-p.MEGtriggers.cue = 150;
-p.MEGtriggers.trial = 50;
+p.MEGtriggers.cue = 200;
+p.MEGtriggers.trial = 250;
 
 % invoke the MEG functions if p.MEG_enabled
 if p.MEG_enabled == 1
@@ -516,14 +518,6 @@ try
                 t.imgrect = [0 0 t.imagewidth t.imageheight]; % make a scaled rect for the cue
                 t.rect = CenterRectOnPointd(t.imgrect,p.resolution(1,1)/2,p.resolution(1,2)/2); % offset it for the centre of the window
                 
-                % send a trigger to let us know this is a cue
-                if p.MEG_enabled == 1
-                    MEG.SendTrigger(0); % reset triggers
-                    WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to return to zero
-                    MEG.SendTrigger(p.MEGtriggers.cue); % send the cue trigger
-                    % we will let it stay on for the duration of the cue
-                end
-                
                 % then display cue and response mapping
                 Screen('DrawTexture', p.win, p.cue_tex, [], t.rect, p.stim_mat(i,2)); % draws the cue in the orientation specified in column 2 of p.stim_mat for the current trial
                 % draw the response mapping at the corners of the t.rect you just made depending on the orientation of the cue
@@ -559,6 +553,15 @@ try
                     DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{2}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_two);
                 end
                 Screen('Flip', p.win);
+                                
+                % send a trigger to let us know this is a cue
+                if p.MEG_enabled == 1
+                    MEG.SendTrigger(0); % reset triggers
+                    WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to return to zero
+                    MEG.SendTrigger(p.MEGtriggers.cue); % send the cue trigger
+                    % we will let it stay on for the duration of the cue
+                end
+                
                 %% response waiter function
                 response_waiter(p,MEG) % call response_waiter function
                 %% response waiter function ends
