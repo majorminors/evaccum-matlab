@@ -51,7 +51,7 @@ outfilename =  '%s_trans.mat';
 settings.fld = tarfld;
 
 settings.freshstart = 1;%delete everything before starting again -not needed for 1st preprocessing run
-settings.overwrite = 0;
+settings.overwrite = 1;
 settings.ICAoverwrite = 1;
 
 dependencies_path = {
@@ -146,7 +146,7 @@ for subi = 3%1:length(dname)
   
        settings.infname = {};settings.outfirst={};
 
-        for runi = 1:3
+        for runi = 1:2
             
             if exist(sprintf([infld filename], dname{subi}, runi, dname{subi}),'file')
                 settings.infname{end+1} = sprintf([infld filename], dname{subi}, runi, dname{subi});

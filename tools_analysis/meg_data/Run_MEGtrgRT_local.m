@@ -38,6 +38,7 @@ for subi = 3 %:length(dname)
     settings.bMEG  = ID.bad_meg;
     settings.behav = sprintf(behav,bname{subi},bname{subi});
     settings.svbeh = sprintf(megrt,bname{subi},dname{subi});
+    settings.runid = ID.runid;
     
     filenames = {};trfiles = {};
     

@@ -4,6 +4,9 @@ function ID = getMEGID(subject)
 % windows: \\cbsu\data\Scandata\MEG\cbu\evaccum\megid\megdate\run
 % unix: /megdata/cbu/evaccum/megid/megdate/run
 
+%%% NOTE: we want to enter ID.runid as [<blocks in run 1>;<blocks in run
+%%% 2>;<blocks in run n>]
+
 switch subject
     
     case {'DM_evaccumpilot_1','DM_evaccumpilot_01'}
@@ -52,6 +55,7 @@ switch subject
         ID.bad_meg = [];
         ID.date_meg= '191202';
         ID.runblks = '6';
+        ID.runid = [1:6;7:12;13:18;19:24;25,NaN,NaN,NaN,NaN,NaN];
         ID.note    = 'run 3 all except last 21 trials, run 4 includes the last 8 of 3, run 5 is a single block';
         ID.usable = 1;
         

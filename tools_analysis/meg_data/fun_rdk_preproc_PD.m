@@ -235,9 +235,9 @@ end
 %% Do preprocessing: downsampling & epoching + label sorting
 %Stimulus locked & Response locked
 
-load(savebehav,'MEG_RT');
-numtrials = MEG_RT(:,end-1:end);
-numtrials = str2double(numtrials);
+load(savebehav,'MEG_RT'); % load behavioural file from MRGtrgRT script
+numtrials = MEG_RT(:,end-1:end); % pull the last two columns of MEGRT: what run the trial belonged to, and a unique number for the trial respectively
+numtrials = str2double(numtrials); % convert to double
 Xfiles=Pipeline(filenames,trls,numtrials);
 
 
@@ -391,9 +391,9 @@ for iff = 1:numel(infname)
     %% Add  info needed for MVPA
     D = spm_eeg_load(output{1}.Dfname{1});
     %info to store: [trial num, block num, here you can add anything you wish]
-    thesetrials = numtrials(find(numtrials(:,1) == iff),2);
-    info = num2cell([thesetrials';iff.*ones(1,numel(thesetrials))],1);
-    D = trialtag(D, ':', info) ;save(D);
+    thesetrials = numtrials(find(numtrials(:,1) == iff),2); % find the trial numbers related to this 'iff' which is the index for each file - files are the Maxfilter outputs ...trans.fif for each run - so what trials for this run
+    info = num2cell([thesetrials';iff.*ones(1,numel(thesetrials))],1); % put that into 'info'
+    D = trialtag(D, ':', info) ;save(D); % tack 'info' onto the trial data
     
     clear matlabbatch;
     matlabbatch{1}.spm.meeg.preproc.prepare.D(1) = cellstr(output{1}.Dfname);
