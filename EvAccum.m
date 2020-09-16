@@ -256,8 +256,8 @@ p.visual_angle_dots = 0.15; % visual angle of the dots expressed as a decimal - 
 % timing info
 p.min_cue_time = 0.5; % minimum period to display cue (participants can't continue during this time)
 p.iti_time = 0.3; % inter trial inteval time
-p.MEG_long_trigger_time = 0.1; % time to let the MEG trigger reach full strength - recommend 100ms for large values but must be smaller than p.iti_time since we'll deliver it in the iti
-p.MEG_short_trigger_time = 0.05; % time for short triggers with small values
+p.MEG_long_trigger_time = 0.005; % time to let the MEG trigger reach full strength - recommend 100ms for large values but must be smaller than p.iti_time since we'll deliver it in the iti
+p.MEG_short_trigger_time = 0.005; % time for short triggers with small values
 p.dots_duration = 1.5; % seconds for the dot cloud to be displayed
 p.feedback_time = 0.5; % period to display feedback after response
 p.keyswap_inform_time = 1; % minumum period to display keyswap notification
@@ -360,7 +360,7 @@ clear block;
 % MEG trigger info - these need to be sufficiently spaced in an analogue
 %   system to allow you to distinguish them if they don't quite reach their value
 p.MEGtriggers.onset = 1;
-p.MEGtriggers.cue = 200;
+%p.MEGtriggers.cue = 200;
 p.MEGtriggers.trial = 250;
 
 % invoke the MEG functions if p.MEG_enabled
