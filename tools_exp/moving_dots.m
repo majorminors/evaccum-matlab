@@ -240,7 +240,7 @@ for frame_num = 1:total_frames
             %fprintf('onset trig\n') % check this works
             MEG.ResetClock; % reset the timer
             button_pressed = 0; % a counter to make sure we catch the first time a button was pressed
-            MEG.SendTrigger(p.MEGtriggers.onset); % send a trigger to tell us the dots started
+            MEG.SendTrigger(p.stim_mat(i,10)); % send a trigger to tell us the dots started
             trig_reset = 0;
         end
         dots_onset_time = Screen('Flip',p.win);
@@ -266,7 +266,7 @@ for frame_num = 1:total_frames
         if ~isempty(MEG.LastButtonPress) && ~button_pressed % check for a keypress in the MEG key wait function every frame, if a key hasn't been pressed yet
             fprintf('response!\n') % check the MEG parts of the script are working
             button_pressed = 1; % record that a key has been pressed this trial
-            MEG.SendTrigger(p.MEGtriggers.response); % send a trigger
+            %MEG.SendTrigger(p.MEGtriggers.response); % send a trigger
             firstPress{1} = MEG.LastButtonPress; % record the key pressed
             firstPress{2} = MEG.TimeOfLastButtonPress; % record the time of the key pressed
             if p.fix_trial_time == 0
