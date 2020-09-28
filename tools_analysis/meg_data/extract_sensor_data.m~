@@ -1,10 +1,15 @@
 % AW 5/8/20
 
 % extract preprocessed sensor data into cosmo friendly format
-rootdir    = '/group/woolgar-lab/projects/Dorian/EvAccum/';
-megdatadir = fullfile(rootdir, 'data/meg_pilot_1/megdata/');
-behavdatadir   = fullfile(rootdir,'data/meg_pilot_1/behavioural/');
-behavfile = fullfile(behavdatadir,'S03/subj_3_MEGRTs.mat');
+root    = '/group/woolgar-lab/projects/Dorian/EvAccum/';
+%root	= '/imaging/at07/Matlab/Projects/Dorian/evaccum2';
+droot   = fullfile(root, 'data/meg_pilot_1/megdata/');
+infld   = fullfile(droot, '%s/MEEG/MaxfilterOutput/');
+tarfld  = fullfile(droot, '%s/MEEG/Preprocess/');
+behav   = fullfile(root,'data/meg_pilot_1/behavioural/%s/%s_EvAccum.mat');%at
+megrt   = fullfile(root,'data/meg_pilot_1/behavioural/%s/subj_%s_MEGRTs.mat');%at
+ICA     = fullfile(droot, '%s/MEEG/ICAOutput/ICA%s.mat');
+outpt   = fullfile(droot, '%s/MEEG/Preprocess/MSL_%s.mat');
 
 addpath(genpath('/imaging/local/software/spm_cbu_svn/releases/spm12_fil_r7487')); %spm
 addpath('/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/meg_data'); %where Ale's extract_chans function lives
@@ -13,10 +18,7 @@ addpath('/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/meg_data'); %
 filename='/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/megdata/subj_3/MEEG/Preprocess/SL_subj_3.mat';
 [EEG,MEGMAG,MEGPLANAR,conditions,chanlabels,badchans, trialinfo] = extract_chans_withtrialnums(filename);
 
-load(behavfile,'MEG_RT'); % load the behavioural data
-condnums = double(MEG_RT(:,5)); % pull the condition numbers and convert them from string array to number array
-% so now we have the condition numbers (condnums) and the trials are tagged
-% with the value needed to index into condnums (first row of trialinfo)
+load(behavfile,'MEG_RT');
 
 % Yields channel * timepoints * trials matrices
 

@@ -158,20 +158,21 @@ for runi = 1:2%numel(filenames)
     
     %MEG_RT = cat(1,MEG_RT,[block(:,[1:4 12 14 15 ]), tmp_RT']);% 1block# 2coh 3act 4cond 5trigger 6resKey 7acc 8rt % compiles matlab trial information with the new MEG generated rts
     run_tagger = runi.*ones(length(block(:,1)),1);
-    MEG_RT = cat(1,MEG_RT,[block(:,[1 3 5 8 10]), conditionlabels, accuracyrow, rts, tmp_RT',run_tagger]);
+    MEG_RT = cat(1,MEG_RT,[block(:,[1 3 5 8 9 10]), conditionlabels, accuracyrow, rts, tmp_RT',run_tagger]);
 
     % re-composed matrix looks like:
     %  1)  cue direction (1-4)
     %  2)  dot motion direction condition (1-8)
     %  3)  coherence difficulty (1 = easy, 2 = hard)
     %  4)  matching difficulty (1 = easy, 2 = difficult)
-    %  5)  gives a number based on 9 for meg triggers
-    %  6)  conditions (HcHr, HcLr, LcHr, LcLr)
-    %  7)  accuracy (0, 1, or -1 for missed trials)
-    %  8)  rts from behavioural data
-    %  9)  rts from MEG
-    % 10)  something to tag which run this sequence of data belongs to
-    % 11)  we later add a row of unique numbers to tag each trial
+    %  5)  unique number for each trial condition (1-64)
+    %  6)  gives a number based on 9 for meg triggers
+    %  7)  conditions (HcHr, HcLr, LcHr, LcLr)
+    %  8)  accuracy (0, 1, or -1 for missed trials)
+    %  9)  rts from behavioural data
+    % 10)  rts from MEG
+    % 11)  something to tag which run this sequence of data belongs to
+    % 12)  we later add a row of unique numbers to tag each trial
     
     %trial definition for epoching
     
@@ -196,7 +197,7 @@ MEG_RT(:,end+1) = 1:length(MEG_RT(:,1));
 % now use those to create something that we can tag the meeg data with
 
 % get the condition labels
-allconditionlabels = MEG_RT(:,6);
+allconditionlabels = MEG_RT(:,7);
 
 % check for consistency
 if sum(strcmp(allconditionlabels,tmplabs)) ~= numel(tmplabs); error(['incongruent condition labels:' filenames{runi}]);end
