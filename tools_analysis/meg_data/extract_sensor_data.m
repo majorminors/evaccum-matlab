@@ -60,8 +60,10 @@ elseif size(EEG,2) ~= size(MEGMAG,2) || size(EEG,2) ~= size(MEGPLANAR,2)
 end
 
 % now we'll convert them into the cosmo format
+% let's start by getting some information
 t.num_trials = size(EEG,3); % we'll use EEG to size, but could be any source
 t.num_timepoints = size(EEG,2); % since they should be the same size
+t.num_chans = size(EEG(:,1,1))+size(MEGMAG(:,1,1))+size(MEGPLANAR(:,1,1)); % delivers [sum of channels, sum of sources (accidentally but could be useful)]
 % stack the three sets of channels for a reshape
 t.combined = []; % init this bad boy
 for itrial = 1:t.num_trials
@@ -71,8 +73,23 @@ ds.samples = reshape(t.combined,t.num_trials,[]); % here we slide the trials (D3
 % note - now the sources are combined, if we normalise we need to be careful not to do that over the different kinds of sensor
 
 % now we want some feature attributes (i.e. information about what we just did)
-% ds.fa.chan = for each column (feature), what channel
 % ds.fa.time = for each column (feature), what timepoint
+% ds.fa.chan = for each column (feature), what channel
+t.timecol = [];
+t.chancol = [];
+t.eeg_chan_nums = 1:length(EEG(:,1,1)); % I'm not actually sure this is right, but when we find out we can alter this
+t.megmag_chan_nums = 1:length(MEGMAG(:,1,1));
+t.megplanar_chan_nums = 1:length(MEGPLANAR(:,1,1));
+for itimepoint = 1:t.num_timepoints % seems easiest to do this by timepoint (although slowish)
+    % so we'll do the timepoint for all channels first
+    t.thistime(1:t.num_chans) = itimepoint; % create a vector of itimepoint as long as the total number of channels
+    t.timecol = [t.timecol,t.thistime]; % stack it
+    % now we'll do the channels for this timepoint
+    t.thesechans = [t.eeg_chan_nums, t.megmag_chan_nums, t.megplanar_chan_nums]; % stack the channel numbers
+    t.chancol = [t.chancol, t.thesechans]; % stack that stack!
+end
+ds.fa.time = t.timecol;
+ds.fa.chan = t.chancol;
 
 % now for the sample attributes
 % ds.sa.rep = repetition of each condition per chunk (can all be ones?)
