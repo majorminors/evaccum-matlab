@@ -24,14 +24,12 @@ addpath(genpath('/group/woolgar-lab/projects/Tijl/MD_dtb/Data_and_Analysis/Toolb
 addpath(genpath('/group/woolgar-lab/projects/Tijl/MD_dtb/Data_and_Analysis/Analysis/Codes/')); %some of Tijl's functions in preference
 addpath(genpath('/group/woolgar-lab/projects/Tijl/MD_dtb/Data_and_Analysis/Toolboxes/libsvm3.17/'));
 
-%filename = '/imaging/at07/Matlab/Projects/Dorian/evaccum2/data/meg_pilot_1/megdata/subj_3/MEEG/Preprocess/SL_subj_3.mat';
-%filename='/imaging/aw02/tempEA/SL_subj_3.mat';
 % extract the sensor data
 p.filename='/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/megdata/subj_3/MEEG/Preprocess/SL_subj_3.mat';
 [EEG,MEGMAG,MEGPLANAR,conditions,chanlabels,badchans, trialinfo] = extract_chans_withtrialnums(p.filename);
 
 % now we'll pull the behaviour data
-    % a reminder that it looks like:
+    % a reminder that it looks like this:
     %  1)  cue direction (1-4)
     %  2)  dot motion direction condition (1-8)
     %  3)  coherence difficulty (1 = easy, 2 = hard)
@@ -45,10 +43,10 @@ p.filename='/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/megdata/
     % 11)  something to tag which run this sequence of data belongs to
     % 12)  we later add a row of unique numbers to tag each trial
 load(behavfile,'MEG_RT'); % load the behavioural data
-p.condnums = double(MEG_RT(:,5)); % pull the condition numbers and convert them from string array to number array
-% so now we have the condition numbers (condnums) and the trials are tagged
-% with the value needed to index into condnums (first row of trialinfo)
+d.behavioral = double(MEG_RT); clear MEG_RT; % convert it to double and put it into a better variable
+% we can index into this with the first row of trialinfo to get at D
 
+%% lets set up cosmo
 % now we have the sensor data from three sources (EEG + 2xMEG) in the
 % format: channel * timepoints * trials matrices
 % cosmo wants it as trials * (timepoints*channels)
@@ -70,28 +68,25 @@ for itrial = 1:t.num_trials
     t.combined(:,:,itrial) = [EEG(:,:,itrial);MEGMAG(:,:,itrial);MEGPLANAR(:,:,itrial)];
 end
 ds.samples = reshape(t.combined,t.num_trials,[]); % here we slide the trials (D3) into the rows, and we free the columns so matlab can stack D1 and D2 into them
+% note - now the sources are combined, if we normalise we need to be careful not to do that over the different kinds of sensor
 
+% now we want some feature attributes (i.e. information about what we just did)
+% ds.fa.chan = for each column (feature), what channel
+% ds.fa.time = for each column (feature), what timepoint
 
-% this is feature attributes (for each column what time and what channel)-ds.fa.chan % ds.fa.time, then ds.sa.chunks = chunks, and finally ds.a - attributes (copy them from the cosmo website) - a reminder of your stuff
+% now for the sample attributes
+% ds.sa.rep = repetition of each condition per chunk (can all be ones?)
+% these following two, we'll do later but here's a description
+    % ds.sa.chunks = for each row (sample), what chunk -> do I want to randomly assign things to train and test set, or deliberately assign irrelevant features so that they're balanced out (equal cooccurance of conditions in train and test set)
+    % ds.sa.targets = for each row (sample), what conditions
 
-% next: reshape into cosmo format: 
-% ds.samples = trials * timepoints [Q: where does channel info go?]
-% ds.sa.targets = list of conditions (numeric)
-% 	we can load the design matrix into a field of sa and then call cols into targets as needed (thanks Lydia)
-% will also need chunks - any restrictions on what to hold out?
-% ds.sa.rep can all be ones (is the repetitions of each condition per
-% chunk)
+% and finally your dataset attributes
+% ds.a = information about the whole dataset
 
-% ds.samples = reshape(EEG x x x)
-
-% Q: how best to combine over sensors?
-% just add them as extra channels in the timepoints - but if we normalise we need to be careful not to do that over the different kinds of sensor
-% Q: pseudotrials?
-% do I want to randomly assign things to train and test set, or deliberately assign irrelevant features so that they're balanced out (equal cooccurance of conditions in train and test set) 
-
+%% lets play with the data
 % first, simplest thing: decode coherence direction through time. Ignore
-% cues and coherence levels. This is MEG_RT col 2.
-all_conditions = double(MEG_RT(:,2))'; %take everything
+% cues and coherence levels. This is col 2 of the behavioural data
+all_conditions = d.behavioural(:,2)'; % take the directions
 rel_conditions = all_conditions(trialinfo(1,:));% filter down to just the trials that we have MEG data for (in this case,
 % everything)
 ds.sa.targets = rel_conditions;
