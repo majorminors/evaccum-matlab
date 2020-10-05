@@ -75,8 +75,10 @@ ds.samples = reshape(t.combined,t.num_trials,[]); % here we slide the trials (D3
 % now we want some feature attributes (i.e. information about what we just did)
 % ds.fa.time = for each column (feature), what timepoint
 % ds.fa.chan = for each column (feature), what channel
+% there are also ds.fa.freq for frequencies, but Lydia hasn't mentioned these so we'll leave it
 t.timecol = [];
 t.chancol = [];
+t.thesenames = [];
 t.eeg_chan_nums = 1:length(EEG(:,1,1)); % I'm not actually sure this is right, but when we find out we can alter this
 t.megmag_chan_nums = 1:length(MEGMAG(:,1,1));
 t.megplanar_chan_nums = 1:length(MEGPLANAR(:,1,1));
@@ -87,6 +89,12 @@ for itimepoint = 1:t.num_timepoints % seems easiest to do this by timepoint (alt
     % now we'll do the channels for this timepoint
     t.thesechans = [t.eeg_chan_nums, t.megmag_chan_nums, t.megplanar_chan_nums]; % stack the channel numbers
     t.chancol = [t.chancol, t.thesechans]; % stack that stack!
+    
+    % we're going to get some information here for ds.a also
+    t.eegnames(1:max(t.eeg_chan_nums)) = "EEG";
+    t.megmagnames(1:max(t.megmag_chan_nums)) = "MEGMAG";
+    t.megplanarnames(1:max(t.megplanar_chan_nums)) = "MEGPLANAR";
+    t.thesenames = [t.thesenames,t.eegnames,t.megmagnames,t.megplanarnames]; % so we'll hold onto this for later
 end
 ds.fa.time = t.timecol;
 ds.fa.chan = t.chancol;
@@ -99,6 +107,15 @@ ds.fa.chan = t.chancol;
 
 % and finally your dataset attributes
 % ds.a = information about the whole dataset
+% for MEG, this is the names of the feature attributes
+% I suppose I'll just identify the sources for now?
+% ds.a.fdim.values{1} = channel names
+ds.a.fdim.values{1} = t.thesenames;
+% ds.a.fdim.values{2} = timepoint names
+ds.a.fdim.values{2} = ds.fa.time; % why would this be different?
+% ds.a.fdim.values{3} = frequencies names
+% again, Lydia didn't mention these
+
 
 %% lets play with the data
 % first, simplest thing: decode coherence direction through time. Ignore
