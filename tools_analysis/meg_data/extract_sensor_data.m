@@ -43,7 +43,7 @@ p.filename='/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/megdata/
     % 11)  something to tag which run this sequence of data belongs to
     % 12)  we later add a row of unique numbers to tag each trial
 load(behavfile,'MEG_RT'); % load the behavioural data
-d.behavioral = double(MEG_RT); clear MEG_RT; % convert it to double and put it into a better variable
+d.behavioural = double(MEG_RT); clear MEG_RT; % convert it to double and put it into a better variable
 % we can index into this with the first row of trialinfo to get at D
 
 %% lets set up cosmo
