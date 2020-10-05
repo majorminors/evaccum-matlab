@@ -71,24 +71,6 @@ for itrial = 1:t.num_trials
 end
 ds.samples = reshape(t.combined,t.num_trials,[]); % here we slide the trials (D3) into the rows, and we free the columns so matlab can stack D1 and D2 into them
 
-% % this one works but it takes bloody ages
-% t.cosmo = []; % init this bad boy
-% %t.cosmo is going to be trials * (timepoints*channels)
-% for itrial = 1:t.num_trials % for each trial
-%     t.alltrialdata = [];
-%     for itimepoint = 1:t.num_timepoints % for each timepoint
-%        % so now we want to move the row to a column
-%        t.eeg_only = [];
-%        t.eeg_megmag = [];
-%        t.all = [];
-%        t.eeg_only = EEG(:,itimepoint,itrial)';
-%        t.eeg_megmag = [t.eeg_only,MEGMAG(:,itimepoint,itrial)'];
-%        t.eeg_megmag_megplanar = [t.eeg_megmag,MEGPLANAR(:,itimepoint,itrial)'];
-%        t.alltrialdata = [t.alltrialdata,t.eeg_megmag_megplanar];
-%    end
-%    t.cosmo(itrial,:) = t.alltrialdata;
-% end
-
 
 % this is feature attributes (for each column what time and what channel)-ds.fa.chan % ds.fa.time, then ds.sa.chunks = chunks, and finally ds.a - attributes (copy them from the cosmo website) - a reminder of your stuff
 
