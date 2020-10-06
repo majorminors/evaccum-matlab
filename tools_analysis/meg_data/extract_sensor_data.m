@@ -86,18 +86,23 @@ for itimepoint = 1:t.num_timepoints % seems easiest to do this by timepoint (alt
     % so we'll do the timepoint for all channels first
     t.thistime(1:t.num_chans) = itimepoint; % create a vector of itimepoint as long as the total number of channels
     t.timecol = [t.timecol,t.thistime]; % stack it
+    
     % now we'll do the channels for this timepoint
+    % I'm doing an index for each type here, though we could also do an
+    % index over all three and use the channel names to figure them out
     t.thesechans = [t.eeg_chan_nums, t.megmag_chan_nums, t.megplanar_chan_nums]; % stack the channel numbers
     t.chancol = [t.chancol, t.thesechans]; % stack that stack!
     
-    % we're going to get some information here for ds.a also
+    % but since I am doing an index for each typ, we're going to get some
+    % information here about the type of sensor to help us
     t.eegnames(1:max(t.eeg_chan_nums)) = "EEG";
     t.megmagnames(1:max(t.megmag_chan_nums)) = "MEGMAG";
     t.megplanarnames(1:max(t.megplanar_chan_nums)) = "MEGPLANAR";
-    t.thesenames = [t.thesenames,t.eegnames,t.megmagnames,t.megplanarnames]; % so we'll hold onto this for later
+    t.thesenames = [t.thesenames,t.eegnames,t.megmagnames,t.megplanarnames];
 end
 ds.fa.time = t.timecol;
-ds.fa.chan = t.chancol;
+ds.fa.chan = t.chancol; % so this is now the index for each kind of sensor
+ds.fa.chanstring = t.thesenames; % and this is the type of sensor
 
 % now for the sample attributes
 % ds.sa.rep = repetition of each condition per chunk (can all be ones?)
@@ -110,11 +115,15 @@ ds.fa.chan = t.chancol;
 % for MEG, this is the names of the feature attributes
 % I suppose I'll just identify the sources for now?
 % ds.a.fdim.values{1} = channel names
-ds.a.fdim.values{1} = t.thesenames;
-% ds.a.fdim.values{2} = timepoint names
-ds.a.fdim.values{2} = ds.fa.time; % why would this be different?
+ds.a.fdim.values{1} = [string(chanlabels{1}),string(chanlabels{2}),string(chanlabels{3})]; % convert chan labels to string array in order EEG, MEGMAG, MEGPLANAR
+%because right now the index values in ds.fa.chans isn't helpful
+% ds.a.fdim.values{2} = timepoint names, what epoch are you using in secs or ms
+ds.a.fdim.values{2} = -1500:1:2500; % our epoch is -1.5s to 2.5s
 % ds.a.fdim.values{3} = frequencies names
 % again, Lydia didn't mention these
+% then add the labels we're using (i guess?)
+ds.a.fdim.labels{1} = 'chan';
+ds.a.fdim.labels{2} = 'time';
 
 
 %% lets play with the data
@@ -123,7 +132,7 @@ ds.a.fdim.values{2} = ds.fa.time; % why would this be different?
 all_conditions = d.behavioural(:,2)'; % take the directions
 rel_conditions = all_conditions(trialinfo(1,:));% filter down to just the trials that we have MEG data for (in this case,
 % everything)
-ds.sa.targets = rel_conditions;
+ds.sa.targets = rel_conditions';
 
 % now asign chunks
 % simplest: use each run as a chunk
@@ -133,8 +142,8 @@ ds.sa.chunks = trialinfo(2,:)';
 %% now actually do some decoding
 ma={};
 ma.classifier = @cosmo_classify_libsvm; % this is where you pick your classifier
-ma.partitions = cosmo_nfold_partitioner(ds_s);
-res=cosmo_crossvalidation_measure(ds_s,ma);
+ma.partitions = cosmo_nfold_partitioner(ds.sa.chunks); % put chunks in here
+res=cosmo_crossvalidation_measure(ds,ma); % put in your ds, and args
 
 
 
