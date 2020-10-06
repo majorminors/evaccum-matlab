@@ -73,9 +73,9 @@ fprintf('combining sensor types by trial\n');
 undochars = '';
 for itrial = 1:t.num_trials
     % some fancy code to display progress without flooding the command window
-    msg = sprintf('combining trial %0.0f of %0.0f\n', itrial, t.num_trials);
-    fprintf([undochars, msg]);
-    undochars = repmat(sprintf('\b'), 1, length(msg));
+    msg = sprintf('combining trial %0.0f of %0.0f\n', itrial, t.num_trials); % create a message to print
+    fprintf([undochars, msg]); % print the message
+    undochars = repmat(sprintf('\b'), 1, length(msg)); % repeat backspace control character to erase the length of the message
     % the actual combining
     t.combined(:,:,itrial) = [EEG(:,:,itrial);MEGMAG(:,:,itrial);MEGPLANAR(:,:,itrial)];
 end; clear msg undochars;
@@ -98,9 +98,9 @@ undochars = '';
 fprintf('extracting attributes by timepoint\n');
 for itimepoint = 1:t.num_timepoints % seems easiest to do this by timepoint (although slowish)
     % some fancy code to display progress without flooding the command window
-    msg = sprintf('extracting from timepoint %0.0f of %0.0f\n', itimepoint, t.num_timepoints);
-    fprintf([undochars, msg]);
-    undochars = repmat(sprintf('\b'), 1, length(msg));
+    msg = sprintf('extracting from timepoint %0.0f of %0.0f\n', itimepoint, t.num_timepoints); % create a message to print
+    fprintf([undochars, msg]);  % print the message
+    undochars = repmat(sprintf('\b'), 1, length(msg));  % repeat backspace control character to erase the length of the message
     
     % lets get an index for all the channels
     t.chans = [t.chans,1:t.num_chans];
@@ -141,7 +141,8 @@ ds.a.fdim.values{2} = -1500:1:2500; % our epoch is -1.5s to 2.5s
 % ds.a.fdim.values{3} = frequencies names
 % again, Lydia didn't mention these
 % lets put the channel split by type here too
-ds.a.fdim.values{4} = [repmat('EEG',size(chanlabels{1})),repmat('MEGMAG',size(chanlabels{2})),repmat('MEGPLANAR',size(chanlabels{3}))]; % this needs to be split up
+ds.a.fdim.values{4} = [repmat("EEG",size(chanlabels{1})),repmat("MEGMAG",size(chanlabels{2})),repmat("MEGPLANAR",size(chanlabels{3}))];
+% older than R2017 - ds.a.fdim.values{4} = [repmat({'EEG'},size(chanlabels{1})),repmat({'MEGMAG'},size(chanlabels{2})),repmat({'MEGPLANAR'},size(chanlabels{3}))];
 % then add the labels we're using (i guess?)
 ds.a.fdim.labels{1} = 'chan';
 ds.a.fdim.labels{2} = 'time';
