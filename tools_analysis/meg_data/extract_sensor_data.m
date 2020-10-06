@@ -59,6 +59,8 @@ elseif size(EEG,2) ~= size(MEGMAG,2) || size(EEG,2) ~= size(MEGPLANAR,2)
     error('it appears your EEG and MEG data dont have the same number of timepoints');
 end
 
+fprintf('converting to cosmo format for %s\n', mfilename);
+
 % now we'll convert them into the cosmo format
 % let's start by getting some information
 t.num_trials = size(EEG,3); % we'll use EEG to size, but could be any source
@@ -78,31 +80,32 @@ ds.samples = reshape(t.combined,t.num_trials,[]); % here we slide the trials (D3
 % there are also ds.fa.freq for frequencies, but Lydia hasn't mentioned these so we'll leave it
 t.timecol = [];
 t.chancol = [];
-t.thesenames = [];
+t.chansplit = [];
+t.channames = [];
 t.eeg_chan_nums = 1:length(EEG(:,1,1)); % I'm not actually sure this is right, but when we find out we can alter this
 t.megmag_chan_nums = 1:length(MEGMAG(:,1,1));
 t.megplanar_chan_nums = 1:length(MEGPLANAR(:,1,1));
 for itimepoint = 1:t.num_timepoints % seems easiest to do this by timepoint (although slowish)
-    % so we'll do the timepoint for all channels first
+    % lets get an index for all the channels
+    t.chancol = [t.chancol,1:t.num_chans];
+    
+    % and the timepoint for all channels
     t.thistime(1:t.num_chans) = itimepoint; % create a vector of itimepoint as long as the total number of channels
     t.timecol = [t.timecol,t.thistime]; % stack it
     
-    % now we'll do the channels for this timepoint
-    % I'm doing an index for each type here, though we could also do an
-    % index over all three and use the channel names to figure them out
+    % lets also get an index split by channel (not sure we need this)
     t.thesechans = [t.eeg_chan_nums, t.megmag_chan_nums, t.megplanar_chan_nums]; % stack the channel numbers
-    t.chancol = [t.chancol, t.thesechans]; % stack that stack!
-    
-    % but since I am doing an index for each typ, we're going to get some
-    % information here about the type of sensor to help us
+    t.chansplit = [t.chansplit, t.thesechans]; % stack that stack!
+    % and some information about the sensors for the chansplit
     t.eegnames(1:max(t.eeg_chan_nums)) = "EEG";
     t.megmagnames(1:max(t.megmag_chan_nums)) = "MEGMAG";
     t.megplanarnames(1:max(t.megplanar_chan_nums)) = "MEGPLANAR";
-    t.thesenames = [t.thesenames,t.eegnames,t.megmagnames,t.megplanarnames];
+    t.channames = [t.channames,t.eegnames,t.megmagnames,t.megplanarnames];
 end
 ds.fa.time = t.timecol;
-ds.fa.chan = t.chancol; % so this is now the index for each kind of sensor
-ds.fa.chanstring = t.thesenames; % and this is the type of sensor
+ds.fa.chan = t.chancol; % so this is now the index across all channels
+ds.fa.chansplit = t.chansplit; % and this is split by sensor type
+ds.fa.chanstring = t.channames; % and this is the label for type of sensor
 
 % now for the sample attributes
 % ds.sa.rep = repetition of each condition per chunk (can all be ones?)
@@ -121,10 +124,13 @@ ds.a.fdim.values{1} = [string(chanlabels{1}),string(chanlabels{2}),string(chanla
 ds.a.fdim.values{2} = -1500:1:2500; % our epoch is -1.5s to 2.5s
 % ds.a.fdim.values{3} = frequencies names
 % again, Lydia didn't mention these
+% lets put the channel split by type here too
+ds.a.fdim.values{4} = [repmat('EEG',size(chanlabels{1})),repmat('MEGMAG',size(chanlabels{2})),repmat('MEGPLANAR',size(chanlabels{3}))]; % this needs to be split up
 % then add the labels we're using (i guess?)
 ds.a.fdim.labels{1} = 'chan';
 ds.a.fdim.labels{2} = 'time';
-
+%ds.a.fdim.labels{3} = 'freq';
+ds.a.fdim.labels{4} = 'chantype';
 
 %% lets play with the data
 % first, simplest thing: decode coherence direction through time. Ignore
@@ -140,6 +146,9 @@ ds.sa.chunks = trialinfo(2,:)';
 
 
 %% now actually do some decoding
+
+fprintf('starting decoding for %s\n', mfilename);
+
 ma={};
 ma.classifier = @cosmo_classify_libsvm; % this is where you pick your classifier
 ma.partitions = cosmo_nfold_partitioner(ds.sa.chunks); % put chunks in here
