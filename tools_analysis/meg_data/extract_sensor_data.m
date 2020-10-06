@@ -141,13 +141,15 @@ ds.a.fdim.values{2} = -1500:1:2500; % our epoch is -1.5s to 2.5s
 % ds.a.fdim.values{3} = frequencies names
 % again, Lydia didn't mention these
 % lets put the channel split by type here too
-ds.a.fdim.values{4} = [repmat("EEG",size(chanlabels{1})),repmat("MEGMAG",size(chanlabels{2})),repmat("MEGPLANAR",size(chanlabels{3}))];
+d.chantype = [repmat("EEG",size(chanlabels{1})),repmat("MEGMAG",size(chanlabels{2})),repmat("MEGPLANAR",size(chanlabels{3}))];
+% cosmo doesn't like me adding stuff
+% ds.a.fdim.values{4} = [repmat("EEG",size(chanlabels{1})),repmat("MEGMAG",size(chanlabels{2})),repmat("MEGPLANAR",size(chanlabels{3}))];
 % older than R2017 - ds.a.fdim.values{4} = [repmat({'EEG'},size(chanlabels{1})),repmat({'MEGMAG'},size(chanlabels{2})),repmat({'MEGPLANAR'},size(chanlabels{3}))];
 % then add the labels we're using (i guess?)
 ds.a.fdim.labels{1} = 'chan';
 ds.a.fdim.labels{2} = 'time';
 %ds.a.fdim.labels{3} = 'freq';
-ds.a.fdim.labels{4} = 'chantype';
+%ds.a.fdim.labels{3} = 'chantype'; % cosmo doesn't like me adding stuff
 
 %% lets play with the data
 % first, simplest thing: decode coherence direction through time. Ignore
