@@ -26,6 +26,7 @@ addpath(genpath('/group/woolgar-lab/projects/Tijl/MD_dtb/Data_and_Analysis/Toolb
 
 % extract the sensor data
 p.filename='/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/megdata/subj_3/MEEG/Preprocess/SL_subj_3.mat';
+fprintf('extracting %s\n', p.filename);
 [EEG,MEGMAG,MEGPLANAR,conditions,chanlabels,badchans, trialinfo] = extract_chans_withtrialnums(p.filename);
 
 % now we'll pull the behaviour data
@@ -59,7 +60,7 @@ elseif size(EEG,2) ~= size(MEGMAG,2) || size(EEG,2) ~= size(MEGPLANAR,2)
     error('it appears your EEG and MEG data dont have the same number of timepoints');
 end
 
-fprintf('converting to cosmo format for %s\n', mfilename);
+fprintf('converting to cosmo format\n');
 
 % now we'll convert them into the cosmo format
 % let's start by getting some information
@@ -68,9 +69,17 @@ t.num_timepoints = size(EEG,2); % since they should be the same size
 t.num_chans = size(EEG(:,1,1))+size(MEGMAG(:,1,1))+size(MEGPLANAR(:,1,1)); % delivers [sum of channels, sum of sources (accidentally but could be useful)]
 % stack the three sets of channels for a reshape
 t.combined = []; % init this bad boy
+fprintf('combining sensor types by trial\n');
+undochars = '';
 for itrial = 1:t.num_trials
+    % some fancy code to display progress without flooding the command window
+    msg = sprintf('combining trial %0.0f of %0.0f\n', itrial, t.num_trials);
+    fprintf([undochars, msg]);
+    undochars = repmat(sprintf('\b'), 1, length(msg));
+    % the actual combining
     t.combined(:,:,itrial) = [EEG(:,:,itrial);MEGMAG(:,:,itrial);MEGPLANAR(:,:,itrial)];
-end
+end; clear msg undochars;
+fprintf('reshaping into cosmo format\n');
 ds.samples = reshape(t.combined,t.num_trials,[]); % here we slide the trials (D3) into the rows, and we free the columns so matlab can stack D1 and D2 into them
 % note - now the sources are combined, if we normalise we need to be careful not to do that over the different kinds of sensor
 
@@ -78,20 +87,27 @@ ds.samples = reshape(t.combined,t.num_trials,[]); % here we slide the trials (D3
 % ds.fa.time = for each column (feature), what timepoint
 % ds.fa.chan = for each column (feature), what channel
 % there are also ds.fa.freq for frequencies, but Lydia hasn't mentioned these so we'll leave it
-t.timecol = [];
-t.chancol = [];
+t.timepoints = [];
+t.chans = [];
 t.chansplit = [];
 t.channames = [];
 t.eeg_chan_nums = 1:length(EEG(:,1,1)); % I'm not actually sure this is right, but when we find out we can alter this
 t.megmag_chan_nums = 1:length(MEGMAG(:,1,1));
 t.megplanar_chan_nums = 1:length(MEGPLANAR(:,1,1));
+undochars = '';
+fprintf('extracting attributes by timepoint\n');
 for itimepoint = 1:t.num_timepoints % seems easiest to do this by timepoint (although slowish)
+    % some fancy code to display progress without flooding the command window
+    msg = sprintf('extracting from timepoint %0.0f of %0.0f\n', itimepoint, t.num_timepoints);
+    fprintf([undochars, msg]);
+    undochars = repmat(sprintf('\b'), 1, length(msg));
+    
     % lets get an index for all the channels
-    t.chancol = [t.chancol,1:t.num_chans];
+    t.chans = [t.chans,1:t.num_chans];
     
     % and the timepoint for all channels
     t.thistime(1:t.num_chans) = itimepoint; % create a vector of itimepoint as long as the total number of channels
-    t.timecol = [t.timecol,t.thistime]; % stack it
+    t.timepoints = [t.timepoints,t.thistime]; % stack it
     
     % lets also get an index split by channel (not sure we need this)
     t.thesechans = [t.eeg_chan_nums, t.megmag_chan_nums, t.megplanar_chan_nums]; % stack the channel numbers
@@ -101,9 +117,9 @@ for itimepoint = 1:t.num_timepoints % seems easiest to do this by timepoint (alt
     t.megmagnames(1:max(t.megmag_chan_nums)) = "MEGMAG";
     t.megplanarnames(1:max(t.megplanar_chan_nums)) = "MEGPLANAR";
     t.channames = [t.channames,t.eegnames,t.megmagnames,t.megplanarnames];
-end
-ds.fa.time = t.timecol;
-ds.fa.chan = t.chancol; % so this is now the index across all channels
+end; clear msg undochars;
+ds.fa.time = t.timepoints;
+ds.fa.chan = t.chans; % so this is now the index across all channels
 ds.fa.chansplit = t.chansplit; % and this is split by sensor type
 ds.fa.chanstring = t.channames; % and this is the label for type of sensor
 
@@ -147,7 +163,7 @@ ds.sa.chunks = trialinfo(2,:)';
 
 %% now actually do some decoding
 
-fprintf('starting decoding for %s\n', mfilename);
+fprintf('starting decoding\n');
 
 ma={};
 ma.classifier = @cosmo_classify_libsvm; % this is where you pick your classifier
