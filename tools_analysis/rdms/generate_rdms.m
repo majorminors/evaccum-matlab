@@ -84,10 +84,6 @@ clear mat1 mat2 mat3
 imagesc(rdm_stim);
 savefig('rdm_stim')
 
-% then you need to do two more:
-% 1. decisions made - so 1-4 cue one is different from 3-6 cue 2 and 5-8 cue 3 and 7-2 cue 4
-% 2. decisions made detail - so 1-4 cue one is LESS different to 3-6 cue 2 THAN 5-8 cue 3
-
 %% RDM - coherence
 
 mat1 = repmat(p.stim_mat(:,5),1,64);
@@ -150,6 +146,10 @@ imagesc(rdm_resp);
 savefig('rdm_resp');
 
 %% RDM - decision
+
+% then you need to do two more:
+% 1. decisions made - so 1-4 cue one is different from 3-6 cue 2 and 5-8 cue 3 and 7-2 cue 4
+% 2. decisions made detail - so 1-4 cue one is LESS different to 3-6 cue 2 THAN 5-8 cue 3
 
 rdm_dec = rdm_decbdry;
 
