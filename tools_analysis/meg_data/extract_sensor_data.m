@@ -169,9 +169,40 @@ ds.sa.chunks = trialinfo(2,:)';
 fprintf('starting decoding\n');
 
 ma={};
-ma.classifier = @cosmo_classify_libsvm; % this is where you pick your classifier
+% pick your classifier
+% ma.classifier = @cosmo_classify_libsvm; % slower
+ma.classifier = @cosmo_classify_lda; % faster - better for debugging
+
+% choose partitions
 ma.partitions = cosmo_nfold_partitioner(ds.sa.chunks); % put chunks in here
-res=cosmo_crossvalidation_measure(ds,ma); % put in your ds, and args
+
+% normalisation
+ma.normalization='zscore'; % estimate normalisation for train and test sets using the training data. 1: zscore each channel. 2: zscore each trial. default=1
+
+ma.output = 'winner_predictions'; % gets the predicted label for each sample. to get the predicted label for each fold, use 'fold_predictions'
+
+measure=@cosmo_crossvalidation_measure;
+nbrhood=cosmo_interval_neighborhood(ds,'time','radius',0); % look in neighbourhoods of 0 radius wide timepoints
+res = cosmo_searchlight(ds, nbrhood, measure, ma);
+%res=cosmo_crossvalidation_measure(ds,ma); % put in your ds, and args
+% not doing something for each timepoint - neightbourhood?
+
+% not sure how it would deal with 8 conditions
+
+% need more detail in output - winner predictions (label for the winning
+
+% condition of each trial across cross validation folds)
+
+% cosmo_interval_neighbourhood = what neighbourhood to look at, (timepoint)
+% -> radius of 1
+
+% LDA is faster so use that as classifier when debugging
+% normalise first because you want to normalise training and testing
+% seperately so theres no information leaking across
+
+% check when it outputs the labels, that its using all of them, because it
+% might default to two - if no way to do more, then can just do all
+% pairwise comparisons
 
 
 
