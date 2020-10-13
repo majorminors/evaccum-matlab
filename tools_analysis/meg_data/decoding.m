@@ -14,7 +14,7 @@ t = struct(); % another structure for temp vars
 rootdir    = '/group/woolgar-lab/projects/Dorian/EvAccum/';
 datadir = fullfile(rootdir,'data','meg_pilot_1');
 decodingdatadir = fullfile(datadir,'decoding'); % find or make directory to output decoding results
-p.filename = 'extracted_data';
+p.filename = fullfile(decodingdatadir, 'extracted_data');
 
 % add tools
 addpath(genpath('/imaging/local/software/spm_cbu_svn/releases/spm12_fil_r7487')); %spm
@@ -24,19 +24,20 @@ addpath(genpath('/group/woolgar-lab/projects/Tijl/MD_dtb/Data_and_Analysis/Analy
 addpath(genpath('/group/woolgar-lab/projects/Tijl/MD_dtb/Data_and_Analysis/Toolboxes/libsvm3.17/'));
 
 % load file
+fprintf('loading file %s\n', p.filename);
 load(p.filename)
 
 %% lets play with the data
 % first, simplest thing: decode coherence direction through time. Ignore
 % cues and coherence levels. This is col 2 of the behavioural data
 all_conditions = d.behavioural(:,2)'; % take the directions
-rel_conditions = all_conditions(trialinfo(1,:));% filter down to just the trials that we have MEG data for (in this case,
+rel_conditions = all_conditions(d.trialinfo(1,:));% filter down to just the trials that we have MEG data for (in this case,
 % everything)
 ds.sa.targets = rel_conditions';
 
 % now asign chunks
 % simplest: use each run as a chunk
-ds.sa.chunks = trialinfo(2,:)';
+ds.sa.chunks = d.trialinfo(2,:)';
 
 
 %% now actually do some decoding
