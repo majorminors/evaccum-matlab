@@ -70,6 +70,7 @@ clear dist;
 clear block;
 
 %% RDM - stimulus distance
+% minimum angle between cues
 
 mat1 = repmat(p.stim_mat(:,4),1,64); % repeat column 3 (cue direction code) for trial columns
 
@@ -85,10 +86,11 @@ imagesc(rdm_stim);
 savefig('rdm_stim')
 
 %% RDM - coherence
+% coherence level same or different
 
-mat1 = repmat(p.stim_mat(:,5),1,64);
+mat1 = repmat(p.stim_mat(:,5),1,64); % repeat coherence for trial cols
 
-mat2 = repmat(p.stim_mat(:,5)',64,1);
+mat2 = repmat(p.stim_mat(:,5)',64,1); % repeat coherence for trial rows
 
 rdm_coh = mat1~=mat2; % if not equal, 1 (dissimilar) else 0
 
@@ -98,29 +100,51 @@ imagesc(rdm_coh);
 savefig('rdm_coh')
 
 %% RDM - cue
+% cue as same or different
 
 mat1 = repmat(p.stim_mat(:,1),1,64); % repeat cue code for trials as columns
 
 mat2 = repmat(p.stim_mat(:,1)',64,1); % repeat cue code for trials as rows
 
-rdm_cue = mat1~=mat2; % if they aren't equal, then 1 (dissimilar) otherwise 0
+rdm_cue_simple = mat1~=mat2; % if they aren't equal, then 1 (dissimilar) otherwise 0
 
-imagesc(rdm_cue);
-savefig('rdm_cue');
+imagesc(rdm_cue_simple);
+savefig('rdm_cue_simple');
 
+%% RDM - cue detail
+% same and opposite cues different, and medial are equal
+
+mat1 = repmat(p.stim_mat(:,1),1,64); % repeat cue code for trials as columns
+
+mat2 = repmat(p.stim_mat(:,1)',64,1); % repeat cue code for trials as rows
+
+rdm_cue_detail = abs(mat1-mat2); % minus one from the other to get dissimilarity
+
+rdm_cue_detail(rdm_cue_detail == 3) = 1;
+
+clear mat1 mat2
+
+imagesc(rdm_cue_detail);
+savefig('rdm_cue_detail');
 %% RDM - decision boundary
+% same and opposite cues same, and medial are equally different
+
+mat1 = repmat(p.stim_mat(:,1),1,64); % repeat cue code for trials as columns
+
+mat2 = repmat(p.stim_mat(:,1)',64,1); % repeat cue code for trials as rows
 
 rdm_decbdry = abs(mat1-mat2); % minus one from the other to get dissimilarity
 
 rdm_decbdry(rdm_decbdry == 3) = 1;
+rdm_decbdry(rdm_decbdry == 2) = 0;
 
 clear mat1 mat2
 
 imagesc(rdm_decbdry);
-savefig('rdm_ruledec');
+savefig('rdm_decbdry');
 
 %% RDM - rule difficulty
-
+% rule difficulty same or different
 mat1 = repmat(p.stim_mat(:,8),1,64); % repeat difficulty for trial cols
 
 mat2 = repmat(p.stim_mat(:,8)',64,1); % repeat difficulty for trial rows
@@ -133,6 +157,7 @@ imagesc(rdm_rulediff);
 savefig('rdm_rulediff');
 
 %% RDM - response
+% response button same or different
 
 mat1 = repmat(p.stim_mat(:,7),1,64); % repeat for trial columns
 
@@ -146,31 +171,22 @@ imagesc(rdm_resp);
 savefig('rdm_resp');
 
 %% RDM - decision
+% same or different side of the decision boundary
 
 % then you need to do two more:
 % 1. decisions made - so 1-4 cue one is different from 3-6 cue 2 and 5-8 cue 3 and 7-2 cue 4
 % 2. decisions made detail - so 1-4 cue one is LESS different to 3-6 cue 2 THAN 5-8 cue 3
 
-rdm_dec = rdm_decbdry;
+rdm_dec = rdm_cue_detail; % pull in the cue information (same, medial, or opposite) so we can use the response as a proxy for all decisions on one half of the dec bndry
 
 for i1 = 1:length(rdm_dec(:,1))
     for i2 = 1:length(rdm_dec(1,:))
-        if rdm_resp(i1,i2) == 1 && rdm_dec(i1,i2) == 0
-            rdm_dec(i1,i2) = 2;
-        elseif rdm_resp(i1,i2) == 1 &&  rdm_dec(i1,i2) == 2
-            rdm_dec(i1,i2) = 0;
-        end
-    end
-end
-
-rdm_dec_equal = rdm_decbdry;
-
-for i1 = 1:length(rdm_dec_equal(:,1))
-    for i2 = 1:length(rdm_dec_equal(1,:))
-        if rdm_resp(i1,i2) == 1 && rdm_dec_equal(i1,i2) == 0
-            rdm_dec_equal(i1,i2) = 2;
-        elseif rdm_resp(i1,i2) == 1 &&  rdm_dec_equal(i1,i2) == 2
-            rdm_dec_equal(i1,i2) = 1;
+        if rdm_resp(i1,i2) == 1 && rdm_dec(i1,i2) == 0 % when the cue is the same but the response (proxy for direction) is on the other side of the decision boundary
+            rdm_dec(i1,i2) = 2; % code as opposite
+        elseif rdm_resp(i1,i2) == 1 &&  rdm_dec(i1,i2) == 2 % when the cue is opposite and the response (proxy for direction) is on the other side of the decision boundary
+            rdm_dec(i1,i2) = 0; % code as the same
+        elseif rdm_dec(i1,i2) == 1
+            rdm_dec(i1,i2) = NaN; % otherwise make no assumption about distance
         end
     end
 end
@@ -178,8 +194,21 @@ end
 imagesc(rdm_dec);
 savefig('rdm_dec');
 
-imagesc(rdm_dec_equal);
-savefig('rdm_dec_equal');
+rdm_dec_diff = rdm_cue_detail; % pull in the cue information (same, medial, or opposite) so we can use the response as a proxy for all decisions on one half of the dec bndry
+
+for i1 = 1:length(rdm_dec_diff(:,1))
+    for i2 = 1:length(rdm_dec_diff(1,:))
+        if rdm_resp(i1,i2) == 1 && rdm_dec_diff(i1,i2) == 0 % when the cue is the same but the response (proxy for direction) is on the other side of the decision boundary
+            rdm_dec_diff(i1,i2) = 2; % code as opposite
+        elseif rdm_resp(i1,i2) == 1 &&  rdm_dec_diff(i1,i2) == 2 % when the cue is opposite and the response (proxy for direction) is on the other side of the decision boundary
+            rdm_dec_diff(i1,i2) = 0; % code as the same
+        end
+    end
+end
+
+imagesc(rdm_dec_diff);
+savefig('rdm_dec_diff');
+
 
 %% show all figures
 
@@ -190,7 +219,7 @@ imagesc(rdm_stim);
 visualise(2)=subplot(4,2,2);
 imagesc(rdm_coh);
 visualise(3)=subplot(4,2,3);
-imagesc(rdm_cue);
+imagesc(rdm_cue_detail);
 visualise(4)=subplot(4,2,4);
 imagesc(rdm_decbdry);
 visualise(5)=subplot(4,2,5);
@@ -199,8 +228,6 @@ visualise(6)=subplot(4,2,6);
 imagesc(rdm_resp);
 visualise(7)=subplot(4,2,7);
 imagesc(rdm_dec);
-visualise(8)=subplot(4,2,8);
-imagesc(rdm_dec_equal);
 
 % add a legend
 t(1)=title(visualise(1),'stimulus');
@@ -210,4 +237,3 @@ t(3)=title(visualise(4),'decision boundary');
 t(4)=title(visualise(5),'rule difficulty');
 t(5)=title(visualise(6),'response');
 t(5)=title(visualise(7),'decision');
-t(5)=title(visualise(8),'decision treated equal');
