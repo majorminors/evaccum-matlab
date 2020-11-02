@@ -314,6 +314,16 @@ dots.visual_angle = p.visual_angle_dots; % visual angle of the dots expressed as
 dots.speed = 5; % speed of dots in degrees per second
 dots.lifetime = 5; % number of frames dots live for
 
+% create a parallel structure for the dots fixation
+t.fixation.dots = dots; 
+t.fixation.dots.direction = 0;
+t.fixation.dots.coherence = 0;
+t.fixation.p = p;
+t.fixation.p.dots_duration = 0.3;
+t.fixation.p.fixation.colour = {[255,0,0],[0,0,0]};
+% we also need p.frame_rate, p.resolution, and p.win which we get after we
+% open the PTB screen later on and enter into this structure at that time
+
 
 % create matrix specifying stimulus conditions per trial:
 %  1)  cue direction (1-4)
@@ -395,6 +405,11 @@ try
     p.resolution = p.rect([3,4]); % pull resolution info from p.rect - used to scale cue image and is passed to moving_dots to do the same
     HideCursor;
     WaitSecs(0.5); % warm up
+    % add some stuff related to the window to our t.fixation structure
+    % since it also calls moving_dots
+    t.fixation.p.frame_rate = p.frame_rate;
+    t.fixation.p.resolution = p.resolution;
+    t.fixation.p.win = p.win;
     
     %% block start
     
@@ -507,12 +522,6 @@ try
                             WaitSecs(p.iti_time);
                             % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
                         elseif p.iti_type == 2 % do a dots fixation
-                            t.fixation.dots = dots; 
-                            t.fixation.dots.direction = 0;
-                            t.fixation.dots.coherence = 0;
-                            t.fixation.p = p;
-                            t.fixation.p.dots_duration = 0.3;
-                            t.fixation.p.fixation.colour = {[255,0,0],[0,0,0]};
                             moving_dots(t.fixation.p,t.fixation.dots,MEG,1);
                         end
                     end
@@ -633,13 +642,7 @@ try
                         WaitSecs(p.iti_time);
                     end
                     % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
-                elseif p.iti_type == 2 % do a dots fixation
-                    t.fixation.dots = dots; 
-                    t.fixation.dots.direction = 0;
-                    t.fixation.dots.coherence = 0;
-                    t.fixation.p = p;
-                    t.fixation.p.dots_duration = 0.3;
-                    t.fixation.p.fixation.colour = {[255,0,0],[0,0,0]};
+                elseif p.iti_type == 2 % do a dots fixationa
                     moving_dots(t.fixation.p,t.fixation.dots,MEG,1);
                 end
             end
