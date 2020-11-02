@@ -80,17 +80,17 @@ p.skip_synctests = 1; % force psychtoolbox to skip synctests. not advised. autos
 % general settings
 p.manually_set_coherence = 1; % if 1, will include prompts to set coherence manually
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
-p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
-p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
+p.fullscreen_enabled = 0; % 1 is full screen, 0 is whatever you've set p.window_size to
+p.testing_enabled = 1; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
 p.training_enabled = 0; % if 0 (or any other than 1) will do nothing, if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
 p.fix_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anything other than 1) will not do iti
-p.iti_type = 1; % if 1 will do a normal fixation, if 2 will do a dots fixation
+p.iti_type = 2; % if 1 will do a normal fixation, if 2 will do a dots fixation
 p.feedback_type = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
 p.num_blocks = 20;
 p.breakblocks = 0; %[7,13,19,25,31]; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
 p.keyswap = 1; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
-p.MEG_enabled = 1; % using MEG
+p.MEG_enabled = 0; % using MEG
 p.MEG_emulator_enabled = 0; % using the emulator - be aware we can't quit using the quitkey with emulator
 
 % check set up
@@ -512,6 +512,7 @@ try
                             t.fixation.dots.coherence = 0;
                             t.fixation.p = p;
                             t.fixation.p.dots_duration = 0.3;
+                            t.fixation.p.fixation.colour = {[255,0,0],[0,0,0]};
                             moving_dots(t.fixation.p,t.fixation.dots,MEG,1);
                         end
                     end
@@ -638,6 +639,7 @@ try
                     t.fixation.dots.coherence = 0;
                     t.fixation.p = p;
                     t.fixation.p.dots_duration = 0.3;
+                    t.fixation.p.fixation.colour = {[255,0,0],[0,0,0]};
                     moving_dots(t.fixation.p,t.fixation.dots,MEG,1);
                 end
             end
