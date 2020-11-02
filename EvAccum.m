@@ -85,6 +85,7 @@ p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and s
 p.training_enabled = 0; % if 0 (or any other than 1) will do nothing, if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
 p.fix_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anything other than 1) will not do iti
+p.iti_type = 1; % if 1 will do a normal fixation, if 2 will do a dots fixation
 p.feedback_type = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
 p.num_blocks = 20;
 p.breakblocks = 0; %[7,13,19,25,31]; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
@@ -494,16 +495,25 @@ try
                     % save data
                     save(save_file); % save all data in '.mat' format
                     if p.iti_on == 1 % do an inter trial interval fixation so we have a buffer between the last trial and the cue appearing
-                        t.centre = p.resolution/2;
-                        t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
-                        t.iti_rect = [-t.sz_l+t.centre(1),-t.sz_l+t.centre(2),t.sz_l+t.centre(1),t.sz_l+t.centre(2)];
-                        t.sz_s = angle2pix(p,0.5/4); % this value (0.5/4) comes from p.fixation.size specified in movingdots.m
-                        t.iti_rect_sml = [-t.sz_s+t.centre(1),-t.sz_s+t.centre(2),t.sz_s+t.centre(1),t.sz_s+t.centre(2)];
-                        Screen('FillOval', p.win, [255,255,255],t.iti_rect);
-                        Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
-                        Screen('Flip', p.win);
-                        WaitSecs(p.iti_time);
-                        % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
+                        if p.iti_type == 1 % do a normal fixation
+                            t.centre = p.resolution/2;
+                            t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
+                            t.iti_rect = [-t.sz_l+t.centre(1),-t.sz_l+t.centre(2),t.sz_l+t.centre(1),t.sz_l+t.centre(2)];
+                            t.sz_s = angle2pix(p,0.5/4); % this value (0.5/4) comes from p.fixation.size specified in movingdots.m
+                            t.iti_rect_sml = [-t.sz_s+t.centre(1),-t.sz_s+t.centre(2),t.sz_s+t.centre(1),t.sz_s+t.centre(2)];
+                            Screen('FillOval', p.win, [255,255,255],t.iti_rect);
+                            Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
+                            Screen('Flip', p.win);
+                            WaitSecs(p.iti_time);
+                            % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
+                        elseif p.iti_type == 2 % do a dots fixation
+                            t.fixation.dots = dots; 
+                            t.fixation.dots.direction = 0;
+                            t.fixation.dots.coherence = 0;
+                            t.fixation.p = p;
+                            t.fixation.p.dots_duration = 0.3;
+                            moving_dots(t.fixation.p,t.fixation.dots,MEG,1);
+                        end
                     end
                 end
                 
@@ -602,25 +612,34 @@ try
             
             % intertrial interval - display fixation and do MEG trigger stuff
             if p.iti_on == 1
-                t.centre = p.resolution/2;
-                t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
-                t.iti_rect = [-t.sz_l+t.centre(1),-t.sz_l+t.centre(2),t.sz_l+t.centre(1),t.sz_l+t.centre(2)];
-                t.sz_s = angle2pix(p,0.5/4); % this value (0.5/4) comes from p.fixation.size specified in movingdots.m
-                t.iti_rect_sml = [-t.sz_s+t.centre(1),-t.sz_s+t.centre(2),t.sz_s+t.centre(1),t.sz_s+t.centre(2)];
-                Screen('FillOval', p.win, [255,255,255],t.iti_rect);
-                Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
-                Screen('Flip', p.win);
-                if p.MEG_enabled == 1
-                    MEG.SendTrigger(0); % reset triggers
-                    WaitSecs(p.iti_time-p.MEG_long_trigger_time*2);
-                    MEG.SendTrigger(p.MEGtriggers.trial); % send a trigger for trial onset
-                    WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to reach value
-                    MEG.SendTrigger(0); % reset triggers
-                    WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to return to zero
-                elseif p.MEG_enabled == 0
-                    WaitSecs(p.iti_time);
+                if p.iti_type == 1 % do a normal fixation
+                    t.centre = p.resolution/2;
+                    t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
+                    t.iti_rect = [-t.sz_l+t.centre(1),-t.sz_l+t.centre(2),t.sz_l+t.centre(1),t.sz_l+t.centre(2)];
+                    t.sz_s = angle2pix(p,0.5/4); % this value (0.5/4) comes from p.fixation.size specified in movingdots.m
+                    t.iti_rect_sml = [-t.sz_s+t.centre(1),-t.sz_s+t.centre(2),t.sz_s+t.centre(1),t.sz_s+t.centre(2)];
+                    Screen('FillOval', p.win, [255,255,255],t.iti_rect);
+                    Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
+                    Screen('Flip', p.win);
+                    if p.MEG_enabled == 1
+                        MEG.SendTrigger(0); % reset triggers
+                        WaitSecs(p.iti_time-p.MEG_long_trigger_time*2);
+                        MEG.SendTrigger(p.MEGtriggers.trial); % send a trigger for trial onset
+                        WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to reach value
+                        MEG.SendTrigger(0); % reset triggers
+                        WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to return to zero
+                    elseif p.MEG_enabled == 0
+                        WaitSecs(p.iti_time);
+                    end
+                    % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
+                elseif p.iti_type == 2 % do a dots fixation
+                    t.fixation.dots = dots; 
+                    t.fixation.dots.direction = 0;
+                    t.fixation.dots.coherence = 0;
+                    t.fixation.p = p;
+                    t.fixation.p.dots_duration = 0.3;
+                    moving_dots(t.fixation.p,t.fixation.dots,MEG,1);
                 end
-                % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
             end
             
             % now run moving_dots
