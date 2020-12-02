@@ -15,6 +15,9 @@ t = struct(); % another structure for temp vars
 rootdir    = '/group/woolgar-lab/projects/Dorian/EvAccum/';
 datadir = fullfile(rootdir,'data','meg_pilot_1');
 p.savefilename = 'extracted_data';
+p.extract_time = [1400,3100]; % what timepoint indices to extract from and to
+p.extract_time_labels = [-100,1600]; % what timepoint do these indices correspond to in real terms
+
 megdatadir = fullfile(datadir, 'megdata/');
 behavdatadir   = fullfile(datadir,'behavioural/');
 behavfile = fullfile(behavdatadir,'S03/subj_3_MEGRTs.mat');
@@ -55,7 +58,7 @@ d.trialinfo = trialinfo;
 d.behavioural = double(MEG_RT); clear MEG_RT; % convert it to double and put it into a better variable
 % we can index into this with the first row of trialinfo to get at D
 
-%% lets set up cosmo
+%% lets set up a cosmo dataset
 % now we have the sensor data from three sources (EEG + 2xMEG) in the
 % format: channel * timepoints * trials matrices
 % cosmo wants it as trials * (timepoints*channels)
@@ -88,8 +91,9 @@ for itrial = 1:t.num_trials
     t.combined(:,:,itrial) = [EEG(:,:,itrial);MEGMAG(:,:,itrial);MEGPLANAR(:,:,itrial)];
 end; clear msg undochars;
 fprintf('reshaping into cosmo format\n');
-ds.samples = reshape(t.combined,t.num_trials,[]); % here we slide the trials (D3) into the rows, and we free the columns so matlab can stack D1 and D2 into them
+t.allsamples = reshape(t.combined,t.num_trials,[]); % here we slide the trials (D3) into the rows, and we free the columns so matlab can stack D1 and D2 into them
 % note - now the sources are combined, if we normalise we need to be careful not to do that over the different kinds of sensor
+ds.samples = t.allsamples(:,(p.extract_time(1)*t.num_chans(1)):((p.extract_time(2)+1)*t.num_chans(1))-1); % cut out the data we don't care about
 
 % now we want some feature attributes (i.e. information about what we just did)
 % ds.fa.time = for each column (feature), what timepoint
@@ -99,12 +103,14 @@ t.timepoints = [];
 t.chans = [];
 t.chansplit = [];
 t.channames = [];
+t.counter = 0; % for creating a new index
 t.eeg_chan_nums = 1:length(EEG(:,1,1)); % I'm not actually sure this is right, but when we find out we can alter this
 t.megmag_chan_nums = 1:length(MEGMAG(:,1,1));
 t.megplanar_chan_nums = 1:length(MEGPLANAR(:,1,1));
 undochars = '';
 fprintf('extracting attributes by timepoint\n');
-for itimepoint = 1:t.num_timepoints % seems easiest to do this by timepoint (although slowish)
+for itimepoint = p.extract_time(1):p.extract_time(2)%1:t.num_timepoints % seems easiest to do this by timepoint (although slowish)
+    t.counter = t.counter+1; % iterate our new index
     % some fancy code to display progress without flooding the command window
     msg = sprintf('extracting from timepoint %0.0f of %0.0f\n', itimepoint, t.num_timepoints); % create a message to print
     fprintf([undochars, msg]);  % print the message
@@ -114,7 +120,7 @@ for itimepoint = 1:t.num_timepoints % seems easiest to do this by timepoint (alt
     t.chans = [t.chans,1:t.num_chans];
     
     % and the timepoint for all channels
-    t.thistime(1:t.num_chans) = itimepoint; % create a vector of itimepoint as long as the total number of channels
+    t.thistime(1:t.num_chans) = t.counter; % create a vector to index into timepointsf as long as the total number of channels
     t.timepoints = [t.timepoints,t.thistime]; % stack it
     
     % lets also get an index split by channel (not sure we need this)
@@ -145,7 +151,7 @@ ds.fa.chanstring = t.channames; % and this is the label for type of sensor
 ds.a.fdim.values{1} = [string(chanlabels{1}),string(chanlabels{2}),string(chanlabels{3})]; % convert chan labels to string array in order EEG, MEGMAG, MEGPLANAR
 %because right now the index values in ds.fa.chans isn't helpful
 % ds.a.fdim.values{2} = timepoint names, what epoch are you using in secs or ms
-ds.a.fdim.values{2} = -1500:1:2500; % our epoch is -1.5s to 2.5s
+ds.a.fdim.values{2} = p.extract_time_labels(1):1:p.extract_time_labels(2); % our epoch is -1.5s to 2.5s
 % ds.a.fdim.values{3} = frequencies names
 % again, Lydia didn't mention these
 % lets put the channel split by type here too

@@ -28,11 +28,34 @@ fprintf('loading file %s\n', p.filename);
 load(p.filename)
 
 %% lets play with the data
+
+% d.behavioural contains (columnwise):
+    %  1)  cue direction (1-4)
+    %  2)  dot motion direction condition (1-8)
+    %  3)  coherence difficulty (1 = easy, 2 = hard)
+    %  4)  matching difficulty (1 = easy, 2 = difficult)
+    %  5)  unique number for each trial condition (1-64)
+    %  6)  gives a number based on 9 for meg triggers
+    %  7)  conditions (HcHr, HcLr, LcHr, LcLr)
+    %  8)  accuracy (0, 1, or -1 for missed trials)
+    %  9)  rts from behavioural data
+    % 10)  rts from MEG
+    % 11)  something to tag which run this sequence of data belongs to
+    % 12)  we later add a row of unique numbers to tag each trial
 % first, simplest thing: decode coherence direction through time. Ignore
 % cues and coherence levels. This is col 2 of the behavioural data
-all_conditions = d.behavioural(:,2)'; % take the directions
-rel_conditions = all_conditions(d.trialinfo(1,:));% filter down to just the trials that we have MEG data for (in this case,
-% everything)
+
+%all_conditions = d.behavioural(:,2)'; % coherence directions
+
+%all_conditions = d.behavioural(:,3)'; % coherence difficulty
+
+%all_conditions = d.behavioural(:,4)'; % matching difficulty
+
+%t.acc_idx = find(d.behavioural(:,8)>=0);
+%all_conditions = d.behavioural(t.acc_idx,8)'; % participant accuracy
+all_conditions = d.behavioural(:,8)';
+
+rel_conditions = all_conditions(d.trialinfo(1,:));% filter down to just the trials that we have MEG data for (in this case, everything)
 ds.sa.targets = rel_conditions';
 
 % now asign chunks
@@ -60,6 +83,13 @@ ma.output = 'winner_predictions'; % gets the predicted label for each sample. to
 measure=@cosmo_crossvalidation_measure;
 nbrhood=cosmo_interval_neighborhood(ds,'time','radius',0); % look in neighbourhoods of 0 radius wide timepoints
 res = cosmo_searchlight(ds, nbrhood, measure, ma);
+
+for i = 1:size(res.samples,2) % for each timepoint
+    accuracy(i)=sum(numel(find(res.samples(:,i)==res.sa.targets)))/size(res.samples,1); % accuracy = sum of correct labels/total number of predictions
+end
+
+plot(accuracy)
+
 %res=cosmo_crossvalidation_measure(ds,ma); % put in your ds, and args
 % not doing something for each timepoint - neightbourhood?
 
