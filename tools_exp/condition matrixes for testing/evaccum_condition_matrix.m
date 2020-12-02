@@ -50,10 +50,19 @@ p.stim_mat(:,10) = p.stim_mat(:,9)+[0:2:127]'+5;
 % clear floating variables
 clear dist;
 
-% shuffle the trial condition order for each block into 'd.stim_mat_all' then re-sort by cue
+% shuffle the trial condition order for each block into 'd.stim_mat_all' then re-sort by a shuffled cue order
 for block=1:p.num_blocks
-    d.stim_mat_all(:,:,block) = p.stim_mat(Shuffle(1:p.num_trials_per_block),:);
-    d.stim_mat_all(:,:,block) = sortrows(d.stim_mat_all(:,:,block),1);
+    d.stim_mat_all(:,:,block) = p.stim_mat(shuffle(1:p.num_trials_per_block),:);
+%     t.hold_this = d.stim_mat_all(:,:,block); % to test whether the rows maintained their integrity
+    t.sort_order = shuffle([1:p.num_cues])'; % get a random sort order of cues, and transpose (cols to rows)
+    t.sort_order = repmat(t.sort_order,1,16)'; % repeat the matrix a desired number of times columnwise, and transpose again to make each column one number
+    t.sort_order = t.sort_order(:); % then push all into one column and transpose one more time so it's a single row
+    [~,t.sort_idx] = sort(t.sort_order); % then get the indices for that sort order (we do that by sorting, which has a function to get the index of where things used to be)
+    d.stim_mat_all(:,:,block) = sortrows(d.stim_mat_all(:,:,block),1); % now we sort the stim matrix so it's the same as t.sort_order after sorting
+    d.stim_mat_all(:,:,block) = d.stim_mat_all(t.sort_idx,:,block); % and we can now use the sort index to rearrange the stimulus matrix into the order t.sort_order was in before sorting
+%     find(t.hold_this(:,9)==3) % to test whether the rows maintained their integrity
+%     find(d.stim_mat_all(:,9,block)==3) % to test whether the rows maintained their integrity
+%     t.hold_this(find(t.hold_this(:,9)==3),:) == d.stim_mat_all(find(d.stim_mat_all(:,9,block)==3),:,block) % to test whether the rows maintained their integrity
 end
 % clear floating variables
 clear block;
