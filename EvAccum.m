@@ -257,6 +257,7 @@ p.visual_angle_dots = 0.15; % visual angle of the dots expressed as a decimal - 
 % timing info
 p.min_cue_time = 0.5; % minimum period to display cue (participants can't continue during this time)
 p.iti_time = 0.3; % inter trial inteval time
+p.dot_iti_range = [0.4,0.6]; % range for random dots fixation time to vary between
 p.MEG_long_trigger_time = 0.005; % time to let the MEG trigger reach full strength - recommend 100ms for large values but must be smaller than p.iti_time since we'll deliver it in the iti
 p.MEG_short_trigger_time = 0.005; % time for short triggers with small values
 p.dots_duration = 1.5; % seconds for the dot cloud to be displayed
@@ -319,8 +320,10 @@ t.fixation.dots = dots;
 t.fixation.dots.direction = 0;
 t.fixation.dots.coherence = 0;
 t.fixation.p = p;
-t.fixation.p.dots_duration = 0.3;
+%t.fixation.p.dots_duration = 0.3;
 t.fixation.p.fixation.colour = {[100,71,76],[0,0,0]};
+temp = zeros(,1); 
+t.fixation.p.dots_duration_vector = (p.dot_iti_range(1)-p.dot_iti_range(2)).*rand(p.num_trials_per_block*p.num_blocks,1) + p.dot_iti_range(1); % create a vector of random numbers varying between the iti range values that is the length of the total number of trials 
 % we also need p.frame_rate, p.resolution, and p.win which we get after we
 % open the PTB screen later on and enter into this structure at that time
 
@@ -527,8 +530,9 @@ try
                             WaitSecs(p.iti_time);
                             % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
                         elseif p.iti_type == 2 % do a dots fixation
-                            WaitSecs(p.iti_time);
-                            moving_dots(t.fixation.p,t.fixation.dots,MEG,1);
+                            t.fixation.p.dots_duration = t.fixation.p.dots_duration_vector(i); % get the dots iti duration for this trial
+                            WaitSecs(p.iti_time); % do a blank screen for the iti time
+                            moving_dots(t.fixation.p,t.fixation.dots(),MEG,1);
                         end
                     end
                 end
@@ -649,7 +653,8 @@ try
                     end
                     % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
                 elseif p.iti_type == 2 % do a dots fixation
-                    WaitSecs(p.iti_time);
+                    t.fixation.p.dots_duration = t.fixation.p.dots_duration_vector(i); % get the dots iti duration for this trial
+                    WaitSecs(p.iti_time); % do a blank screen for the iti time
                     moving_dots(t.fixation.p,t.fixation.dots,MEG,1);
                 end
             end
