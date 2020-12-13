@@ -320,7 +320,7 @@ t.fixation.dots.direction = 0;
 t.fixation.dots.coherence = 0;
 t.fixation.p = p;
 t.fixation.p.dots_duration = 0.3;
-t.fixation.p.fixation.colour = {[255,0,0],[0,0,0]};
+t.fixation.p.fixation.colour = {[100,71,76],[0,0,0]};
 % we also need p.frame_rate, p.resolution, and p.win which we get after we
 % open the PTB screen later on and enter into this structure at that time
 
