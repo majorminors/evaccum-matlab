@@ -80,7 +80,7 @@ p.skip_synctests = 1; % force psychtoolbox to skip synctests. not advised. autos
 % general settings
 p.manually_set_coherence = 1; % if 1, will include prompts to set coherence manually
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
-p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
+p.fullscreen_enabled = 0; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing_enabled = 1; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
 p.training_enabled = 0; % if 0 (or any other than 1) will do nothing, if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
 p.fix_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
@@ -322,8 +322,8 @@ t.fixation.dots.coherence = 0;
 t.fixation.p = p;
 %t.fixation.p.dots_duration = 0.3;
 t.fixation.p.fixation.colour = {[100,71,76],[0,0,0]};
-temp = zeros(,1); 
-t.fixation.p.dots_duration_vector = (p.dot_iti_range(1)-p.dot_iti_range(2)).*rand(p.num_trials_per_block*p.num_blocks,1) + p.dot_iti_range(1); % create a vector of random numbers varying between the iti range values that is the length of the total number of trials 
+t.fixation.p.dots_duration_vector = (p.dot_iti_range(2)-p.dot_iti_range(1)).*rand(p.num_trials_per_block*p.num_blocks,1) + p.dot_iti_range(1); % create a vector of random numbers varying between the iti range values that is the length of the total number of trials 
+t.fixation.p.dots_duration_vector
 % we also need p.frame_rate, p.resolution, and p.win which we get after we
 % open the PTB screen later on and enter into this structure at that time
 
@@ -363,8 +363,8 @@ clear dist;
 
 % shuffle the trial condition order for each block into 'd.stim_mat_all' then re-sort by cue
 for block=1:p.num_blocks
-    d.stim_mat_all(:,:,block) = p.stim_mat(shuffle(1:p.num_trials_per_block),:);
-    t.sort_order = shuffle([1:p.num_cues])'; % get a random sort order of cues, and transpose (cols to rows)
+    d.stim_mat_all(:,:,block) = p.stim_mat(Shuffle(1:p.num_trials_per_block),:);
+    t.sort_order = Shuffle([1:p.num_cues])'; % get a random sort order of cues, and transpose (cols to rows)
     t.sort_order = repmat(t.sort_order,1,16)'; % repeat the matrix a desired number of times columnwise, and transpose again to make each column one number
     t.sort_order = t.sort_order(:); % then push all into one column and transpose one more time so it's a single row
     [~,t.sort_idx] = sort(t.sort_order); % then get the indices for that sort order (we do that by sorting, which has a function to get the index of where things used to be)
