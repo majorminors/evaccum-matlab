@@ -530,6 +530,7 @@ try
                             WaitSecs(p.iti_time);
                             % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
                         elseif p.iti_type == 2 % do a dots fixation
+                            Screen('Flip', p.win);
                             t.fixation.p.dots_duration = t.fixation.p.dots_duration_vector(i); % get the dots iti duration for this trial
                             WaitSecs(p.iti_time); % do a blank screen for the iti time
                             moving_dots(t.fixation.p,t.fixation.dots(),MEG,1);
@@ -653,6 +654,7 @@ try
                     end
                     % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
                 elseif p.iti_type == 2 % do a dots fixation
+                    Screen('Flip', p.win);
                     t.fixation.p.dots_duration = t.fixation.p.dots_duration_vector(i); % get the dots iti duration for this trial
                     WaitSecs(p.iti_time); % do a blank screen for the iti time
                     moving_dots(t.fixation.p,t.fixation.dots,MEG,1);
