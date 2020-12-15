@@ -65,6 +65,8 @@ p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
 p.fix_trial_time = 0; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
+p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anything other than 1) will not do iti
+p.iti_type = 2; % if 1 will do a normal fixation, if 2 will do a dots fixation
 p.num_blocks = 1; % currently only one block is interpretable, although potential to do more
 
 % for use in MEG
@@ -78,6 +80,7 @@ if ~ismember(p.training_enabled,[0,1]); error('invalid value for p.training_enab
 if ~ismember(p.fix_trial_time,[0,1]); error('invalid value for p.fix_trial_time'); end % check if valid or error
 if ~ismember(p.coherence_spread,[1,2]); error('invalid value for p.coherence_spread'); end % check if valid or error
 if p.num_blocks ~= 1; error('currently only one block is interpretable - check p.num_blocks'); end % check if valid or error
+if ~ismember(p.iti_on,[0,1]); error('invalid value for p.iti_on'); end % check if valid or error
 
 % directory mapping
 addpath(genpath(fullfile(rootdir, 'tools_exp'))); % add tools folder to path (includes moving_dots function which is required for dot motion, as well as an external copy of subfunctions for backwards compatibility with MATLAB)
@@ -182,6 +185,8 @@ p.visual_angle_dots = 0.15; % visual angle of the dots expressed as a decimal - 
 p.min_cue_time = 1; % minimum period to display cue (participants can't continue during this time)
 p.dots_duration = 2; % seconds for the dot cloud to be displayed
 p.min_resp_mapping_time = 1; % minimum period to display response mapping (participants can't continue during this time)
+p.iti_time = 0.3; % inter trial inteval time
+p.dot_iti_range = [0.4,0.6]; % range for random dots fixation time to vary between
 p.feedback_time = 0.5; % period to display feedback after response
 
 % trial settings (*p.stim_mat* = parameter required to calculate stimulus condition matrix)
@@ -205,6 +210,29 @@ fprintf('defining stimuli params for %s\n', mfilename);
 
 % read in stimulus file for the cue
 p.cue = imread(fullfile(stimdir, 'arrows_cue_with_line.png'));
+
+% dot cloud parameters for moving_dots function
+%   note that for the following required params for moving_dots:
+%       'dots.direction' is specified within the trial loop
+%       'dots.coherence' is specified within the trial loop
+dots.aperture_size = [10,10]; % [width,height] in degrees of the rectangular aperture dots are displayed in
+dots.centre = [0,0]; % [x,y] centre of the dot cloud
+dots.num_dots = 100; % number of dots
+dots.colour = [255,255,255]; % colour of the dots in [r,g,b]
+dots.visual_angle = p.visual_angle_dots; % visual angle of the dots expressed as a decimal - determines size
+dots.speed = 5; % speed of dots in degrees per second
+dots.lifetime = 5; % number of frames dots live for
+
+% create a parallel structure for the dots fixation
+t.fixation.dots = dots; 
+t.fixation.dots.direction = 0;
+t.fixation.dots.coherence = 0;
+t.fixation.p = p;
+%t.fixation.p.dots_duration = 0.3;
+t.fixation.p.fixation.colour = {[100,71,76],[0,0,0]};
+t.fixation.p.dots_duration_vector = (p.dot_iti_range(2)-p.dot_iti_range(1)).*rand(p.num_trials_per_block*p.num_blocks,1) + p.dot_iti_range(1); % create a vector of random numbers varying between the iti range values that is the length of the total number of trials 
+% we also need p.frame_rate, p.resolution, and p.win which we get after we
+% open the PTB screen later on and enter into this structure at that time
 
 % create matrix specifying stimulus conditions per trial:
 %    1)  cue direction (1-4) - evenly allocates trials to cues
@@ -242,17 +270,7 @@ end
 % clear floating variables
 clear block;
 
-% dot cloud parameters for moving_dots function
-%   note that for the following required params for moving_dots:
-%       'dots.direction' is specified within the trial loop
-%       'dots.coherence' is specified within the trial loop
-dots.aperture_size = [10,10]; % [width,height] in degrees of the rectangular aperture dots are displayed in
-dots.centre = [0,0]; % [x,y] centre of the dot cloud
-dots.num_dots = 100; % number of dots
-dots.colour = [255,255,255]; % colour of the dots in [r,g,b]
-dots.visual_angle = p.visual_angle_dots; % visual angle of the dots expressed as a decimal - determines size
-dots.speed = 5; % speed of dots in degrees per second
-dots.lifetime = 5; % number of frames dots live for
+
 
 t.fixation.dots = dots; 
 t.fixation.dots.direction = 0;
@@ -282,6 +300,11 @@ try
     p.resolution = p.rect([3,4]); % pull resolution info from p.rect - used to scale cue image and is passed to moving_dots to do the same
     HideCursor;
     WaitSecs(0.5); % warm up
+    % add some stuff related to the window to our t.fixation structure
+    % since it also calls moving_dots
+    t.fixation.p.frame_rate = p.frame_rate;
+    t.fixation.p.resolution = p.resolution;
+    t.fixation.p.win = p.win;
     
     %% block start
     
@@ -329,10 +352,25 @@ try
                 if i > 1
                     % save data
                     save(save_file); % save all data in '.mat' format
-                    Screen('Flip', p.win);                        
-                    t.fixation.p.dots_duration = t.fixation.p.dots_duration_vector(i); % get the dots iti duration for this trial
-                    WaitSecs(0.3); % do a blank screen for the iti time
-                    moving_dots(t.fixation.p,t.fixation.dots,MEG,1);
+                    if p.iti_on == 1 % do an inter trial interval fixation so we have a buffer between the last trial and the cue appearing
+                        if p.iti_type == 1 % do a normal fixation
+                            t.centre = p.resolution/2;
+                            t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
+                            t.iti_rect = [-t.sz_l+t.centre(1),-t.sz_l+t.centre(2),t.sz_l+t.centre(1),t.sz_l+t.centre(2)];
+                            t.sz_s = angle2pix(p,0.5/4); % this value (0.5/4) comes from p.fixation.size specified in movingdots.m
+                            t.iti_rect_sml = [-t.sz_s+t.centre(1),-t.sz_s+t.centre(2),t.sz_s+t.centre(1),t.sz_s+t.centre(2)];
+                            Screen('FillOval', p.win, [255,255,255],t.iti_rect);
+                            Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
+                            Screen('Flip', p.win);
+                            WaitSecs(p.iti_time);
+                            % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
+                        elseif p.iti_type == 2 % do a dots fixation
+                            Screen('Flip', p.win);
+                            t.fixation.p.dots_duration = t.fixation.p.dots_duration_vector(i); % get the dots iti duration for this trial
+                            WaitSecs(p.iti_time); % do a blank screen for the iti time
+                            moving_dots(t.fixation.p,t.fixation.dots(),MEG,1);
+                        end
+                    end
                 end
                 
                 % make the texture and scale it
@@ -450,6 +488,27 @@ try
                     end
                 end
                 dots.coherence = t.training_placeholder;
+            end
+
+            % intertrial interval - display fixation
+            if p.iti_on == 1
+                if p.iti_type == 1 % do a normal fixation
+                    t.centre = p.resolution/2;
+                    t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
+                    t.iti_rect = [-t.sz_l+t.centre(1),-t.sz_l+t.centre(2),t.sz_l+t.centre(1),t.sz_l+t.centre(2)];
+                    t.sz_s = angle2pix(p,0.5/4); % this value (0.5/4) comes from p.fixation.size specified in movingdots.m
+                    t.iti_rect_sml = [-t.sz_s+t.centre(1),-t.sz_s+t.centre(2),t.sz_s+t.centre(1),t.sz_s+t.centre(2)];
+                    Screen('FillOval', p.win, [255,255,255],t.iti_rect);
+                    Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
+                    Screen('Flip', p.win);
+                    WaitSecs(p.iti_time);
+                    % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
+                elseif p.iti_type == 2 % do a dots fixation
+                    Screen('Flip', p.win);
+                    t.fixation.p.dots_duration = t.fixation.p.dots_duration_vector(i); % get the dots iti duration for this trial
+                    WaitSecs(p.iti_time); % do a blank screen for the iti time
+                    moving_dots(t.fixation.p,t.fixation.dots,MEG,1);
+                end
             end
             
             Screen('Flip', p.win);
