@@ -6,7 +6,7 @@ clc;
 
 fprintf('setting up %s\n', mfilename);
 
-rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % root directory
+rootdir = pwd; %'\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % root directory
 
 %% do stimulus matrix
 
@@ -120,7 +120,7 @@ mat2 = repmat(p.stim_mat(:,1)',64,1); % repeat cue code for trials as rows
 
 rdm_cue_detail = abs(mat1-mat2); % minus one from the other to get dissimilarity
 
-rdm_cue_detail(rdm_cue_detail == 3) = 1;
+rdm_cue_detail(rdm_cue_detail == 3) = 1; % the furthest distant are actually closer again
 
 clear mat1 mat2
 
@@ -186,7 +186,7 @@ for i1 = 1:length(rdm_dec(:,1))
         elseif rdm_resp(i1,i2) == 1 &&  rdm_dec(i1,i2) == 2 % when the cue is opposite and the response (proxy for direction) is on the other side of the decision boundary
             rdm_dec(i1,i2) = 0; % code as the same
         elseif rdm_dec(i1,i2) == 1
-            rdm_dec(i1,i2) = NaN; % otherwise make no assumption about distance
+            rdm_dec(i1,i2) = NaN; % otherwise make no assumption about distance (should be NaNs, but code as number for visual)
         end
     end
 end
@@ -194,14 +194,12 @@ end
 imagesc(rdm_dec);
 savefig('rdm_dec');
 
-rdm_dec_diff = rdm_cue_detail; % pull in the cue information (same, medial, or opposite) so we can use the response as a proxy for all decisions on one half of the dec bndry
-
+rdm_dec_diff = rdm_cue_simple; % pull in the cue information (same or different) so we can use the response as a proxy for all decisions on one half of the dec bndry
+rdm_dec_diff = rdm_dec_diff-1; % make different trials 0 and same trials -1
 for i1 = 1:length(rdm_dec_diff(:,1))
     for i2 = 1:length(rdm_dec_diff(1,:))
-        if rdm_resp(i1,i2) == 1 && rdm_dec_diff(i1,i2) == 0 % when the cue is the same but the response (proxy for direction) is on the other side of the decision boundary
-            rdm_dec_diff(i1,i2) = 2; % code as opposite
-        elseif rdm_resp(i1,i2) == 1 &&  rdm_dec_diff(i1,i2) == 2 % when the cue is opposite and the response (proxy for direction) is on the other side of the decision boundary
-            rdm_dec_diff(i1,i2) = 0; % code as the same
+        if rdm_dec_diff(i1,i2) == -1 && rdm_resp(i1,i2) == 1 % if the response is a 1 on same trials, make it a 1
+            rdm_dec_diff(i1,i2) = 1;
         end
     end
 end
