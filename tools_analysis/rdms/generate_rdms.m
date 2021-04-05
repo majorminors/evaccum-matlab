@@ -58,6 +58,16 @@ p.stim_mat(:,8) = ~((p.stim_mat(:,6)==min(p.stim_mat(:,6)))|(p.stim_mat(:,6)==ma
 p.stim_mat(:,9) = 1:length(p.stim_mat(:,9));
 p.stim_mat(:,10) = p.stim_mat(:,9)+[0:2:127]'+5;
 
+easy_coh = (find(p.stim_mat(:,5) == 1));
+hard_coh = (find(p.stim_mat(:,5) == 2));
+easy_dec = (find(p.stim_mat(:,8) == 1));
+hard_dec = (find(p.stim_mat(:,8) == 2));
+
+eced = easy_coh(ismember(easy_coh,easy_dec));
+echd = easy_coh(ismember(easy_coh,hard_dec));
+hced = hard_coh(ismember(hard_coh,easy_dec));
+hchd = hard_coh(ismember(hard_coh,hard_dec));
+
 % clear floating variables
 clear dist;
 
@@ -186,7 +196,7 @@ for i1 = 1:length(rdm_dec(:,1))
         elseif rdm_resp(i1,i2) == 1 &&  rdm_dec(i1,i2) == 2 % when the cue is opposite and the response (proxy for direction) is on the other side of the decision boundary
             rdm_dec(i1,i2) = 0; % code as the same
         elseif rdm_dec(i1,i2) == 1
-            rdm_dec(i1,i2) = NaN; % otherwise make no assumption about distance (should be NaNs, but code as number for visual)
+                rdm_dec(i1,i2) = NaN; % otherwise make no assumption about distance (should be NaNs, but code as number for visual)
         end
     end
 end
@@ -207,31 +217,56 @@ end
 imagesc(rdm_dec_diff);
 savefig('rdm_dec_diff');
 
+%% extract specific trials
+
+rdm_dec_eced = rdm_dec(eced,eced);
+rdm_dec_eced_tri = triu(rdm_dec_eced,1); % get upper triangle above the first diagonal
+corrcoef(x)
+rdm_dec_echd = rdm_dec(echd,echd);
+rdm_dec_echd_tri = triu(rdm_dec_echd,1); % get upper triangle above the first diagonal
+rdm_dec_hced = rdm_dec(hced,hced);
+rdm_dec_hced_tri = triu(rdm_dec_hced,1); % get upper triangle above the first diagonal
+rdm_dec_hchd = rdm_dec(hchd,hchd);
+rdm_dec_hchd_tri = triu(rdm_dec_hchd,1); % get upper triangle above the first diagonal
+
+figure
+visualise(1)=subplot(2,2,1);
+imagesc(rdm_dec_eced);
+visualise(2)=subplot(2,2,2);
+imagesc(rdm_dec_echd);
+visualise(3)=subplot(2,2,3);
+imagesc(rdm_dec_hced);
+visualise(4)=subplot(2,2,4);
+imagesc(rdm_dec_hchd);
+t(1)=title(visualise(1),'eced');
+t(2)=title(visualise(2),'echd');
+t(3)=title(visualise(3),'hced');
+t(4)=title(visualise(4),'hchd');
 
 %% show all figures
 
-% create subplot and map rdms to it
-figure
-visualise(1)=subplot(4,2,1);
-imagesc(rdm_stim);
-visualise(2)=subplot(4,2,2);
-imagesc(rdm_coh);
-visualise(3)=subplot(4,2,3);
-imagesc(rdm_cue_detail);
-visualise(4)=subplot(4,2,4);
-imagesc(rdm_decbdry);
-visualise(5)=subplot(4,2,5);
-imagesc(rdm_rulediff);
-visualise(6)=subplot(4,2,6);
-imagesc(rdm_resp);
-visualise(7)=subplot(4,2,7);
-imagesc(rdm_dec);
-
-% add a legend
-t(1)=title(visualise(1),'stimulus');
-t(5)=title(visualise(2),'coherence difficulty');
-t(2)=title(visualise(3),'cue');
-t(3)=title(visualise(4),'decision boundary');
-t(4)=title(visualise(5),'rule difficulty');
-t(5)=title(visualise(6),'response');
-t(5)=title(visualise(7),'decision');
+% % create subplot and map rdms to it
+% figure
+% visualise(1)=subplot(4,2,1);
+% imagesc(rdm_stim);
+% visualise(2)=subplot(4,2,2);
+% imagesc(rdm_coh);
+% visualise(3)=subplot(4,2,3);
+% imagesc(rdm_cue_detail);
+% visualise(4)=subplot(4,2,4);
+% imagesc(rdm_decbdry);
+% visualise(5)=subplot(4,2,5);
+% imagesc(rdm_rulediff);
+% visualise(6)=subplot(4,2,6);
+% imagesc(rdm_resp);
+% visualise(7)=subplot(4,2,7);
+% imagesc(rdm_dec);
+% 
+% % add a legend
+% t(1)=title(visualise(1),'stimulus');
+% t(5)=title(visualise(2),'coherence difficulty');
+% t(2)=title(visualise(3),'cue');
+% t(3)=title(visualise(4),'decision boundary');
+% t(4)=title(visualise(5),'rule difficulty');
+% t(5)=title(visualise(6),'response');
+% t(5)=title(visualise(7),'decision');
