@@ -254,6 +254,16 @@ dots.visual_angle = p.visual_angle_dots; % visual angle of the dots expressed as
 dots.speed = 5; % speed of dots in degrees per second
 dots.lifetime = 5; % number of frames dots live for
 
+t.fixation.dots = dots; 
+t.fixation.dots.direction = 0;
+t.fixation.dots.coherence = 0;
+t.fixation.p = p;
+t.fixation.p.stim_mat(1,10) = 0; % make sure moving dots doesn't send a trial trigger during the ITI
+%t.fixation.p.dots_duration = 0.3;
+t.fixation.p.fixation.colour = {[100,71,76],[0,0,0]};
+t.fixation.p.dots_duration_vector = (0.6-0.4).*rand(p.num_trials_per_block*p.num_blocks,1) + p.dot_iti_range(1); % create a vector of random numbers varying between the iti range values that is the length of the total number of trials 
+
+
 %% test start
 
 fprintf('running coherence threshold assessment (%s)\n', mfilename);
@@ -316,8 +326,14 @@ try
             %% present cue and response mapping
             if i == 1 || p.stim_mat(i,1) ~= p.stim_mat(i-1,1) || ~mod(i-1,8) %|| i > p.act_trial_num-1 && ~mod(i,8) && p.stim_mat(i+1,1) == p.stim_mat(i,1) % if first trial, or cue changes (as currently blocked), or every 8 trials unless we're about to change cue then display cue
                 
-                % save the trial data
-                save(save_file); % save all data in '.mat' format
+                if i > 1
+                    % save data
+                    save(save_file); % save all data in '.mat' format
+                    Screen('Flip', p.win);                        
+                    t.fixation.p.dots_duration = t.fixation.p.dots_duration_vector(i); % get the dots iti duration for this trial
+                    WaitSecs(0.3); % do a blank screen for the iti time
+                    moving_dots(t.fixation.p,t.fixation.dots,MEG,1);
+                end
                 
                 % make the texture and scale it
                 p.cue_tex = Screen('MakeTexture', p.win, p.cue);
@@ -436,6 +452,10 @@ try
                 dots.coherence = t.training_placeholder;
             end
             
+            Screen('Flip', p.win);
+            t.fixation.p.dots_duration = t.fixation.p.dots_duration_vector(i); % get the dots iti duration for this trial
+            WaitSecs(0.3); % do a blank screen for the iti time
+            moving_dots(t.fixation.p,t.fixation.dots,MEG,1);
             % now run moving_dots
             KbQueueFlush(); % flush the response queue so any accidental presses recorded in the cue period won't affect responses in the dots period
             [d.dots_onset(block,i), t.pressed, t.firstPress] = moving_dots(p,dots); % pull time of first flip for dots, as well as information from KBQueueCheck from moving_dots

@@ -75,13 +75,13 @@ rootdir = pwd; % root directory - used to inform directory mappings
 p.screen_width = 40;   % Screen width in cm
 p.screen_height = 30;    % Screen height in cm
 p.screen_distance = 50; % Screen distance from participant in cm
-p.skip_synctests = 1; % force psychtoolbox to skip synctests. not advised. autoskipped during testing
+p.skip_synctests = 0; % force psychtoolbox to skip synctests. not advised. autoskipped during testing
 
 % general settings
 p.manually_set_coherence = 1; % if 1, will include prompts to set coherence manually
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 0; % 1 is full screen, 0 is whatever you've set p.window_size to
-p.testing_enabled = 1; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
+p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
 p.training_enabled = 0; % if 0 (or any other than 1) will do nothing, if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
 p.fix_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anything other than 1) will not do iti
@@ -320,6 +320,7 @@ t.fixation.dots = dots;
 t.fixation.dots.direction = 0;
 t.fixation.dots.coherence = 0;
 t.fixation.p = p;
+t.fixation.p.stim_mat(1,10) = 0; % make sure moving dots doesn't send a trial trigger during the ITI
 %t.fixation.p.dots_duration = 0.3;
 t.fixation.p.fixation.colour = {[100,71,76],[0,0,0]};
 t.fixation.p.dots_duration_vector = (p.dot_iti_range(2)-p.dot_iti_range(1)).*rand(p.num_trials_per_block*p.num_blocks,1) + p.dot_iti_range(1); % create a vector of random numbers varying between the iti range values that is the length of the total number of trials 
@@ -378,7 +379,7 @@ clear block;
 % MEG trigger info - these need to be sufficiently spaced in an analogue
 %   system to allow you to distinguish them if they don't quite reach their value
 p.MEGtriggers.onset = 1;
-%p.MEGtriggers.cue = 200;
+p.MEGtriggers.cue = 200;
 p.MEGtriggers.trial = 250;
 
 % invoke the MEG functions if p.MEG_enabled
@@ -530,9 +531,13 @@ try
                             % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
                         elseif p.iti_type == 2 % do a dots fixation
                             Screen('Flip', p.win);
+                            MEG.SendTrigger(p.MEGtriggers.trial); % send a trigger for trial onset
+                            WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to reach value
+                            MEG.SendTrigger(0); % reset triggers
+                            WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to return to zero
                             t.fixation.p.dots_duration = t.fixation.p.dots_duration_vector(i); % get the dots iti duration for this trial
                             WaitSecs(p.iti_time); % do a blank screen for the iti time
-                            moving_dots(t.fixation.p,t.fixation.dots(),MEG,1);
+                            moving_dots(t.fixation.p,t.fixation.dots,MEG,1);
                         end
                     end
                 end
@@ -654,6 +659,10 @@ try
                     % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
                 elseif p.iti_type == 2 % do a dots fixation
                     Screen('Flip', p.win);
+                    MEG.SendTrigger(p.MEGtriggers.trial); % send a trigger for trial onset
+                    WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to reach value
+                    MEG.SendTrigger(0); % reset triggers
+                    WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to return to zero
                     t.fixation.p.dots_duration = t.fixation.p.dots_duration_vector(i); % get the dots iti duration for this trial
                     WaitSecs(p.iti_time); % do a blank screen for the iti time
                     moving_dots(t.fixation.p,t.fixation.dots,MEG,1);
