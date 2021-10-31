@@ -92,6 +92,8 @@ p.breakblocks = 0; %[7,13,19,25,31]; % before which blocks should we initiate a 
 p.keyswap = 1; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
 p.MEG_enabled = 0; % using MEG
 p.MEG_emulator_enabled = 0; % using the emulator - be aware we can't quit using the quitkey with emulator
+p.useEyelink = 1; % use or don't use eyetracker
+p.eyelinkDummyMode = 0; % use or don't use eyetracker dummy mode
 
 % check set up
 if ~ismember(p.fullscreen_enabled,[0,1]); error('invalid value for p.fullscreen_enabled'); end % check if valid or error
@@ -214,6 +216,15 @@ if exist([save_file '.mat'],'file') % check if the file already exists and throw
 end % end check save file exist
 save(save_file); % save all data to a .mat file
 
+edfFile = [num2str(d.participant_id,'S%02d'),'_eyetracking_',mfilename];
+edfFile = fullfile(datadir, edfFile);
+if exist(edfFile,'file') % check if the file already exists and throw a warning if it does
+    warning('the following save file already exists:\n %s', edfFile);
+    t.prompt = 'continue? (y/n): ';
+    t.ans = input(t.prompt,'s');
+    if isempty(t.ans); t.ans = 'y'; end
+    if ~strcmp(t.ans,'y'); error('aborting...'); end
+end % end check file exist
 %% define experiment parameters
 
 fprintf('defining exp params for %s\n', mfilename);
@@ -395,6 +406,7 @@ elseif p.MEG_enabled == 0
     MEG = 0; % just put something here so the switches and the functions we pass this to don't freak out
 end
 
+
 %% exp start
 
 fprintf('running experiment %s\n', mfilename);
@@ -418,6 +430,74 @@ try
     t.fixation.p.frame_rate = p.frame_rate;
     t.fixation.p.resolution = p.resolution;
     t.fixation.p.win = p.win;
+
+%% set up eyelink if in use
+if p.useEyelink
+    
+    % initializations
+    el=EyelinkInitDefaults(p.win);
+    
+    el.backgroundcolour = p.bg_colour;
+    el.calibrationtargetcolour =  0;
+    EyelinkUpdateDefaults(el);
+    
+    %connection with eyetracker, opening file
+    if ~EyelinkInit(p.eyelinkDummyMode)
+        fprintf('Eyelink Init aborted.\n');
+        eyelinkClean(p.useEyelink, edfFile);
+        return;
+    end
+    i = Eyelink('Openfile', edfFile);
+    if i~=0
+        fprintf('Cannot create EDF file ''%s'' ', edfFile);
+        eyelinkClean(p.useEyelink, edfFile);
+        return;
+    end
+    if Eyelink('IsConnected')~=1 && ~p.eyelinkDummyMode
+        eyelinkClean(p.useEyelink, edfFile);
+        return;
+    end
+    
+    %configure eye tracker
+    Eyelink('command', 'add_file_preamble_text ''Recorded for %s''', mfilename);
+
+    % This command is crucial to map the gaze positions from the tracker to
+    % screen pixel positions to determine fixation
+    Eyelink('command','screen_pixel_coords = %ld %ld %ld %ld', 0, 0, p.resolution(1)-1, p.resolution(2)-1);
+    Eyelink('message', 'DISPLAY_COORDS %ld %ld %ld %ld', 0, 0, p.resolution(1)-1, p.resolution(2)-1);
+    Eyelink('command', 'calibration_type = HV5 '); %Eyelink('command', 'calibration_type = HV9');
+    Eyelink('command', 'generate_default_targets = YES');
+    % set parser (conservative saccade thresholds)
+    Eyelink('command', 'saccade_velocity_threshold = 35');
+    Eyelink('command', 'saccade_acceleration_threshold = 9500');
+    % set EDF file contents
+    % retrieve tracker version and tracker software version
+    [v,vs] = Eyelink('GetTrackerVersion');
+    fprintf('Running experiment on a ''%s'' tracker.\n', vs );
+    vsn = regexp(vs,'\d','match');
+    if v ==3 && str2double(vsn{1}) == 4 % if EL 1000 and tracker version 4.xx
+        % remote mode possible add HTARGET ( head target)
+        Eyelink('command', 'file_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON,INPUT');
+        Eyelink('command', 'file_sample_data  = LEFT,RIGHT,GAZE,HREF,AREA,GAZERES,STATUS,INPUT,HTARGET');
+        % set link data (used for gaze cursor)
+        Eyelink('command', 'link_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON,FIXUPDATE,INPUT');
+        Eyelink('command', 'link_sample_data  = LEFT,RIGHT,GAZE,GAZERES,AREA,STATUS,INPUT,HTARGET');
+    else
+        Eyelink('command', 'file_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON,INPUT');
+        Eyelink('command', 'file_sample_data  = LEFT,RIGHT,GAZE,HREF,AREA,GAZERES,STATUS,INPUT');
+        % set link data (used for gaze cursor)
+        Eyelink('command', 'link_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON,FIXUPDATE,INPUT');
+        Eyelink('command', 'link_sample_data  = LEFT,RIGHT,GAZE,GAZERES,AREA,STATUS,INPUT');
+    end
+    % allow to use the big button on the eyelink gamepad to accept the
+    % calibration/drift correction target
+    Eyelink('command', 'button_function 5 "accept_target_fixation"');
+    
+    %enter Eyetracker camera setup mode, calibration and validation
+    EyelinkDoTrackerSetup(el);
+    
+end
+
     
     %% block start
     
