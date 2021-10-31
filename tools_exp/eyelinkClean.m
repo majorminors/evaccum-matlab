@@ -1,4 +1,4 @@
-function cleanup(useOfEyelink, edfFile)
+function cleanup(useOfEyelink, edfFile, datadir)
 
 if useOfEyelink==1
     Eyelink('Command' , 'set_idle_mode');
@@ -7,13 +7,13 @@ if useOfEyelink==1
     %download data file
     try
         fprintf('Receiving data file ''%s''\n', edfFile );
-        status=Eyelink('ReceiveFile');
+        status=Eyelink('ReceiveFile',edfFile,datadir);
         if status > 0
             fprintf('ReceiveFile status %d\n', status);
-            fprintf('Data file ''%s'' can be found in ''%s''\n', edfFile, pwd );
+            fprintf('Data file ''%s'' can be found in ''%s''\n', edfFile, datadir );
         end
         if 2==exist(edfFile, 'file')
-            fprintf('Data file ''%s'' can be found in ''%s''\n', edfFile, pwd );
+            fprintf('Data file ''%s'' can be found in ''%s''\n', edfFile, datadir );
         end
     catch
         fprintf('Problem receiving data file ''%s''\n', edfFile );
