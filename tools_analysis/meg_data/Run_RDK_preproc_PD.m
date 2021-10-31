@@ -9,7 +9,7 @@ addpath(genpath('/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/'))
 
 t.local = 1;
 
-root    = '/group/woolgar-lab/projects/Dorian/EvAccum/';
+root    = '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab';
 %root	= '/imaging/at07/Matlab/Projects/Dorian/evaccum2';
 droot   = fullfile(root, 'data/meg_pilot_1/megdata/');
 infld   = fullfile(droot, '%s/MEEG/MaxfilterOutput/');
@@ -57,31 +57,31 @@ settings.ICAoverwrite = 1;
 dependencies_path = {
     '/neuro/meg_pd_1.2/'
     '/hpc-software/matlab/cbu/'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/meg_data/'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/megdata/'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/behavioural/'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/eeglab13_5_4b/'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/eeglab13_5_4b/external'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/eeglab13_5_4b/functions'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/eeglab13_5_4b/functions/adminfunc'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/eeglab13_5_4b/functions/guifunc'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/eeglab13_5_4b/functions/javachatfunc'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/eeglab13_5_4b/functions/miscfunc'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/eeglab13_5_4b/functions/popfunc'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/eeglab13_5_4b/functions/resources'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/eeglab13_5_4b/functions/sigprocfunc'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/eeglab13_5_4b/functions/statistics'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/eeglab13_5_4b/functions/studyfunc'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/eeglab13_5_4b/functions/timefreqfunc'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/eeglab13_5_4b/plugins'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/eeglab13_5_4b/plugins/ADJUST1.1.1'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/eeglab13_5_4b/plugins/dipfit2.3'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/eeglab13_5_4b/plugins/dipfit2.3/standard_BEM'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/eeglab13_5_4b/plugins/dipfit2.3/standard_BEM/elec'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/eeglab13_5_4b/plugins/dipfit2.3/standard_BEM/skin'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/eeglab13_5_4b/plugins/dipfit2.3/standard_BESA'
-    '/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/eeglab13_5_4b/plugins/firfilt1.6.1'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/meg_data/'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/data/meg_pilot_1/megdata/'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/data/meg_pilot_1/behavioural/'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/eeglab13_5_4b/'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/eeglab13_5_4b/external'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/eeglab13_5_4b/functions'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/eeglab13_5_4b/functions/adminfunc'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/eeglab13_5_4b/functions/guifunc'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/eeglab13_5_4b/functions/javachatfunc'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/eeglab13_5_4b/functions/miscfunc'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/eeglab13_5_4b/functions/popfunc'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/eeglab13_5_4b/functions/resources'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/eeglab13_5_4b/functions/sigprocfunc'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/eeglab13_5_4b/functions/statistics'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/eeglab13_5_4b/functions/studyfunc'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/eeglab13_5_4b/functions/timefreqfunc'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/eeglab13_5_4b/plugins'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/eeglab13_5_4b/plugins/ADJUST1.1.1'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/eeglab13_5_4b/plugins/dipfit2.3'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/eeglab13_5_4b/plugins/dipfit2.3/standard_BEM'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/eeglab13_5_4b/plugins/dipfit2.3/standard_BEM/elec'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/eeglab13_5_4b/plugins/dipfit2.3/standard_BEM/skin'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/eeglab13_5_4b/plugins/dipfit2.3/standard_BESA'
+    '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/eeglab13_5_4b/plugins/firfilt1.6.1'
     jobdir
     };
 

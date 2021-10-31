@@ -6,10 +6,10 @@ close all
 clc
 addpath /hpc-software/matlab/cbu/
 
-addpath(genpath('/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/'))
+addpath(genpath('/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/'))
 
-droot = '/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/megdata/';
-maxfld= '/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/megdata/%s/MEEG/MaxfilterOutput/'; % will this work
+droot = '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/data/meg_pilot_1/megdata/';
+maxfld= '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/data/meg_pilot_1/megdata/%s/MEEG/MaxfilterOutput/'; % will this work
 addpath(droot);
 
 
@@ -33,6 +33,7 @@ J = [];
 ind = 0;
 
 for subi = 1:length(dname)
+    disp(subi)
     clear settings
     
     settings.overwrite = overwrite;

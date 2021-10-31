@@ -1,10 +1,10 @@
 %%
 addpath /hpc-software/matlab/cbu/
-addpath(genpath('/group/woolgar-lab/projects/Dorian/EvAccum/'))
+addpath(genpath('/group/woolgar-lab/projects/Dorian/evaccum/evaccum/matlab'))
 
 %numbers refer to the PID number
-subjs = [01 02 03];
-fld_tar = '/group/woolgar-lab/projects/Dorian/EvAccum/data/meg_pilot_1/megdata/';
+subjs = [01 02 03 04];
+fld_tar = '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/data/meg_pilot_1/megdata/';
 
 %decide whether to update (0 - e.g. after scanning new participants) or whether
 %to start from scratch (1);

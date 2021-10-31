@@ -10,7 +10,7 @@ d = struct(); % set up a structure for the data info
 t = struct(); % set up a structure for temp data
 
 % set up variables
-rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; %'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code'; %
+rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\evaccum\evaccum-matlab'; %'C:\Users\doria\Nextcloud\desiderata\desiderata\04 Research\05 Evidence Accumulation\01 EvAccum Code'; %
 
 datadir = fullfile(rootdir,'data','behav_pilot_2');
 num_subjects = 6;
@@ -69,7 +69,7 @@ end
 
 
 %% plot results
-BIC_all(5,:)=[]; % delete removed models
+BIC_all([5 10],:)=[]; % delete removed models
 [posterior_all, out_all] = VBA_groupBMC(BIC_all) ;
 %out_pd;
 %out_ctr;

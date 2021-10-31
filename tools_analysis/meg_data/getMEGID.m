@@ -60,6 +60,23 @@ switch subject
         ID.usable = 1;
         
         ID.subj  = 'DM_evaccumpilot_03';
+        
+    case {'DM_evaccumpilot_4','DM_evaccumpilot_04'}
+        
+        ID.meg_fld  = 'meg20_0064';
+        ID.meg_runs = {'run_1_raw', 'run_2_raw'};
+        ID.meg_labs = {'Run1','Run2'};
+        ID.mri      = 'CBU190516';
+        ID.date_mri = '20190708';
+        
+        ID.bad_eeg = [];
+        ID.bad_meg = [];
+        ID.date_meg= '201215';
+        ID.runblks = '2';
+        ID.note    = '';
+        ID.usable = 1;
+        
+        ID.subj  = 'DM_evaccumpilot_04';
 end
 
 
