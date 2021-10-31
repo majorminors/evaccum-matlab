@@ -217,8 +217,7 @@ end % end check save file exist
 save(save_file); % save all data to a .mat file
 
 edfFile = [num2str(d.participant_id,'S%02d'),'_eyetracking_',mfilename];
-edfFile = fullfile(datadir, edfFile);
-if exist(edfFile,'file') % check if the file already exists and throw a warning if it does
+if exist(fullfile(datadir,edfFile),'file') % check if the file already exists and throw a warning if it does
     warning('the following save file already exists:\n %s', edfFile);
     t.prompt = 'continue? (y/n): ';
     t.ans = input(t.prompt,'s');
@@ -444,17 +443,17 @@ if p.useEyelink
     %connection with eyetracker, opening file
     if ~EyelinkInit(p.eyelinkDummyMode)
         fprintf('Eyelink Init aborted.\n');
-        eyelinkClean(p.useEyelink, edfFile);
+        eyelinkClean(p.useEyelink, edfFile, datadir);
         return;
     end
     i = Eyelink('Openfile', edfFile);
     if i~=0
         fprintf('Cannot create EDF file ''%s'' ', edfFile);
-        eyelinkClean(p.useEyelink, edfFile);
+        eyelinkClean(p.useEyelink, edfFile, datadir);
         return;
     end
     if Eyelink('IsConnected')~=1 && ~p.eyelinkDummyMode
-        eyelinkClean(p.useEyelink, edfFile);
+        eyelinkClean(p.useEyelink, edfFile, datadir);
         return;
     end
     
@@ -544,6 +543,34 @@ end
         while i < p.act_trial_num
             i = i + 1;
             fprintf('trial %u of %u\n',i,p.act_trial_num); % report trial number to command window
+            %
+            %% prestart trial for eyelink
+            if p.useEyelink==1
+                % let eyelink knows which trial
+                WaitSecs(0.05);
+                Eyelink('Message', 'Trial Number %d',i);
+                Eyelink('Command', 'set_idle_mode');
+                Eyelink('Command', 'clear_screen %d', 0);
+                Eyelink('Command', 'set_idle_mode');
+                WaitSecs(0.05);
+            end
+    
+            % initialize the acquisition of online eye position
+            eyeCounter = 1;
+            eyePoints = zeros(10000,3);
+            if p.useEyelink==1
+                Eyelink('StartRecording'); % start recording eyelink
+                eye_used = Eyelink('EyeAvailable'); % 0 (left), 1 (right) or 2 (both)
+                if eye_used == 2
+                    eye_used = 1;
+                end
+            end
+            if p.useEyelink==1 && p.eyelinkDummyMode==0
+                error=Eyelink('CheckRecording');
+                if(error~=0)
+                    break;
+                end
+            end
             
             %set up a queue to collect response info (or in the case of p.MEG_enabled, to watch for the quitkey)
             if ~p.MEG_emulator_enabled
@@ -598,6 +625,11 @@ end
                     % save data
                     save(save_file); % save all data in '.mat' format
                     if p.iti_on == 1 % do an inter trial interval fixation so we have a buffer between the last trial and the cue appearing
+
+                        if p.useEyelink==1
+                            Eyelink('Message', 'Fixation Start');
+                        end
+                        
                         if p.iti_type == 1 % do a normal fixation
                             t.centre = p.resolution/2;
                             t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
@@ -619,6 +651,9 @@ end
                             WaitSecs(p.iti_time); % do a blank screen for the iti time
                             moving_dots(t.fixation.p,t.fixation.dots,MEG,1);
                         end
+                        if p.useEyelink==1
+                            Eyelink('Message', 'Fixation End');
+                        end
                     end
                 end
                 
@@ -632,7 +667,7 @@ end
                 % parameterise the rect to display cue in
                 t.imgrect = [0 0 t.imagewidth t.imageheight]; % make a scaled rect for the cue
                 t.rect = CenterRectOnPointd(t.imgrect,p.resolution(1,1)/2,p.resolution(1,2)/2); % offset it for the centre of the window
-                
+
                 % then display cue and response mapping
                 Screen('DrawTexture', p.win, p.cue_tex, [], t.rect, p.stim_mat(i,2)); % draws the cue in the orientation specified in column 2 of p.stim_mat for the current trial
                 % draw the response mapping at the corners of the t.rect you just made depending on the orientation of the cue
@@ -668,6 +703,10 @@ end
                     DrawFormattedText(p.win, sprintf('\n %s \n', p.resp_key_names{2}), t.rect(RectRight)*1.01, t.rect(RectBottom)*1.01, p.cue_colour_two);
                 end
                 Screen('Flip', p.win);
+
+                if p.useEyelink==1
+                    Eyelink('Message', 'Cue On');
+                end
                                 
                 % send a trigger to let us know this is a cue
                 if p.MEG_enabled == 1
@@ -717,6 +756,9 @@ end
             
             % intertrial interval - display fixation and do MEG trigger stuff
             if p.iti_on == 1
+                if p.useEyelink==1
+                    Eyelink('Message', 'Fixation Start');
+                end
                 if p.iti_type == 1 % do a normal fixation
                     t.centre = p.resolution/2;
                     t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
@@ -747,6 +789,9 @@ end
                     WaitSecs(p.iti_time); % do a blank screen for the iti time
                     moving_dots(t.fixation.p,t.fixation.dots,MEG,1);
                 end
+                if p.useEyelink==1
+                    Eyelink('Message', 'Fixation End');
+                end
             end
             
             % now run moving_dots
@@ -754,8 +799,15 @@ end
             if p.MEG_enabled == 1
                 MEG.WaitForButtonPress(0); % reset MEG button press to empty
             end
+
+            if p.useEyelink==1
+                Eyelink('Message', 'Dots Start');
+            end
             %% moving dots function begins
             [d.dots_onset(block,i), t.pressed, t.firstPress] = moving_dots(p,dots,MEG,i); % pull time of first flip for dots, as well as information from KBQueueCheck from moving_dots
+            if p.useEyelink==
+                Eyelink('Message', 'Dots End');
+            end
             
             %% deal with response and provide feedback (or abort if 'p.quitkey' pressed)
             
@@ -876,6 +928,10 @@ end
     Screen('Flip', p.win);
     WaitSecs(1);
     Screen('Flip', p.win);
+
+    if p.useEyelink==1
+        eyelinkClean(p.useEyelink, edfFile, datadir);
+    end
     
     % close screen
     ShowCursor;
@@ -892,6 +948,9 @@ catch err
     if ~p.MEG_emulator_enabled; KbQueueRelease(); end %KbReleaseWait();
     %     if p.MEG_enabled == 1; MEG.delete; end % stop MEG from limiting button presses
     sca; %Screen('Close',p.win);
+    if p.useEyelink==1
+        eyelinkClean(p.useEyelink, edfFile, datadir);
+    end
     rethrow(err);
 end
 
