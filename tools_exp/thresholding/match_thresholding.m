@@ -1,4 +1,4 @@
-function [easy_threshold,hard_threshold,overview,summary] = match_thresholding(p,d,save_file)
+function [easy_threshold,hard_threshold,overview,summary] = match_thresholding(input_data,save_file)
 % function [easy_value,hard_value] = coh_thresholding(p,d)
 %
 % matching threshold analysis
@@ -40,6 +40,27 @@ function [easy_threshold,hard_threshold,overview,summary] = match_thresholding(p
 
 % enter your thresholds
 low_threshold_pc = 0.6; % percent correct for your hard threshold (uses inverse of this number for easy)
+
+% makes a structure that looks like
+% | matching difficulty point | number correct | number of trials |
+% and builds row-wise each iteration
+accuracy = NaN(10,length(input_data.stim_array)); % make array as large as (num_points,num_trials)
+rts = NaN(10,length(input_data.stim_array));
+for i = 1:length(input_data.stim_array)
+    % rows are coh point, cols are accuracy
+    accuracy(input_data.stim_array{1,i}.coh_point_code,i) = input_data.correct(1,i);
+    coh_point_values(i) = input_data.stim_array{1,i}.coherence_value; % pull these for later
+    if accuracy(input_data.stim_array{1,i}.coh_point_code,i) == 1
+        rts(input_data.stim_array{1,i}.coh_point_code,i) = input_data.rt(1,i);
+    end
+end
+coh_point_values = sort(unique(coh_point_values)); % cull to unique values only, and sort in order
+correct_rts = mean(rts,2,'omitnan');
+for i = 1:length(accuracy(:,1))
+   psignifit_array(i,1) = i;
+   psignifit_array(i,2) = sum(accuracy(i,:),'omitnan');
+end
+psignifit_array(:,3) = sum(~isnan(accuracy),2);
 
 % create matrix specifying stimulus conditions per trial:
 %    1)  cue direction (1-4) - evenly allocates trials to cues
