@@ -92,6 +92,7 @@ p.breakblocks = 0; %[7,13,19,25,31]; % before which blocks should we initiate a 
 p.keyswap = 1; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
 p.MEG_enabled = 0; % using MEG
 p.MEG_emulator_enabled = 0; % using the emulator - be aware we can't quit using the quitkey with emulator
+p.usePhotodiode = 1; % use or don't use photodiode
 
 % check set up
 if ~ismember(p.fullscreen_enabled,[0,1]); error('invalid value for p.fullscreen_enabled'); end % check if valid or error
@@ -235,6 +236,9 @@ p.no_participant_response = 0; % turn this off for response_waiter function to w
 p.quitkey = {'q'}; % this is watched by KbqQueue regardless of p.MEG_enabled
 p.continuekey = {'c'}; % this is watched by KbQueue regardless of p.MEG_enabled
 t.keyswapper = 0; % will use this variable to mark a keyswap event (code currently at commencement of block loop)
+if p.usePhotodiode
+    p.photodiodeTrigger = 'LY';
+end
 % establish response keys for the trial based off whether participant id is odd or even
 if mod(d.participant_id,2) % if pid not divisible by 2 (i.e. leaves a modulus after division)
     p.resp_keys = {p.resp_keys{1},p.resp_keys{2}}; % essentially do nothing - keep resp keys the same
@@ -253,6 +257,14 @@ p.text_size = 40; % size of text
 p.window_size = [0 0 1200 800]; % size of window when ~p.fullscreen_enabled
 p.visual_angle_cue = 10; % visual angle of the cue expressed as a decimal - determines size
 p.visual_angle_dots = 0.15; % visual angle of the dots expressed as a decimal - determines size
+if p.usePhotodiode
+    p.photodiodeOnColor=[255 255 255];
+    p.photodiodeOffColor=[0 0 0];
+    p.photodiodeRectHeight=100; %height (in pixel) of the blanck rectangle at the top of the screen for the photoresistor
+    p.photodiodeRectwidth= 100; %width (in pixel) of the blanck rectangle at the top of the screen for the photoresistor
+    p.photodiodeXshift=50;
+    p.photodiodeYshift=50;
+end
 
 % timing info
 p.min_cue_time = 0.5; % minimum period to display cue (participants can't continue during this time)
@@ -645,7 +657,13 @@ try
                     t.iti_rect_sml = [-t.sz_s+t.centre(1),-t.sz_s+t.centre(2),t.sz_s+t.centre(1),t.sz_s+t.centre(2)];
                     Screen('FillOval', p.win, [255,255,255],t.iti_rect);
                     Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
+                    if p.usePhotodiode
+                        Screen('FillRect',p.win,p.photodiodeOnColour,[p.photodiodeXshift p.photodiodeYshift p.photodiodeRectwidth p.photodiodeRectHeight]); %show the photoresistor blank rectangle
+                    end
                     Screen('Flip', p.win);
+                    if p.usePhotodiode
+                        Screen('FillRect',p.win,p.photodiodeOffColour,[p.photodiodeXshift p.photodiodeYshift p.photodiodeRectwidth p.photodiodeRectHeight]); %show the photoresistor blank rectangle
+                    end
                     if p.MEG_enabled == 1
                         MEG.SendTrigger(0); % reset triggers
                         WaitSecs(p.iti_time-p.MEG_long_trigger_time*2);
@@ -658,7 +676,13 @@ try
                     end
                     % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
                 elseif p.iti_type == 2 % do a dots fixation
+                    if p.usePhotodiode
+                        Screen('FillRect',p.win,p.photodiodeOnColour,[p.photodiodeXshift p.photodiodeYshift p.photodiodeRectwidth p.photodiodeRectHeight]); %show the photoresistor blank rectangle
+                    end
                     Screen('Flip', p.win);
+                    if p.usePhotodiode
+                        Screen('FillRect',p.win,p.photodiodeOffColour,[p.photodiodeXshift p.photodiodeYshift p.photodiodeRectwidth p.photodiodeRectHeight]); %show the photoresistor blank rectangle
+                    end
                     MEG.SendTrigger(p.MEGtriggers.trial); % send a trigger for trial onset
                     WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to reach value
                     MEG.SendTrigger(0); % reset triggers
