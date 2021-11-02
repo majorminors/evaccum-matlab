@@ -80,8 +80,8 @@ p.skip_synctests = 0; % force psychtoolbox to skip synctests. not advised. autos
 % general settings
 p.manually_set_coherence = 1; % if 1, will include prompts to set coherence manually
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
-p.fullscreen_enabled = 0; % 1 is full screen, 0 is whatever you've set p.window_size to
-p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
+p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
+p.testing_enabled = 1; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
 p.training_enabled = 0; % if 0 (or any other than 1) will do nothing, if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
 p.fix_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anything other than 1) will not do iti
@@ -92,6 +92,7 @@ p.breakblocks = 0; %[7,13,19,25,31]; % before which blocks should we initiate a 
 p.keyswap = 1; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
 p.MEG_enabled = 0; % using MEG
 p.MEG_emulator_enabled = 0; % using the emulator - be aware we can't quit using the quitkey with emulator
+p.usePhotodiode = 1; % use or don't use photodiode
 p.useEyelink = 1; % use or don't use eyetracker
 p.eyelinkDummyMode = 0; % use or don't use eyetracker dummy mode
 
@@ -104,7 +105,7 @@ if ~ismember(p.iti_on,[0,1]); error('invalid value for p.iti_on'); end % check i
 if ~ismember(p.feedback_type,[0,1,2]); error('invalid value for p.feedback_type'); end % check if valid or error
 if ~ismember(p.MEG_enabled,[0,1]); error('invalid value for p.MEG_enabled'); end % check if valid or error
 if ~ismember(p.MEG_emulator_enabled,[0,1]); error('invalid value for p.MEG_emulator_enabled'); end % check if valid or error
-if p.MEG_enabled == 1 && p.testing_enabled == 1; error('are you sure you want to be testing with MEG enabled? if so, comment out this line'); end
+%if p.MEG_enabled == 1 && p.testing_enabled == 1; error('are you sure you want to be testing with MEG enabled? if so, comment out this line'); end
 if p.MEG_enabled == 1 && p.training_enabled == 1; error('you cannot train with MEG enabled currently'); end
 if p.MEG_emulator_enabled == 1 && p.MEG_enabled == 0
     warning('you cannot emulate MEG without enabling MEG - turning off emulation\n');
@@ -245,6 +246,9 @@ p.no_participant_response = 0; % turn this off for response_waiter function to w
 p.quitkey = {'q'}; % this is watched by KbqQueue regardless of p.MEG_enabled
 p.continuekey = {'c'}; % this is watched by KbQueue regardless of p.MEG_enabled
 t.keyswapper = 0; % will use this variable to mark a keyswap event (code currently at commencement of block loop)
+if p.usePhotodiode
+    p.photodiodeTrigger = 'LY';
+end
 % establish response keys for the trial based off whether participant id is odd or even
 if mod(d.participant_id,2) % if pid not divisible by 2 (i.e. leaves a modulus after division)
     p.resp_keys = {p.resp_keys{1},p.resp_keys{2}}; % essentially do nothing - keep resp keys the same
@@ -263,6 +267,14 @@ p.text_size = 40; % size of text
 p.window_size = [0 0 1200 800]; % size of window when ~p.fullscreen_enabled
 p.visual_angle_cue = 10; % visual angle of the cue expressed as a decimal - determines size
 p.visual_angle_dots = 0.15; % visual angle of the dots expressed as a decimal - determines size
+if p.usePhotodiode
+    p.photodiodeOnColour = [255 255 255]; % colour when photo diode is on
+    p.photodiodeOffColour = [0 0 0]; % colour when photo diode is off
+    p.photodiodeRectHeight = 100; % pixel height of rectangle to display
+    p.photodiodeRectwidth = 100; % pixel width of rectangle to display
+    p.photodiodeXshift = 50; % shift rectangle x pixels off edge of screen
+    p.photodiodeYshift = 50; % shift rectangle y pixels off edge of screen
+end
 
 % timing info
 p.min_cue_time = 0.5; % minimum period to display cue (participants can't continue during this time)
@@ -767,7 +779,11 @@ end
                     t.iti_rect_sml = [-t.sz_s+t.centre(1),-t.sz_s+t.centre(2),t.sz_s+t.centre(1),t.sz_s+t.centre(2)];
                     Screen('FillOval', p.win, [255,255,255],t.iti_rect);
                     Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
+                    
+                    doPhotodiode(p,'on');
                     Screen('Flip', p.win);
+                    doPhotodiode(p,'off');
+                    
                     if p.MEG_enabled == 1
                         MEG.SendTrigger(0); % reset triggers
                         WaitSecs(p.iti_time-p.MEG_long_trigger_time*2);
@@ -780,7 +796,11 @@ end
                     end
                     % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
                 elseif p.iti_type == 2 % do a dots fixation
+                    
+                    doPhotodiode(p,'on');
                     Screen('Flip', p.win);
+                    doPhotodiode(p,'off');
+                    
                     MEG.SendTrigger(p.MEGtriggers.trial); % send a trigger for trial onset
                     WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to reach value
                     MEG.SendTrigger(0); % reset triggers
