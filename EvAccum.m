@@ -216,7 +216,7 @@ if exist([save_file '.mat'],'file') % check if the file already exists and throw
 end % end check save file exist
 save(save_file); % save all data to a .mat file
 
-edfFile = [num2str(d.participant_id,'S%02d'),'_eyetracking_',mfilename];
+edfFile = [num2str(d.participant_id,'S%02d'),'_eyes'];
 if exist(fullfile(datadir,edfFile),'file') % check if the file already exists and throw a warning if it does
     warning('the following save file already exists:\n %s', edfFile);
     t.prompt = 'continue? (y/n): ';
@@ -545,7 +545,7 @@ end
             fprintf('trial %u of %u\n',i,p.act_trial_num); % report trial number to command window
             %
             %% prestart trial for eyelink
-            if p.useEyelink==1
+            if p.useEyelink
                 % let eyelink knows which trial
                 WaitSecs(0.05);
                 Eyelink('Message', 'Trial Number %d',i);
@@ -558,14 +558,14 @@ end
             % initialize the acquisition of online eye position
             eyeCounter = 1;
             eyePoints = zeros(10000,3);
-            if p.useEyelink==1
+            if p.useEyelink
                 Eyelink('StartRecording'); % start recording eyelink
                 eye_used = Eyelink('EyeAvailable'); % 0 (left), 1 (right) or 2 (both)
                 if eye_used == 2
                     eye_used = 1;
                 end
             end
-            if p.useEyelink==1 && p.eyelinkDummyMode==0
+            if p.useEyelink && ~p.eyelinkDummyMode
                 error=Eyelink('CheckRecording');
                 if(error~=0)
                     break;
@@ -626,7 +626,7 @@ end
                     save(save_file); % save all data in '.mat' format
                     if p.iti_on == 1 % do an inter trial interval fixation so we have a buffer between the last trial and the cue appearing
 
-                        if p.useEyelink==1
+                        if p.useEyelink
                             Eyelink('Message', 'Fixation Start');
                         end
                         
@@ -651,7 +651,7 @@ end
                             WaitSecs(p.iti_time); % do a blank screen for the iti time
                             moving_dots(t.fixation.p,t.fixation.dots,MEG,1);
                         end
-                        if p.useEyelink==1
+                        if p.useEyelink
                             Eyelink('Message', 'Fixation End');
                         end
                     end
@@ -704,7 +704,7 @@ end
                 end
                 Screen('Flip', p.win);
 
-                if p.useEyelink==1
+                if p.useEyelink
                     Eyelink('Message', 'Cue On');
                 end
                                 
@@ -756,7 +756,7 @@ end
             
             % intertrial interval - display fixation and do MEG trigger stuff
             if p.iti_on == 1
-                if p.useEyelink==1
+                if p.useEyelink
                     Eyelink('Message', 'Fixation Start');
                 end
                 if p.iti_type == 1 % do a normal fixation
@@ -789,7 +789,7 @@ end
                     WaitSecs(p.iti_time); % do a blank screen for the iti time
                     moving_dots(t.fixation.p,t.fixation.dots,MEG,1);
                 end
-                if p.useEyelink==1
+                if p.useEyelink
                     Eyelink('Message', 'Fixation End');
                 end
             end
@@ -800,12 +800,12 @@ end
                 MEG.WaitForButtonPress(0); % reset MEG button press to empty
             end
 
-            if p.useEyelink==1
+            if p.useEyelink
                 Eyelink('Message', 'Dots Start');
             end
             %% moving dots function begins
             [d.dots_onset(block,i), t.pressed, t.firstPress] = moving_dots(p,dots,MEG,i); % pull time of first flip for dots, as well as information from KBQueueCheck from moving_dots
-            if p.useEyelink==
+            if p.useEyelink
                 Eyelink('Message', 'Dots End');
             end
             
@@ -929,7 +929,7 @@ end
     WaitSecs(1);
     Screen('Flip', p.win);
 
-    if p.useEyelink==1
+    if p.useEyelink
         eyelinkClean(p.useEyelink, edfFile, datadir);
     end
     
@@ -948,7 +948,7 @@ catch err
     if ~p.MEG_emulator_enabled; KbQueueRelease(); end %KbReleaseWait();
     %     if p.MEG_enabled == 1; MEG.delete; end % stop MEG from limiting button presses
     sca; %Screen('Close',p.win);
-    if p.useEyelink==1
+    if p.useEyelink
         eyelinkClean(p.useEyelink, edfFile, datadir);
     end
     rethrow(err);
