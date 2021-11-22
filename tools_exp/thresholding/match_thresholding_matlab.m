@@ -1,4 +1,4 @@
-function [easy_threshold,hard_threshold,overview,summary] = match_thresholding(input_data,save_file)
+function [easy_threshold,hard_threshold,overview,summary] = match_thresholding_matlab(p,d,save_file)
 % function [easy_value,hard_value] = coh_thresholding(p,d)
 %
 % matching threshold analysis
@@ -41,26 +41,26 @@ function [easy_threshold,hard_threshold,overview,summary] = match_thresholding(i
 % enter your thresholds
 low_threshold_pc = 0.6; % percent correct for your hard threshold (uses inverse of this number for easy)
 
-% makes a structure that looks like
-% | matching difficulty point | number correct | number of trials |
-% and builds row-wise each iteration
-accuracy = NaN(10,length(input_data.stim_array)); % make array as large as (num_points,num_trials)
-rts = NaN(10,length(input_data.stim_array));
-for i = 1:length(input_data.stim_array)
-    % rows are coh point, cols are accuracy
-    accuracy(input_data.stim_array{1,i}.coh_point_code,i) = input_data.correct(1,i);
-    coh_point_values(i) = input_data.stim_array{1,i}.coherence_value; % pull these for later
-    if accuracy(input_data.stim_array{1,i}.coh_point_code,i) == 1
-        rts(input_data.stim_array{1,i}.coh_point_code,i) = input_data.rt(1,i);
-    end
-end
-coh_point_values = sort(unique(coh_point_values)); % cull to unique values only, and sort in order
-correct_rts = mean(rts,2,'omitnan');
-for i = 1:length(accuracy(:,1))
-   psignifit_array(i,1) = i;
-   psignifit_array(i,2) = sum(accuracy(i,:),'omitnan');
-end
-psignifit_array(:,3) = sum(~isnan(accuracy),2);
+% % makes a structure that looks like
+% % | matching difficulty point | number correct | number of trials |
+% % and builds row-wise each iteration
+% accuracy = NaN(10,length(input_data.stim_array)); % make array as large as (num_points,num_trials)
+% rts = NaN(10,length(input_data.stim_array));
+% for i = 1:length(input_data.stim_array)
+%     % rows are coh point, cols are accuracy
+%     accuracy(input_data.stim_array{1,i}.coh_point_code,i) = input_data.correct(1,i);
+%     coh_point_values(i) = input_data.stim_array{1,i}.coherence_value; % pull these for later
+%     if accuracy(input_data.stim_array{1,i}.coh_point_code,i) == 1
+%         rts(input_data.stim_array{1,i}.coh_point_code,i) = input_data.rt(1,i);
+%     end
+% end
+% coh_point_values = sort(unique(coh_point_values)); % cull to unique values only, and sort in order
+% correct_rts = mean(rts,2,'omitnan');
+% for i = 1:length(accuracy(:,1))
+%    psignifit_array(i,1) = i;
+%    psignifit_array(i,2) = sum(accuracy(i,:),'omitnan');
+% end
+% psignifit_array(:,3) = sum(~isnan(accuracy),2);
 
 % create matrix specifying stimulus conditions per trial:
 %    1)  cue direction (1-4) - evenly allocates trials to cues
@@ -136,13 +136,14 @@ summary = [1:p.num_points;p.rule_points;pc_low_coh';av_corr_rts_low;pc_hi_coh';a
 %       the intensity values (i.e. lie to matlab) or invert them to their
 %       negative.
 % block/test 1 first
-temp=[-d.stim_mat_all(:,5,1) d.correct(1,:)']; % pull required data (matching angle and correct) into temp
+temp=[d.stim_mat_all(:,5,1) d.correct(1,:)']; % pull required data (matching angle and correct) into temp
 temp = sortrows(temp,1); % sort by matching angle
+temp(find(temp(:,2)==-1),2) = 0; % make invalid responses 0 (incorrect)
 test1 =[]; % open a variable for data
 for i = 1:numel(p.rule_points) % for 1:number of matching angle points
     
-    idx = temp(:,1)==-p.rule_points(i);
-    test1(i,1)=-p.rule_points(i);
+    idx = temp(:,1)==p.rule_points(i);
+    test1(i,1)=p.rule_points(i);
     test1(i,2)=sum(temp(idx,2));
     test1(i,3)=sum(idx);
     
@@ -154,13 +155,14 @@ end
 %test1(:,1) = flip(test1(:,1)); % need to flip the points (lie to matlab) so the psychcurve tool works
 
 % then block/test 2
-temp=[-d.stim_mat_all(:,5,2) d.correct(2,:)']; % pull required data (matching angle and correct) into temp
+temp=[d.stim_mat_all(:,5,2) d.correct(2,:)']; % pull required data (matching angle and correct) into temp
 temp = sortrows(temp,1); % sort by matching angle
+temp(find(temp(:,2)==-1),2) = 0; % make invalid responses 0 (incorrect)
 test2 =[]; % open a variable for data
 for i = 1:numel(p.rule_points) % for 1:number of matching angle points
     
-    idx = temp(:,1)==-p.rule_points(i);
-    test2(i,1)=-p.rule_points(i);
+    idx = temp(:,1)==p.rule_points(i);
+    test2(i,1)=p.rule_points(i);
     test2(i,2)=sum(temp(idx,2));
     test2(i,3)=sum(idx);
     
@@ -171,19 +173,22 @@ for i = 1:numel(p.rule_points) % for 1:number of matching angle points
 end
 %test2(:,1) = flip(test2(:,1)); % need to flip the points (lie to matlab) so the psychcurve tool works
 
+[result,low_threshold] = doPsignifit(test2,low_threshold_pc,1); % new way of getting unscaled thresholds that obviates the need for some of the crazy indexing into the plotline I was doing below
+high_threshold = 90-low_threshold; % this is the inverse of the low_threshold value
+
+
 % make a sigmoid and put it on a figure
 sigmoid_low = figure('visible','on');
-[plotresult, plotline, plotdata] = psychcurve(test2);
+plotPsych(result);
 hold on
 % find the x value for proportion correct:
-[~, low_threshold_idx] = min(abs(plotline.YData-low_threshold_pc(1))); % first find the index of the value closest to the threshold pc
-low_threshold = plotline.XData(low_threshold_idx); % then find the value using the index
-high_threshold = -90-low_threshold; % this is the inverse of the low_threshold value - currently I've flipped everything into negative so it is oriented correctly in the psignifit tools
+% [~, low_threshold_idx] = min(abs(plotline.YData-low_threshold_pc(1))); % first find the index of the value closest to the threshold pc
+% low_threshold = plotline.XData(low_threshold_idx); % then find the value using the index
 % add plot lines at the threshold value on y:
-plot([-90 -0], [low_threshold_pc low_threshold_pc], '-', 'Color',[1 0 0])
-[~, high_pc_idx] = min(abs(plotline.XData-high_threshold(1))); % then find the index of the value closest to the high_threshold
-high_threshold_pc = plotline.YData(high_pc_idx); % then find the value using the index and print that in the command window
-plot([-90 -0], [high_threshold_pc high_threshold_pc], '-', 'Color',[0 1 0])
+plot([90 0], [low_threshold_pc low_threshold_pc], '-', 'Color',[1 0 0])
+% [~, high_pc_idx] = min(abs(plotline.XData-high_threshold(1))); % then find the index of the value closest to the high_threshold
+% high_threshold_pc = plotline.YData(high_pc_idx); % then find the value using the index and print that in the command window
+plot([90 0], [high_threshold high_threshold], '-', 'Color',[0 1 0])
 % add plot lines at the threshold value on x:
 plot([low_threshold low_threshold], [0.3 1], '-', 'Color',[1 0 0])
 plot([high_threshold high_threshold], [0.3 1], '-', 'Color',[0 1 0])
@@ -193,16 +198,25 @@ hold off
 rts_low = figure('visible','off');
 plot(summary(2,:),summary(4,:),'ro:');
 savefig([save_file '_low_coh_rts']);
+
+hard_dots_easy_threshold = high_threshold;
+hard_dots_hard_threshold = low_threshold; % this is the one we care about
+
 % make a sigmoid and put it on a figure
-sigmoid_hi = figure('visible','off');
-[plotresult, plotline, plotdata] = psychcurve(test1);
+[result,low_threshold] = doPsignifit(test1,low_threshold_pc,1); % new way of getting unscaled thresholds that obviates the need for some of the crazy indexing into the plotline I was doing below
+high_threshold = 90-low_threshold; % this is the inverse of the low_threshold value
+
+
+% make a sigmoid and put it on a figure
+sigmoid_hi = figure('visible','on');
+plotPsych(result);
 hold on
-[~, low_pc_idx] = min(abs(plotline.XData-low_threshold(1))); % then find the index of the value closest to the high_threshold
-low_threshold_pc = plotline.YData(low_pc_idx); % then find the value using the index and print that in the command window
-[~, high_pc_idx] = min(abs(plotline.XData-high_threshold(1))); % then find the index of the value closest to the high_threshold
-high_threshold_pc = plotline.YData(high_pc_idx); % then find the value using the index and print that in the command window
-plot([-90 -0], [low_threshold_pc low_threshold_pc], '-', 'Color',[1 0 0])
-plot([-90 -0], [low_threshold_pc low_threshold_pc], '-', 'Color',[1 0 0])
+% [~, low_pc_idx] = min(abs(plotline.XData-low_threshold(1))); % then find the index of the value closest to the high_threshold
+% low_threshold_pc = plotline.YData(low_pc_idx); % then find the value using the index and print that in the command window
+% [~, high_pc_idx] = min(abs(plotline.XData-high_threshold(1))); % then find the index of the value closest to the high_threshold
+% high_threshold_pc = plotline.YData(high_pc_idx); % then find the value using the index and print that in the command window
+plot([90 0], [low_threshold_pc low_threshold_pc], '-', 'Color',[1 0 0])
+plot([90 0], [high_threshold high_threshold], '-', 'Color',[0 1 0])
 plot([low_threshold low_threshold], [0.3 1], '-', 'Color',[1 0 0])
 plot([high_threshold high_threshold], [0.3 1], '-', 'Color',[0 1 0])
 savefig([save_file '_hicohsigmoid']);
@@ -212,8 +226,9 @@ rts_hi = figure('visible','off');
 plot(summary(2,:),summary(6,:),'ro:');
 savefig([save_file '_hi_coh_rts']);
 
-low_threshold = abs(low_threshold);
-high_threshold = abs(high_threshold);
+easy_dots_easy_threshold = high_threshold;
+easy_dots_hard_threshold = low_threshold; % this is the one we care about
+
 
 % load those figures into variables
 % sigmoid_low=hgload(fullfile(datadir, data_file, [data_file '_lowcohsigmoid.fig']));
@@ -238,8 +253,11 @@ t(2)=title(visualise(2),'reaction time low coh');
 t(3)=title(visualise(3),'percent correct hi coh');
 t(4)=title(visualise(4),'reaction time hi coh');
 
-% make the output a little less confusing to understand
-easy_threshold = high_threshold;
-hard_threshold = low_threshold;
+% now we combine them
+ave_hard_thresh = (easy_dots_hard_threshold+hard_dots_hard_threshold)/2;
+hard_threshold = ave_hard_thresh;
+if hard_threshold < 50; hard_threshold = 50; end % limit this
+easy_threshold = 90-hard_threshold;
+
 
 return
