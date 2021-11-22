@@ -64,17 +64,19 @@ t = struct(); % another structure for untidy trial specific floating variables t
 % initial settings
 rootdir = pwd; % root directory - used to inform directory mappings
 p.training_enabled = 0; % if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below. will also suppress pre-block information about whether it's a hard or easy test
-p.screen_width = 35;   % Screen width in cm
-p.screen_height = 50;    % Screen height in cm
-p.screen_distance = 50; % Screen distance from participant in cm
-p.skip_synctests = 0; % force psychtoolbox to skip synctests. not advised. autoskipped during testing
+p.screen_width = 40;   % Screen width in cm
+p.screen_height = 30;    % Screen height in cm
+p.screen_distance = 70; % Screen distance from participant in cm
+p.skip_synctests = 0; % foaaarce psychtoolbox to skip synctests. not advised. autoskipped during testing
+p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anything other than 1) will not do iti
+p.iti_type = 2; % if 1 will do a normal fixation, if 2 will do a dots fixation
 
 % general settings
 p.manually_set_coherence = 0; % if 1, will include prompts to set coherence manually
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
-p.fix_trial_time = 0; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
+p.fix_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 p.num_blocks = 2; % each block currently feeds the two coherence values (block 1 is easy, block 2 is hard)
 
 % for use in MEG
@@ -87,11 +89,12 @@ if ~ismember(p.testing_enabled,[0,1]); error('invalid value for p.testing_enable
 if ~ismember(p.training_enabled,[0,1]); error('invalid value for p.training_enabled'); end % check if valid or error
 if ~ismember(p.fix_trial_time,[0,1]); error('invalid value for p.fix_trial_time'); end % check if valid or error
 if p.num_blocks ~= 2; error('currently only two blocks are interpretable - check p.num_blocks'); end % check if valid or error
+if (MEG || p.MEG_enabled) ~= 0 ; error('this is not set up for MEG! check (MEG || p.MEG_enabled) == 0'); end % check we haven't accidently turned on MEG stuff
 
 % directory mapping
 addpath(genpath(fullfile(rootdir, 'tools_exp'))); % add tools folder to path (includes moving_dots function which is required for dot motion, as well as an external copy of subfunctions for backwards compatibility with MATLAB)
 stimdir = fullfile(rootdir, 'tools_exp', 'stimuli');
-datadir = fullfile(rootdir, 'data'); % will make a data directory if none exists
+datadir = fullfile(rootdir, 'data','meg_pilot_3'); % will make a data directory if none exists
 if ~exist(datadir,'dir')
     mkdir(datadir);
 end
@@ -107,7 +110,7 @@ p.training_rule_lvl_mid = 45; % what matching rule level for mid (training level
 p.training_rule_lvl_hard = 75; % what matching rule level for hard (training level 3)
 
 % test variables
-p.num_test_trials = 4;
+p.num_test_trials = 10;
 p.num_test_blocks = 2;
 if p.testing_enabled == 1
     p.PTBsynctests = 1; % PTB will skip synctests if 1
@@ -186,7 +189,7 @@ fprintf('defining exp params for %s\n', mfilename);
 
 % define keys
 p.quitkey = {'q'};
-p.resp_keys = {'a','s'}; % only accepts two response options
+p.resp_keys = {'p','o'}; % only accepts two response options
 % establish response keys for the trial based off whether participant id is odd or even
 if mod(d.participant_id,2) % if pid not divisible by 2 (i.e. leaves a modulus after division)
     p.resp_keys = {p.resp_keys{1},p.resp_keys{2}}; % essentially do nothing - keep resp keys the same
@@ -629,7 +632,7 @@ try
     
     %% run analysis
     if ~p.training_enabled
-        [d.easy_threshold,d.hard_threshold,d.test_overview,d.test_summary] = match_thresholding(p,d,save_file);
+        [d.easy_threshold,d.hard_threshold,d.test_overview,d.test_summary] = match_thresholding_matlab(p,d,save_file);
     end
     
     % save the analysis results
