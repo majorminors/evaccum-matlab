@@ -7,12 +7,16 @@ if useOfEyelink==1
     %download data file
     try
         fprintf('Receiving data file ''%s''\n', edfFile );
-        status=Eyelink('ReceiveFile',edfFile,datadir);
+        status=Eyelink('ReceiveFile',edfFile,datadir,1);
         if status > 0
             fprintf('ReceiveFile status %d\n', status);
             fprintf('Data file ''%s'' can be found in ''%s''\n', edfFile, datadir );
+        elseif status == 0
+            fprintf('Data file transfer cancelled\n');
+        elseif status < 0
+            fprintf('error in data file transfer\n');
         end
-        if 2==exist(edfFile, 'file')
+        if 2==exist(fullfile(datadir,edfFile), 'file')
             fprintf('Data file ''%s'' can be found in ''%s''\n', edfFile, datadir );
         end
     catch
@@ -21,8 +25,4 @@ if useOfEyelink==1
     Eyelink('Shutdown');
 end
 
-Screen('CloseAll');
-
-ListenChar(0);
-ShowCursor;
 end
