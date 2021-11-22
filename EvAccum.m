@@ -15,8 +15,7 @@
 %   rows indicate trials
 %   columns are explained when we define the matrix in 'define stimulus
 %       parameters', below
-%   in this script two blocks represent two different response
-%       mappings (to counterbalance two button-presses)
+%   in this script two blocks represent two diffe)
 
 % other trial specific variables are in 't' in case something goes wrong
 %   and we want to see them
@@ -74,23 +73,23 @@ t = struct(); % another structure for untidy trial specific floating variables t
 rootdir = pwd; % root directory - used to inform directory mappings
 p.screen_width = 40;   % Screen width in cm
 p.screen_height = 30;    % Screen height in cm
-p.screen_distance = 50; % Screen distance from participant in cm
+p.screen_distance = 70; % Screen distance from participant in cm
 p.skip_synctests = 0; % force psychtoolbox to skip synctests. not advised. autoskipped during testing
 
 % general settings
-p.manually_set_coherence = 1; % if 1, will include prompts to set coherence manually
+p.manually_set_coherence = 0; % if 1, will include prompts to set coherence manually
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
-p.testing_enabled = 1; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
+p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
 p.training_enabled = 0; % if 0 (or any other than 1) will do nothing, if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
 p.fix_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anything other than 1) will not do iti
 p.iti_type = 2; % if 1 will do a normal fixation, if 2 will do a dots fixation
 p.feedback_type = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
-p.num_blocks = 20;
+p.num_blocks = 5;
 p.breakblocks = 0; %[7,13,19,25,31]; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
 p.keyswap = 1; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
-p.MEG_enabled = 0; % using MEG
+p.MEG_enabled = 1; % using MEG
 p.MEG_emulator_enabled = 0; % using the emulator - be aware we can't quit using the quitkey with emulator
 p.usePhotodiode = 1; % use or don't use photodiode
 p.useEyelink = 1; % use or don't use eyetracker
@@ -105,7 +104,7 @@ if ~ismember(p.iti_on,[0,1]); error('invalid value for p.iti_on'); end % check i
 if ~ismember(p.feedback_type,[0,1,2]); error('invalid value for p.feedback_type'); end % check if valid or error
 if ~ismember(p.MEG_enabled,[0,1]); error('invalid value for p.MEG_enabled'); end % check if valid or error
 if ~ismember(p.MEG_emulator_enabled,[0,1]); error('invalid value for p.MEG_emulator_enabled'); end % check if valid or error
-%if p.MEG_enabled == 1 && p.testing_enabled == 1; error('are you sure you want to be testing with MEG enabled? if so, comment out this line'); end
+if p.MEG_enabled == 1 && p.testing_enabled == 1; error('are you sure you want to be testing with MEG enabled? if so, comment out this line'); end
 if p.MEG_enabled == 1 && p.training_enabled == 1; error('you cannot train with MEG enabled currently'); end
 if p.MEG_emulator_enabled == 1 && p.MEG_enabled == 0
     warning('you cannot emulate MEG without enabling MEG - turning off emulation\n');
@@ -117,7 +116,7 @@ end
 % directory mapping
 addpath(genpath(fullfile(rootdir, 'tools_exp'))); % add tools folder to path (includes moving_dots function which is required for dot motion, as well as an external copy of subfunctions for backwards compatibility with MATLAB)
 stimdir = fullfile(rootdir, 'tools_exp', 'stimuli');
-datadir = fullfile(rootdir, 'data'); % will make a data directory if none exists
+datadir = fullfile(rootdir, 'data','meg_pilot_3'); % will make a data directory if none exists
 if ~exist(datadir,'dir')
     mkdir(datadir);
 end
@@ -231,8 +230,8 @@ fprintf('defining exp params for %s\n', mfilename);
 
 % define keys
 if p.MEG_enabled == 0
-    p.resp_keys = {'a','s'}; % only accepts two response options
-    p.resp_key_names = {'a','s'};
+    p.resp_keys = {'p','o'}; % only accepts two response options
+    p.resp_key_names = {'p','o'};
 elseif p.MEG_enabled == 1 % what keys in the MEG
     if p.MEG_emulator_enabled == 0
         p.resp_keys = {'RB','RR'}; % only accepts two response options
@@ -801,12 +800,15 @@ end
                     Screen('Flip', p.win);
                     doPhotodiode(p,'off');
                     
-                    MEG.SendTrigger(p.MEGtriggers.trial); % send a trigger for trial onset
-                    WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to reach value
-                    MEG.SendTrigger(0); % reset triggers
-                    WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to return to zero
-                    t.fixation.p.dots_duration = t.fixation.p.dots_duration_vector(i); % get the dots iti duration for this trial
-                    WaitSecs(p.iti_time); % do a blank screen for the iti time
+                    if p.MEG_enabled == 1
+                        MEG.SendTrigger(p.MEGtriggers.trial); % send a trigger for trial onset
+                        WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to reach value
+                        MEG.SendTrigger(0); % reset triggers
+                        WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to return to zero
+                        t.fixation.p.dots_duration = t.fixation.p.dots_duration_vector(i); % get the dots iti duration for this trial
+                    elseif p.MEG_enabled == 0
+                        WaitSecs(p.iti_time);
+                    end
                     moving_dots(t.fixation.p,t.fixation.dots,MEG,1);
                 end
                 if p.useEyelink
@@ -958,7 +960,7 @@ end
     if ~p.MEG_emulator_enabled; KbQueueRelease(); end %KbReleaseWait();
     if p.MEG_enabled == 1; MEG.delete; end % stop MEG from limiting button presses
     clear block i ans; % clear specific indexes and stuff
-    Screen('Close',p.win);
+    Screen('CloseAll');
        
     fprintf('done running %s\n', mfilename);
     
