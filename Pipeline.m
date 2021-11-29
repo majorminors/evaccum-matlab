@@ -17,7 +17,8 @@ runBehav = 0;
 subjectRange = 0; % 0 for all, otherwise can specify
 jobdir = fullfile(rootdir,'job_logging','uniqueidentifier');
 functionToRun = @checkAndSelect;
-
+%a1_importAndOrganiseScans
+%a2_maxFilter
 
 subjects = importParticipants();
 if ~subjectRange; subjectRange = 1:numel(subjects); end
