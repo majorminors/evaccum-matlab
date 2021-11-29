@@ -71,9 +71,9 @@ t = struct(); % another structure for untidy trial specific floating variables t
 
 % initial settings
 rootdir = pwd; % root directory - used to inform directory mappings
-p.screen_width = 40;   % Screen width in cm
-p.screen_height = 30;    % Screen height in cm
-p.screen_distance = 70; % Screen distance from participant in cm
+p.screen_width = 54;   % Screen width in cm
+p.screen_height = 32;    % Screen height in cm
+p.screen_distance = 120; % Screen distance from participant in cm
 p.skip_synctests = 0; % force psychtoolbox to skip synctests. not advised. autoskipped during testing
 
 % general settings
@@ -86,11 +86,11 @@ p.fix_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for d
 p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anything other than 1) will not do iti
 p.iti_type = 2; % if 1 will do a normal fixation, if 2 will do a dots fixation
 p.feedback_type = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
-p.num_blocks = 5;
+p.num_blocks = 10;
 p.breakblocks = 0; %[7,13,19,25,31]; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
 p.keyswap = 1; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
 p.MEG_enabled = 1; % using MEG
-p.MEG_emulator_enabled = 0; % using the emulator - be aware we can't quit using the quitkey with emulator
+p.MEG_emulator_enabled = 0; % using tqqhe emulator - be aware we can't quit using the quitkey with emulator
 p.usePhotodiode = 1; % use or don't use photodiode
 p.useEyelink = 1; % use or don't use eyetracker
 p.eyelinkDummyMode = 0; % use or don't use eyetracker dummy mode
@@ -270,9 +270,9 @@ if p.usePhotodiode
     p.photodiodeOnColour = [255 255 255]; % colour when photo diode is on
     p.photodiodeOffColour = [0 0 0]; % colour when photo diode is off
     p.photodiodeRectHeight = 100; % pixel height of rectangle to display
-    p.photodiodeRectwidth = 100; % pixel width of rectangle to display
-    p.photodiodeXshift = 50; % shift rectangle x pixels off edge of screen
-    p.photodiodeYshift = 50; % shift rectangle y pixels off edge of screen
+    p.photodiodeRectwidth = 300; % pixel width of rectangle to display
+    p.photodiodeXshift = -200; % shift rectangle x pixels off edge of screen
+    p.photodiodeYshift = 0; % shift rectangle y pixels off edge of screen
 end
 
 % timing info
@@ -505,6 +505,7 @@ if p.useEyelink
     
     %enter Eyetracker camera setup mode, calibration and validation
     EyelinkDoTrackerSetup(el);
+    EyelinkDoDriftCorrect(el);
     
 end
 
