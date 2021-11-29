@@ -42,7 +42,7 @@ end
 [PATHSTR,NAME,EXT] = fileparts(settings.outfname{ifile});
 
 if overwrite || ~exist([PATHSTR,'/',NAME,'_trans',EXT],'file')
-    fun_MaxFilter_RDKPD(settings)
+    doMaxFilter(settings)
 end
 
 
