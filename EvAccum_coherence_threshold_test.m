@@ -12,7 +12,8 @@
 
 % data related information saved in 'd'
 %   d.stim_mat_all contains trial condition matrices for each block
-%       (d.stim_mat_all(:,:,[block number])
+%       (d.stim_mat_all(:,:,[block number])+
+
 %   rows indicate trials
 %   columns are explained when we define the matrix in 'define stimulus
 %       parameters', below
