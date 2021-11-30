@@ -4,8 +4,9 @@ function a2_maxFilter(thisSubject)
 overwrite = 0; % turn this on for auto overwrite
 
 addpath /hpc-software/matlab/cbu/
-addpath(genpath('/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/'))
-droot = ['/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab/data/meg_pilot_3/' num2str(thisSubject.subj)];
+rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab/';
+addpath(genpath(fullfile(rootdir,'tools_analysis')))
+droot = fullfile(rootdir,'data','meg_pilot_3',num2str(thisSubject.subj,'S%02d'));
 maxfld= fullfile(droot,MaxfilterOutput);
 addpath(droot);
 

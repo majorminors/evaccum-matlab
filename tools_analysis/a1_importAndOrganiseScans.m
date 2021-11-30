@@ -6,7 +6,7 @@ datadir = fullfile(rootdir,'data','meg_pilot_3');
 overwrite = 0; % turn this on for auto overwrite
 
 % using ale's language to avoid errors in changing the names
-base = fullfile(datadir,num2str(thisSubject.subj));
+base = fullfile(datadir,num2str(thisSubject.subj,'S%02d'));
 
 % if it exists choose whether to overwrite
 fprintf('creating folder %s: \n',base);

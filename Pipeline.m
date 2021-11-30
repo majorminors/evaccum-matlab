@@ -11,17 +11,14 @@ clear all
 
 rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab';
 scriptdir = fullfile(rootdir,'tools_analysis'); cd(scriptdir)
-datadir = fullfile(rootdir,'data','meg_pilot_3');
+datadir = fullfile(rootdir,'data','meg_pilot_3'); addpath(datadir);
 runLocal = 1;
 runBehav = 0;
-subjectRange = 0; % 0 for all, otherwise can specify
+subjectRange = 1:2;
 jobdir = fullfile(rootdir,'job_logging','uniqueidentifier');
-functionToRun = @checkAndSelect;
+functionToRun = @a1_importAndOrganiseScans;
 %a1_importAndOrganiseScans
 %a2_maxFilter
-
-subjects = importParticipants();
-if ~subjectRange; subjectRange = 1:numel(subjects); end
 
 % make an object to hold cbuscheduler jobs
 clear J;
