@@ -6,7 +6,7 @@ overwrite = 0; % turn this on for auto overwrite
 addpath /hpc-software/matlab/cbu/
 rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab/';
 addpath(genpath(fullfile(rootdir,'tools_analysis')))
-droot = fullfile(rootdir,'data','meg_pilot_3',num2str(thisSubject.subj,'S%02d'));
+droot = fullfile(rootdir,'data','meg_pilot_3',thisSubject.id);
 maxfld= fullfile(droot,MaxfilterOutput);
 addpath(droot);
 
@@ -20,8 +20,8 @@ d = getnames(droot,[],'*raw.fif');
 settings.maxfld = maxfld;
 
 
-if~exist(fullfile(droot,['subjectInfo_',num2str(thisSubject.subj),'.mat']),'file')
-    save(fullfile(droot,['subjectInfo_',num2str(thisSubject.subj),'.mat']),'thisSubject');% save subject's details
+if~exist(fullfile(droot,['subjectInfo_',num2str(thisSubject.id),'.mat']),'file')
+    save(fullfile(droot,['subjectInfo_',num2str(thisSubject.id),'.mat']),'thisSubject');% save subject's details
 end
 
 if ~isempty(thisSubject.bad_meg) %either use operator's bad channesl or automatic bad channels detection

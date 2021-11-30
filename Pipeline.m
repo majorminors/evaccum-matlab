@@ -14,21 +14,24 @@ scriptdir = fullfile(rootdir,'tools_analysis'); cd(scriptdir)
 datadir = fullfile(rootdir,'data','meg_pilot_3'); addpath(datadir);
 runLocal = 1;
 runBehav = 0;
-subjectRange = 1:2;
+subjectRange = 0;
 jobdir = fullfile(rootdir,'job_logging','uniqueidentifier');
 functionToRun = @a1_importAndOrganiseScans;
 %a1_importAndOrganiseScans
 %a2_maxFilter
 
+allSubjects = importParticipants();
+if ~subjectRange; subjectRange = 1:numel(allSubjects); end
+
 % make an object to hold cbuscheduler jobs
 clear J;
-J(1:numel(subjects))=deal(struct('task',[],'n_return_values',[], ...
+J(1:numel(allSubjects))=deal(struct('task',[],'n_return_values',[], ...
     'input_args',[],'depends_on',[]));
 
 for subjectidx = subjectRange
     disp('starting with subject: '); disp(subjectidx);
     
-    thisSubject = importParticipants(subjectidx); % let's make this easier to reference
+    thisSubject = allSubjects{subjectidx}; % let's make this easier to reference
       
     % let's skip participants who are not useable
     if ~thisSubject.usable

@@ -6,7 +6,7 @@ datadir = fullfile(rootdir,'data','meg_pilot_3');
 overwrite = 0; % turn this on for auto overwrite
 
 % using ale's language to avoid errors in changing the names
-base = fullfile(datadir,num2str(thisSubject.subj,'S%02d'));
+base = fullfile(datadir,thisSubject.id);
 
 % if it exists choose whether to overwrite
 fprintf('creating folder %s: \n',base);
@@ -33,7 +33,7 @@ source      = thisSubject.meg_folder;
 sourcefiles = cellfun(@(x) sprintf('%s.fif',x),thisSubject.meg_runs, 'UniformOutput',false);
 runlabs     = thisSubject.meg_labs;
 
-runfiles    = cellfun(@(x) sprintf([base,'%s_raw.fif'],x), runlabs,'UniformOutput',false);
+runfiles    = cellfun(@(x) sprintf([base,'/%s_raw.fif'],x), runlabs,'UniformOutput',false);
 
 cd(source);
 cellfun(@copyfile,sourcefiles,runfiles,'UniformOutput',false);
@@ -41,7 +41,7 @@ cellfun(@copyfile,sourcefiles,runfiles,'UniformOutput',false);
 %% import MRI structurals
 if ~isempty(thisSubject.mri)
     % locate the right destination folder
-    T1Folder = [base,'T1/'];
+    T1Folder = [base,'/T1/'];
     
     % locate MRI images
     mriFolder = dir(thisSubject.mri_folder); mriFolder = ['/mridata/cbu/',mriFolder.name];
@@ -67,7 +67,7 @@ if ~isempty(thisSubject.mri)
     
 end
 
-cd(base); save([thisSubject.subj,'_filesID.mat'],'runfiles','sourcefiles','thisSubject');
+cd(base); save([thisSubject.id,'_filesID.mat'],'runfiles','sourcefiles','thisSubject');
 
 return
 end

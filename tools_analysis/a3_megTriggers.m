@@ -6,13 +6,13 @@ addpath /hpc-software/matlab/cbu/
 
 rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab/';
 addpath(genpath(fullfile(rootdir,'tools_analysis')))
-droot = fullfile(rootdir,'data','meg_pilot_3',num2str(thisSubject.subj,'S%02d'));
+droot = fullfile(rootdir,'data','meg_pilot_3',thisSubject.id);
 behavioural_data = fullfile(rootdir,'data','meg_pilot_3','behavioural');
 
 infld   = fullfile(droot, 'Preprocess');
-behav   = fullfile(behavioural_data,[num2str(thisSubject.subj,'S%02d') '_EvAccum.mat']);
-trfile  = fullfile(infld, 'run%s_%s_trl.mat'); % going to have difficulty with subject naming conventions (Sxx vs subjx)
-megrt   = fullfile(behavioural_data,[num2str(thisSubject.subj,'S%02d') '_MEGRTs.mat']);
+behav   = fullfile(behavioural_data,[thisSubject.id '_EvAccum.mat']);
+trfile  = fullfile(infld, 'run%s_%s_trl.mat');
+megrt   = fullfile(behavioural_data,[thisSubject.id '_MEGRTs.mat']);
 datafld = fullfile(droot, 'MaxfilterOutput/');
 tarfld  = infld;
 
