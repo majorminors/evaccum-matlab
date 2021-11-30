@@ -16,10 +16,9 @@ runLocal = 1;
 runBehav = 0;
 subjectRange = 0;
 jobdir = fullfile(rootdir,'job_logging','uniqueidentifier');
-functionToRun = @a3_megTriggers;
-%a1_importAndOrganiseScans
-%a2_maxFilter
-%a3_megTriggers
+% functionToRun = @a1_importAndOrganiseScans;
+functionToRun = @a2_maxFilter;
+%functionToRun = @a3_megTriggers;
 
 allSubjects = importParticipants();
 if ~subjectRange; subjectRange = 1:numel(allSubjects); end
