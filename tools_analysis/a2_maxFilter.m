@@ -1,7 +1,7 @@
 function a2_maxFilter(thisSubject)
 
 
-overwrite = 0; % turn this on for auto overwrite
+overwrite = 1; % turn this on for auto overwrite
 
 addpath /hpc-software/matlab/cbu/
 rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab/';
@@ -35,13 +35,13 @@ end
 for ifile = 1:length(d)
     settings.infname{ifile} = [droot,filesep,d{ifile}];
     %always match output's name to input's file to avoid mislabeling
-    settings.outfname{ifile}= [droot,filesep,['Maxfiltered_' d{ifile}]];
+    infileNoRaw = strjoin(regexp(d{ifile},'_raw','split'),''); % split on the 'raw' filename bit that the MEG operators add and put it back together again
+    settings.outfname{ifile}= [maxfld,filesep,infileNoRaw];
 end
 
-[PATHSTR,NAME,EXT] = fileparts(settings.outfname{ifile});
-
-if overwrite || ~exist([PATHSTR,filesep,NAME,'_trans',EXT],'file')
-    doMaxFilter(settings)
+[PATHSTR,NAME,EXT] = fileparts(settings.outfname{ifile}); % just check one of these exists
+if overwrite || ~exist([PATHSTR,filesep,NAME,'_trans',EXT],'file') % and if so
+    doMaxFilter(settings) % max it up!
 end
 
 
