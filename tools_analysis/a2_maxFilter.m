@@ -1,7 +1,7 @@
 function a2_maxFilter(thisSubject)
 
 
-overwrite = 1; % turn this on for auto overwrite
+overwrite = 0; % turn this on for auto overwrite
 
 addpath /hpc-software/matlab/cbu/
 rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab/';
