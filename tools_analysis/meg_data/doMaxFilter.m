@@ -116,7 +116,7 @@ for i = nfiles
         %    unix(mfcmd_rest)
         [status, maxres] = unix(mfcmd_rest); % this stops screen-dumping?
         if status ~= 0
-            error('MaxFilter failed!')
+            error('MaxFilter failed! FYI: this will happen if you run it in matlab desktop mode for some reason.')
             maxres
         else
             disp(maxres);
