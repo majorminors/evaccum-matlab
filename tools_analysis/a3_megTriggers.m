@@ -13,7 +13,7 @@ infld   = fullfile(droot, 'Preprocess');
 behav   = fullfile(behavioural_data,[thisSubject.id '_EvAccum.mat']);
 trfile  = fullfile(infld, 'run%s_%s_trl.mat');
 megrt   = fullfile(behavioural_data,[thisSubject.id '_MEGRTs.mat']);
-datafld = fullfile(droot, 'MaxfilterOutput/');
+datafld = fullfile(droot, 'MaxfilterOutput');
 tarfld  = infld;
 
 filename    = 'Run%d_%s_trans.fif';

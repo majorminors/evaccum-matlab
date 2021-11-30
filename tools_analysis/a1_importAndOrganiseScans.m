@@ -33,7 +33,7 @@ source      = thisSubject.meg_folder;
 sourcefiles = cellfun(@(x) sprintf('%s.fif',x),thisSubject.meg_runs, 'UniformOutput',false);
 runlabs     = thisSubject.meg_labs;
 
-runfiles    = cellfun(@(x) sprintf([base,'/%s_raw.fif'],x), runlabs,'UniformOutput',false);
+runfiles    = cellfun(@(x) sprintf([base,filesep,'%s_raw.fif'],x), runlabs,'UniformOutput',false);
 
 cd(source);
 cellfun(@copyfile,sourcefiles,runfiles,'UniformOutput',false);
@@ -41,26 +41,26 @@ cellfun(@copyfile,sourcefiles,runfiles,'UniformOutput',false);
 %% import MRI structurals
 if ~isempty(thisSubject.mri)
     % locate the right destination folder
-    T1Folder = [base,'/T1/'];
+    T1Folder = [base,filesep,'T1']; % we might need a filesep at the end
     
     % locate MRI images
     mriFolder = dir(thisSubject.mri_folder); mriFolder = ['/mridata/cbu/',mriFolder.name];
     
     
     
-    mriSubFld = dir(sprintf([mriFolder,'/%s_*'],thisSubject.date_mri));
+    mriSubFld = dir(sprintf([mriFolder,filesep,'%s_*'],thisSubject.date_mri));
     
     %double check we are picking the right MRI file
     if isempty(mriSubFld); error(sprintf('mismatch with MRI dates %s',base));end
     
     mriSubFld = mriSubFld.name;
-    target = dir([mriFolder,'/',mriSubFld,'/*MPRAGE_*chn']);
+    target = dir([mriFolder,filesep,mriSubFld,filesep,'*MPRAGE_*chn']);
     
     %in case MRI scan had to be repeated (e.g. if the volunteer moved)
     %choose the last one
     if size({target.name},2)>1; name = target(size({target.name},2)).name;clear target; target.name = name; end
     
-    target = [mriFolder,'/',mriSubFld,'/',target.name];
+    target = [mriFolder,filesep,mriSubFld,filesep,target.name];
     
     
     copyfile(target,T1Folder);
