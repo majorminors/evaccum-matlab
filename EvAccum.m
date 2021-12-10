@@ -943,6 +943,7 @@ end
     end
     
     d.trials_completed = d.blocks_completed*p.num_trials_per_block;
+    save(save_file); % save all data in '.mat' format
     
     %% wrap up
     
