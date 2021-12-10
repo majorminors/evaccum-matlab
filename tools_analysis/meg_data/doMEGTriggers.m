@@ -30,7 +30,7 @@ for runi = 1:numel(filenames)
     trig = D(D.indchannel('STI101'),:)/1e6;  % 1e6 new scaling introduced by SPM12;
     ttime = D.time;
     
-    % pull the information for the blocks in the run 
+    % pull the information for the blocks in the run
     vecrunid = runid(runi,:); % select vector of blocks in the run
     vecrunid(isnan(vecrunid)) = []; % get rid of any NaNs if they exist
     block = d.stim_mat_all(:,:,vecrunid); % pull the stimulus matrix info for those blocks
@@ -39,52 +39,69 @@ for runi = 1:numel(filenames)
     
     % find onset trials, coherence, trial type, and rt
     % these triggers need to change
-    triggers = d.stim_mat_all(:,10,1)'; % trial type triggers
-    coh_trigger = 1; % value of coherence onset trigger
+    trial_type_triggers = d.stim_mat_all(:,9,1)'; % trial type triggers/coherence onset triggers
+    cue_trigger = p.MEGtriggers.cue;
+    iti_trigger = p.MEGtriggers.trial;
     keys = [4096 8192 16384 -32768]; % index medium ring little - on right button box
-    trigger_onset = (find(round(diff(trig)) == 1)+1)'; % onset of all triggers - we use this for a check
-    resp_onset_neg = (find(ismember(round(diff(trig)),-keys))+1)';
-    coh_onset = (find(ismember(round(diff(trig)),coh_trigger))+1)'; % coherence trigger onset
-    trial_type_onset = (find(ismember(round(diff(trig)),triggers))+1)'; % trial type trigger onset
-    trial_type_onset_neg = (find(ismember(round(diff(trig)),-triggers))+1)'; % trial type trigger onset
+    cue_onset = (find(ismember(round(diff(trig)),cue_trigger))+1)'; % cue trigger onset (less useful because the onset might be cut off at the start and thus not always found preceding a sequence of 8 trials)
+    cue_offset = (find(ismember(round(diff(trig)),-cue_trigger))+1)'; % cue trigger offset (more useful because it predicts a sequence of 8 trials, and is only likely to be missing if the corresponding sequence is also missing)
+    iti_onset = (find(ismember(round(diff(trig)),iti_trigger))+1)'; % trial trigger onset
+    trial_type_onset = (find(ismember(round(diff(trig)),trial_type_triggers))+1)'; % trial type trigger onset
     
-    cohtrigsID  = [0; round(diff(trig)')]; cohtrigsID = cohtrigsID(coh_onset); % gets the amplitude of the trigger (which should be the thing you specified as the trigger) and then strips anything that is not a coherence onset trigger
-    trialIDtrg  = [0; round(diff(trig)')]; trialID = trialIDtrg(trial_type_onset); % same for trial type
     
-    if numel(trialID) ~= numel(block(:,10)) || sum(trialID ~= block(:,10)) % if number of trial onset triggers is not equal to number of trials, or if the trial triggers don't sum to what they should do
-        % then try another way of identifying trials
-        if numel(coh_onset) == numel(block(:,10)) % if coh  onset is reliable
-            tmp_tronset = [];
-            tmp_trialID =[];
-            for ic = 1:numel(coh_onset) % go through each coherence onset trigger
-                
-                % search before the coherence onset trigger for a trigger
-                searchtwin=[0 round(diff(trig(coh_onset(ic)-400:coh_onset(ic))))];
-                ttrigger = find(searchtwin>1 & searchtwin <= max(triggers));
-                ttrigger = ttrigger(1);
-                
-                % plug that found value into a tmp var
-                tmp_trialID(ic) = block(ic,10);
-                
-                
-                tmp_tronset(ic) = coh_onset(ic)-400 + ttrigger-1;
-                
-            end
-            % replace the bad trial triggers with our recovered triggers
-            trial_type_onset   = tmp_tronset';
-            trialIDtrg  =  tmp_trialID';
+    trialIDtrg  = [0; round(diff(trig)')]; trialID = trialIDtrg(trial_type_onset); % gets the amplitude of the trigger (which should be the thing you specified as the trigger) and then strips anything that is not a trial type trigger
+    
+    
+    tmp_tronset = [];
+    tmp_trialID =[];
+    multiTrigs=[];
+    for ic = 1:numel(trial_type_onset) % go through each onset trigger
+        
+        % search before and after the onset trigger for triggers
+        searchtwin=[0 round(diff(trig(trial_type_onset(ic)-5:trial_type_onset(ic)+5)))];
+        ttrigger = find(searchtwin>1);% & searchtwin <= max(triggers));
+%         ttrigger = ttrigger(1);
+        if numel(ttrigger) > 1
+            multiTrigs = [multiTrigs;[ttrigger,ic]];
         end
-
+        
+% %         plug that found value into a tmp var
+%         tmp_trialID(ic) = block(ic,10);
+%         
+%         
+%         tmp_tronset(ic) = coh_onset(ic)-400 + ttrigger-1;
+        
     end
+%     % replace the bad trial triggers with our recovered triggers
+%     trial_type_onset   = tmp_tronset';
+%     trialIDtrg  =  tmp_trialID';
     
     % plot the triggers
-    figure; plot(trig); hold on; plot(trial_type_onset,trig(trial_type_onset),'-o');
-
+    figure;
+    % plot the value of the triggerline at every timepoint
+    plot(trig);
+    hold on;
+    % plot the triggers we discovered by searching for any valid trial type trigger values
+    plot(trial_type_onset,trig(trial_type_onset),'-o');
+    % plot what SHOULD be happening
+    whatShouldHappen = reshape(squeeze(d.stim_mat_all(:,9,:)),[],1); % could also do block(:,9)
+    plot(trial_type_onset,whatShouldHappen(1:numel(trial_type_onset)),'-g');
+    % plot the trial IDs it thinks it found
+    % notice that at the erroneous triggers, this thinks it has found a 2
+    % and a 26, although that is not reflected in the actual trigger value
+    % which is at 250 both times. Can't think of a reason for this unless
+    % it's doing that thing where it took too long to get up to 250 and so
+    % it thinks there's a trigger in the ascent of the ITI trigger value?
+    plot(trial_type_onset,trialID(1:numel(trial_type_onset)),'-m');
+    
+    %plot(cue_offset,trig(cue_offset),'-m');
+    %plot(trial_onset,trig(trial_onset),'-y');
+    
     % check now that we have the right number of triggers
     if numel(trigger_onset) ~= size(block,1)
         error('Inconsistent number of onset triggers vs trials')
     end
-
+    
     % do the check we did before - same number of trial triggers as trials,
     % and they sum to they should
     if numel(trialID) ~= numel(block(:,10)) || sum(trialID ~= block(:,10))
@@ -120,7 +137,7 @@ for runi = 1:numel(filenames)
         
     end
     
-       
+    
     rts = d.rt(vecrunid,:)';rts = rts(:); % transpose relevant rows of d.rt and then place each block under one another in the same row
     
     idx = rts~=0 & rts>0; % where there is a rt
@@ -159,7 +176,7 @@ for runi = 1:numel(filenames)
     %MEG_RT = cat(1,MEG_RT,[block(:,[1:4 12 14 15 ]), tmp_RT']);% 1block# 2coh 3act 4cond 5trigger 6resKey 7acc 8rt % compiles matlab trial information with the new MEG generated rts
     run_tagger = runi.*ones(length(block(:,1)),1);
     MEG_RT = cat(1,MEG_RT,[block(:,[1 3 5 8 9 10]), conditionlabels, accuracyrow, rts, tmp_RT',run_tagger]);
-
+    
     % re-composed matrix looks like:
     %  1)  cue direction (1-4)
     %  2)  dot motion direction condition (1-8)
