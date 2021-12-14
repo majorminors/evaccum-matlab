@@ -77,7 +77,7 @@ p.screen_distance = 120; % Screen distance from participant in cm
 p.skip_synctests = 0; % force psychtoolbox to skip synctests. not advised. autoskipped during testing
 
 % general settings
-p.manually_set_coherence = 0; % if 1, will include prompts to set coherence manually
+p.manually_set_coherence = 1; % if 1, will include prompts to set coherence manually
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
@@ -89,7 +89,7 @@ p.feedback_type = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 th
 p.num_blocks = 10;
 p.breakblocks = 0; %[7,13,19,25,31]; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
 p.keyswap = 1; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
-p.MEG_enabled = 1; % using MEG
+p.MEG_enabled = 0; % using MEG
 p.MEG_emulator_enabled = 0; % using tqqhe emulator - be aware we can't quit using the quitkey with emulator
 p.usePhotodiode = 1; % use or don't use photodiode
 p.useEyelink = 1; % use or don't use eyetracker
@@ -273,6 +273,16 @@ if p.usePhotodiode
     p.photodiodeRectwidth = 300; % pixel width of rectangle to display
     p.photodiodeXshift = -200; % shift rectangle x pixels off edge of screen
     p.photodiodeYshift = 0; % shift rectangle y pixels off edge of screen
+%         photo_diode_on_color=[255 255 255];
+%     photo_diode_off_color=[0 0 0];
+%     photoDiodeRectHeight=70; %height (in pixel) of the blanck rectangle at the top of the screen for the photoresistor
+%     photoDiodeRectwidth= 70; %width (in pixel) of the blanck rectangle at the top of the screen for the photoresistor
+% %     photoDiodeXshift=70;
+% %     photoDiodeYshift=1080-photoDiodeXshift;
+% %     photoDiodeRadius=140;
+%     photoDiodeXshift=120;
+%     photoDiodeYshift=1080-45;
+%     photoDiodeRadius=50;
 end
 
 % timing info
@@ -447,7 +457,7 @@ if p.useEyelink
     % initializations
     el=EyelinkInitDefaults(p.win);
     
-    el.backgroundcolour = p.bg_colour;
+    el.backgroundcolour = [120 120 120];
     el.calibrationtargetcolour =  0;
     EyelinkUpdateDefaults(el);
     
@@ -470,7 +480,6 @@ if p.useEyelink
     
     %configure eye tracker
     Eyelink('command', 'add_file_preamble_text ''Recorded for %s''', mfilename);
-
     % This command is crucial to map the gaze positions from the tracker to
     % screen pixel positions to determine fixation
     Eyelink('command','screen_pixel_coords = %ld %ld %ld %ld', 0, 0, p.resolution(1)-1, p.resolution(2)-1);
@@ -505,7 +514,7 @@ if p.useEyelink
     
     %enter Eyetracker camera setup mode, calibration and validation
     EyelinkDoTrackerSetup(el);
-    EyelinkDoDriftCorrect(el);
+    %EyelinkDoDriftCorrect(el);
     
 end
 
