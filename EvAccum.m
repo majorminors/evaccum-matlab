@@ -280,6 +280,7 @@ end
 p.min_cue_time = 0.5; % minimum period to display cue (participants can't continue during this time)
 p.iti_time = 0.3; % inter trial inteval time
 p.dot_iti_range = [0.4,0.6]; % range for random dots fixation time to vary between
+% the notes on these trigger times are wrong---olaf reckons 5ms is plenty to reach value
 p.MEG_long_trigger_time = 0.005; % time to let the MEG trigger reach full strength - recommend 100ms for large values but must be smaller than p.iti_time since we'll deliver it in the iti
 p.MEG_short_trigger_time = 0.005; % time for short triggers with small values
 p.dots_duration = 1.5; % seconds for the dot cloud to be displayed
@@ -346,6 +347,7 @@ t.fixation.p.stim_mat(1,10) = 0; % make sure moving dots doesn't send a trial tr
 %t.fixation.p.dots_duration = 0.3;
 t.fixation.p.fixation.colour = {[100,71,76],[0,0,0]};
 t.fixation.p.dots_duration_vector = (p.dot_iti_range(2)-p.dot_iti_range(1)).*rand(p.num_trials_per_block*p.num_blocks,1) + p.dot_iti_range(1); % create a vector of random numbers varying between the iti range values that is the length of the total number of trials 
+p.fixation_dots_duration_vector = t.fixation.p.dots_duration_vector; % save this
 % we also need p.frame_rate, p.resolution, and p.win which we get after we
 % open the PTB screen later on and enter into this structure at that time
 
@@ -638,38 +640,23 @@ end
             if i == 1 || p.stim_mat(i,1) ~= p.stim_mat(i-1,1) || ~mod(i-1,8) % && p.stim_mat(i+1,1) == p.stim_mat(i,1) % if first trial, or cue changes (as currently blocked), or every 8 trials unless we're about to change cue then display cue
                                 
                 if i > 1
+
                     % save data
                     save(save_file); % save all data in '.mat' format
+
                     if p.iti_on == 1 % do an inter trial interval fixation so we have a buffer between the last trial and the cue appearing
 
-                        if p.useEyelink
-                            Eyelink('Message', 'Fixation Start');
-                        end
+                        t.centre = p.resolution/2;
+                        t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
+                        t.iti_rect = [-t.sz_l+t.centre(1),-t.sz_l+t.centre(2),t.sz_l+t.centre(1),t.sz_l+t.centre(2)];
+                        t.sz_s = angle2pix(p,0.5/4); % this value (0.5/4) comes from p.fixation.size specified in movingdots.m
+                        t.iti_rect_sml = [-t.sz_s+t.centre(1),-t.sz_s+t.centre(2),t.sz_s+t.centre(1),t.sz_s+t.centre(2)];
+                        Screen('FillOval', p.win, [255,255,255],t.iti_rect);
+                        Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
+                        Screen('Flip', p.win);
+                        WaitSecs(p.iti_time);
+                        % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
                         
-                        if p.iti_type == 1 % do a normal fixation
-                            t.centre = p.resolution/2;
-                            t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
-                            t.iti_rect = [-t.sz_l+t.centre(1),-t.sz_l+t.centre(2),t.sz_l+t.centre(1),t.sz_l+t.centre(2)];
-                            t.sz_s = angle2pix(p,0.5/4); % this value (0.5/4) comes from p.fixation.size specified in movingdots.m
-                            t.iti_rect_sml = [-t.sz_s+t.centre(1),-t.sz_s+t.centre(2),t.sz_s+t.centre(1),t.sz_s+t.centre(2)];
-                            Screen('FillOval', p.win, [255,255,255],t.iti_rect);
-                            Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
-                            Screen('Flip', p.win);
-                            WaitSecs(p.iti_time);
-                            % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
-                        elseif p.iti_type == 2 % do a dots fixation
-                            Screen('Flip', p.win);
-                            MEG.SendTrigger(p.MEGtriggers.trial); % send a trigger for trial onset
-                            WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to reach value
-                            MEG.SendTrigger(0); % reset triggers
-                            WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to return to zero
-                            t.fixation.p.dots_duration = t.fixation.p.dots_duration_vector(i); % get the dots iti duration for this trial
-                            WaitSecs(p.iti_time); % do a blank screen for the iti time
-                            moving_dots(t.fixation.p,t.fixation.dots,MEG,1);
-                        end
-                        if p.useEyelink
-                            Eyelink('Message', 'Fixation End');
-                        end
                     end
                 end
                 
@@ -770,8 +757,8 @@ end
                 end
             end
             
-            % intertrial interval - display fixation and do MEG trigger stuff
-            if p.iti_on == 1
+            if p.iti_on == 1 % do an inter trial interval fixation
+
                 if p.useEyelink
                     Eyelink('Message', 'Fixation Start');
                 end
@@ -788,16 +775,16 @@ end
                     Screen('Flip', p.win);
                     doPhotodiode(p,'off');
                     
-                    if p.MEG_enabled == 1
-                        MEG.SendTrigger(0); % reset triggers
-                        WaitSecs(p.iti_time-p.MEG_long_trigger_time*2);
-                        MEG.SendTrigger(p.MEGtriggers.trial); % send a trigger for trial onset
-                        WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to reach value
-                        MEG.SendTrigger(0); % reset triggers
-                        WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to return to zero
-                    elseif p.MEG_enabled == 0
+                    %if p.MEG_enabled == 1
+                    %    MEG.SendTrigger(0); % reset triggers
+                    %    WaitSecs(p.iti_time-p.MEG_long_trigger_time*2);
+                    %    MEG.SendTrigger(p.MEGtriggers.trial); % send a trigger for trial onset
+                    %    WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to reach value
+                    %    MEG.SendTrigger(0); % reset triggers
+                    %    WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to return to zero
+                    %elseif p.MEG_enabled == 0
                         WaitSecs(p.iti_time);
-                    end
+                    %end
                     % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
                 elseif p.iti_type == 2 % do a dots fixation
                     
@@ -805,20 +792,20 @@ end
                     Screen('Flip', p.win);
                     doPhotodiode(p,'off');
                     
-                    if p.MEG_enabled == 1
-                        MEG.SendTrigger(p.MEGtriggers.trial); % send a trigger for trial onset
-                        WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to reach value
-                        MEG.SendTrigger(0); % reset triggers
-                        WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to return to zero
-                        t.fixation.p.dots_duration = t.fixation.p.dots_duration_vector(i); % get the dots iti duration for this trial
-                    elseif p.MEG_enabled == 0
-                        WaitSecs(p.iti_time);
-                    end
+                    %if p.MEG_enabled == 1
+                    %    MEG.SendTrigger(p.MEGtriggers.trial); % send a trigger for trial onset
+                    %    WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to reach value
+                    %    MEG.SendTrigger(0); % reset triggers
+                    %    WaitSecs(p.MEG_long_trigger_time); % give enough time for trigger to return to zero
+                    %end
+                    % we don't need to wait for the iti time, because we're doing a dots iti
+                    t.fixation.p.dots_duration = t.fixation.p.dots_duration_vector(i); % get the dots iti duration for this trial
                     moving_dots(t.fixation.p,t.fixation.dots,MEG,1);
                 end
                 if p.useEyelink
                     Eyelink('Message', 'Fixation End');
                 end
+                
             end
             
             % now run moving_dots
