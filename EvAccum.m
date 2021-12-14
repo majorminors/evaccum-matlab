@@ -447,7 +447,11 @@ if p.useEyelink
     
     % initializations
     el=EyelinkInitDefaults(p.win);
+    % values for the defaults can be viewed here:
+    % https://github.com/Psychtoolbox-3/Psychtoolbox-3/blob/master/Psychtoolbox/PsychHardware/EyelinkToolbox/EyelinkBasic/EyelinkInitDefaults.m
+    % which can be changed with EyelinkUpdateDefaults()
     
+    % update defaults
     el.backgroundcolour = p.bg_colour;
     el.calibrationtargetcolour = p.text_colour;
     EyelinkUpdateDefaults(el);
