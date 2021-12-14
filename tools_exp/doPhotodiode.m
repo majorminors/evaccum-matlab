@@ -24,7 +24,7 @@ if p.usePhotodiode
         
     end
     
-    Screen('FillRect',p.win,colourToUse,[p.photodiodeXshift p.photodiodeYshift p.photodiodeRectwidth p.photodiodeRectHeight]); %show the photoresistor blank rectangle
+    Screen('FillOval',p.win,colourToUse,[p.photodiodeXshift p.photodiodeYshift p.photodiodeRectWidth p.photodiodeRectHeight],p.photodiodeDiameter); %show the photoresistor blank rectangle
     
 end
 

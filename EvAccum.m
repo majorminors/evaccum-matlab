@@ -269,20 +269,11 @@ p.visual_angle_dots = 0.15; % visual angle of the dots expressed as a decimal - 
 if p.usePhotodiode
     p.photodiodeOnColour = [255 255 255]; % colour when photo diode is on
     p.photodiodeOffColour = [0 0 0]; % colour when photo diode is off
-    p.photodiodeRectHeight = 100; % pixel height of rectangle to display
-    p.photodiodeRectwidth = 300; % pixel width of rectangle to display
-    p.photodiodeXshift = -200; % shift rectangle x pixels off edge of screen
-    p.photodiodeYshift = 0; % shift rectangle y pixels off edge of screen
-%         photo_diode_on_color=[255 255 255];
-%     photo_diode_off_color=[0 0 0];
-%     photoDiodeRectHeight=70; %height (in pixel) of the blanck rectangle at the top of the screen for the photoresistor
-%     photoDiodeRectwidth= 70; %width (in pixel) of the blanck rectangle at the top of the screen for the photoresistor
-% %     photoDiodeXshift=70;
-% %     photoDiodeYshift=1080-photoDiodeXshift;
-% %     photoDiodeRadius=140;
-%     photoDiodeXshift=120;
-%     photoDiodeYshift=1080-45;
-%     photoDiodeRadius=50;
+    p.photodiodeRectHeight = 70; % pixel height of rectangle to display
+    p.photodiodeRectWidth = 70; % pixel width of rectangle to display
+    p.photodiodeXshift = 120; % shift rectangle x pixels off edge of screen
+    p.photodiodeYshift = 1080-45; % shift rectangle y pixels off edge of screen
+    p.photodiodeDiameter = 50; % we'll do a circle to minimise surface area
 end
 
 % timing info
