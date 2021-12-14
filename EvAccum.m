@@ -448,8 +448,8 @@ if p.useEyelink
     % initializations
     el=EyelinkInitDefaults(p.win);
     
-    el.backgroundcolour = [120 120 120];
-    el.calibrationtargetcolour =  0;
+    el.backgroundcolour = p.bg_colour;
+    el.calibrationtargetcolour = p.text_colour;
     EyelinkUpdateDefaults(el);
     
     %connection with eyetracker, opening file
