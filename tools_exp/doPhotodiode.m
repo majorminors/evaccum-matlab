@@ -24,7 +24,7 @@ if p.usePhotodiode
         
     end
       
-    Screen('FillOval',p.win,colourToUse,[p.photodiodeXshift p.photodiodeYshift p.photodiodeRectWidth p.photodiodeRectHeight],p.photodiodeDiameter); %show the photoresistor blank rectangle
+    Screen('DrawDots',p.win,[p.photodiodeXshift p.photodiodeYshift],p.photodiodeDiameter,colourToUse,[],1); % draw a dot for the photodiode (last two values []=default centre, 1 = circular (not square) dots)
     
 end
 

@@ -270,7 +270,9 @@ if p.usePhotodiode
     p.photodiodeRectWidth = 70; % pixel width of rectangle to display
     p.photodiodeXshift = 120; % shift rectangle x pixels off edge of screen
     p.photodiodeYshift = 1080-45; % shift rectangle y pixels off edge of screen
-    p.photodiodeDiameter = 50; % we'll do a circle to minimise surface area
+    % so we thought we'd use a rectangle, but we'll actually do a circle to minimise surface area
+    % using drawdots
+    p.photodiodeDiameter = 20; % I think you can do 50 on the MEG computer, but with drawdots this will vary based on graphics hardware
 end
 
 % timing info
