@@ -245,9 +245,6 @@ p.no_participant_response = 0; % turn this off for response_waiter function to w
 p.quitkey = {'q'}; % this is watched by KbqQueue regardless of p.MEG_enabled
 p.continuekey = {'c'}; % this is watched by KbQueue regardless of p.MEG_enabled
 t.keyswapper = 0; % will use this variable to mark a keyswap event (code currently at commencement of block loop)
-if p.usePhotodiode
-    p.photodiodeTrigger = 'LY';
-end
 % establish response keys for the trial based off whether participant id is odd or even
 if mod(d.participant_id,2) % if pid not divisible by 2 (i.e. leaves a modulus after division)
     p.resp_keys = {p.resp_keys{1},p.resp_keys{2}}; % essentially do nothing - keep resp keys the same
