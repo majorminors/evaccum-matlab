@@ -23,7 +23,7 @@ if p.usePhotodiode
         colourToUse = p.photodiodeOffColour;
         
     end
-    
+      
     Screen('FillOval',p.win,colourToUse,[p.photodiodeXshift p.photodiodeYshift p.photodiodeRectWidth p.photodiodeRectHeight],p.photodiodeDiameter); %show the photoresistor blank rectangle
     
 end
