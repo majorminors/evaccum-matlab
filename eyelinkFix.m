@@ -1,4 +1,5 @@
 %% if the eyetracker gets stuck, run this twice (will error the first time)
+% may need to move cleanup function into own file
 
 clc;
 clear all;

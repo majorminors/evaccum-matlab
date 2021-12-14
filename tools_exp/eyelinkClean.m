@@ -1,4 +1,4 @@
-function cleanup(useOfEyelink, edfFile, datadir)
+function eyelinkClean(useOfEyelink, edfFile, datadir)
 
 if useOfEyelink==1
     Eyelink('Command' , 'set_idle_mode');
