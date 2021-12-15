@@ -237,6 +237,9 @@ for frame_num = 1:total_frames
     if frame_num == 1
         % if p.MEG_enabled then set up MEG for response recording
         if p.MEG_enabled == 1
+            doPhotodiode(p,'on');
+            Screen('Flip', p.win);
+            doPhotodiode(p,'off');
             %fprintf('onset trig\n') % check this works
             MEG.ResetClock; % reset the timer
             button_pressed = 0; % a counter to make sure we catch the first time a button was pressed
