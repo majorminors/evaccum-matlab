@@ -80,7 +80,7 @@ p.skip_synctests = 0; % force psychtoolbox to skip synctests. not advised. autos
 p.manually_set_coherence = 1; % if 1, will include prompts to set coherence manually
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
-p.testing_enabled = 1; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
+p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
 p.training_enabled = 0; % if 0 (or any other than 1) will do nothing, if 1, initiates training protocol (reduce dots presentation time from 'p.training_dots_duration' to 'p.dots_duration' by one 'p.training_reduction' every 'p.training_interval') - see '% training variables' below
 p.fix_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anything other than 1) will not do iti
@@ -89,10 +89,10 @@ p.feedback_type = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 th
 p.num_blocks = 10;
 p.breakblocks = 0; %[7,13,19,25,31]; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
 p.keyswap = 1; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
-p.MEG_enabled = 0; % using MEG
-p.MEG_emulator_enabled = 0; % using tqqhe emulator - be aware we can't quit using the quitkey with emulator
+p.MEG_enabled = 1; % using MEG
+p.MEG_emulator_enabled = 0; % using the emulator - be aware we can't quit using the quitkey with emulator
 p.usePhotodiode = 1; % use or don't use photodiode
-p.useEyelink = 0; % use or don't use eyetracker
+p.useEyelink = 1; % use or don't use eyetracker
 p.eyelinkDummyMode = 0; % use or don't use eyetracker dummy mode
 
 % check set up
@@ -104,7 +104,7 @@ if ~ismember(p.iti_on,[0,1]); error('invalid value for p.iti_on'); end % check i
 if ~ismember(p.feedback_type,[0,1,2]); error('invalid value for p.feedback_type'); end % check if valid or error
 if ~ismember(p.MEG_enabled,[0,1]); error('invalid value for p.MEG_enabled'); end % check if valid or error
 if ~ismember(p.MEG_emulator_enabled,[0,1]); error('invalid value for p.MEG_emulator_enabled'); end % check if valid or error
-if p.MEG_enabled == 1 && p.testing_enabled == 1; error('are you sure you want to be testing with MEG enabled? if so, comment out this line'); end
+% if p.MEG_enabled == 1 && p.testing_enabled == 1; error('are you sure you want to be testing with MEG enabled? if so, comment out this line'); end
 if p.MEG_enabled == 1 && p.training_enabled == 1; error('you cannot train with MEG enabled currently'); end
 if p.MEG_emulator_enabled == 1 && p.MEG_enabled == 0
     warning('you cannot emulate MEG without enabling MEG - turning off emulation\n');
@@ -127,7 +127,7 @@ p.training_reduction = 1; % by how much do we reduce the duration during trainin
 p.training_interval = 2; % how many trials should we train on before reducing the dots presentation time
 
 % test variables
-p.num_test_trials = 3;
+p.num_test_trials = 8;
 p.num_test_blocks = 2;
 if p.testing_enabled == 1
     p.PTBsynctests = 1; % PTB will skip synctests if 1
@@ -343,6 +343,7 @@ t.fixation.dots.direction = 0;
 t.fixation.dots.coherence = 0;
 t.fixation.p = p;
 t.fixation.p.stim_mat(1,10) = 0; % make sure moving dots doesn't send a trial trigger during the ITI
+% could also do t.fixation.p.MEG_enabled = 0;
 %t.fixation.p.dots_duration = 0.3;
 t.fixation.p.fixation.colour = {[100,71,76],[0,0,0]};
 t.fixation.p.dots_duration_vector = (p.dot_iti_range(2)-p.dot_iti_range(1)).*rand(p.num_trials_per_block*p.num_blocks,1) + p.dot_iti_range(1); % create a vector of random numbers varying between the iti range values that is the length of the total number of trials 
@@ -454,7 +455,9 @@ if p.useEyelink
     
     % update defaults
     el.backgroundcolour = p.bg_colour;
-    el.calibrationtargetcolour = p.text_colour;
+    el.calibrationtargetcolour = p.text_colour; % change calibration targets to white
+    el.foregroundcolour = p.text_colour; % not sure if needed, but set the foreground colour to white
+    el.msgfontcolour = p.text_colour; % change eyelink instructions to white
     EyelinkUpdateDefaults(el);
     
     %connection with eyetracker, opening file
@@ -563,6 +566,15 @@ end
             %
             %% prestart trial for eyelink
             if p.useEyelink
+                % draw a fixation since we're going to freeze for 10ms
+                t.centre = p.resolution/2;
+                t.sz_l = angle2pix(p,0.5/2); % this value (0.5/2) comes from p.fixation.size specified in movingdots.m
+                t.iti_rect = [-t.sz_l+t.centre(1),-t.sz_l+t.centre(2),t.sz_l+t.centre(1),t.sz_l+t.centre(2)];
+                t.sz_s = angle2pix(p,0.5/4); % this value (0.5/4) comes from p.fixation.size specified in movingdots.m
+                t.iti_rect_sml = [-t.sz_s+t.centre(1),-t.sz_s+t.centre(2),t.sz_s+t.centre(1),t.sz_s+t.centre(2)];
+                Screen('FillOval', p.win, [255,255,255],t.iti_rect);
+                Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
+                Screen('Flip', p.win);
                 % let eyelink knows which trial
                 WaitSecs(0.05);
                 Eyelink('Message', 'Trial Number %d',i);
@@ -787,9 +799,9 @@ end
                     % fixation will remain in place until next flip called, else can call here %Screen('Flip', p.win);
                 elseif p.iti_type == 2 % do a dots fixation
                     
-                    doPhotodiode(p,'on');
-                    Screen('Flip', p.win);
-                    doPhotodiode(p,'off');
+%                     doPhotodiode(p,'on');
+%                     Screen('Flip', p.win);
+%                     doPhotodiode(p,'off');
                     
                     %if p.MEG_enabled == 1
                     %    MEG.SendTrigger(p.MEGtriggers.trial); % send a trigger for trial onset
