@@ -343,7 +343,7 @@ t.fixation.dots.direction = 0;
 t.fixation.dots.coherence = 0;
 t.fixation.p = p;
 t.fixation.p.stim_mat(1,10) = 0; % make sure moving dots doesn't send a trial trigger during the ITI
-% could also do t.fixation.p.MEG_enabled = 0;
+t.fixation.p.usePhotodiode = 0; % turn off the photodiode for the fixation
 %t.fixation.p.dots_duration = 0.3;
 t.fixation.p.fixation.colour = {[100,71,76],[0,0,0]};
 t.fixation.p.dots_duration_vector = (p.dot_iti_range(2)-p.dot_iti_range(1)).*rand(p.num_trials_per_block*p.num_blocks,1) + p.dot_iti_range(1); % create a vector of random numbers varying between the iti range values that is the length of the total number of trials 
@@ -513,7 +513,6 @@ if p.useEyelink
     
     %enter Eyetracker camera setup mode, calibration and validation
     EyelinkDoTrackerSetup(el);
-    %EyelinkDoDriftCorrect(el);
     
 end
 
@@ -531,6 +530,11 @@ end
     % repeat trials for each block
     for block = 1:p.act_block_num
         fprintf('entering block %u of %u\n',block, p.act_block_num); %report block number to command window
+
+        if p.useEyelink
+            % do eyelink drift correction
+            EyelinkDoDriftCorrect(el);
+        end
         
         % pick up trial condition order for this block
         p.stim_mat = d.stim_mat_all(:,:,block);
@@ -629,6 +633,11 @@ end
                 %% script continue
                 if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue from the response waiter
                 t.takeabreak = 2; % break event complete
+
+                if p.useEyelink
+                    % redo calibration
+                    EyelinkDoTrackerSetup(el);
+                end
             end
             
             % do keyswap and training
@@ -782,9 +791,9 @@ end
                     Screen('FillOval', p.win, [255,255,255],t.iti_rect);
                     Screen('FillOval', p.win, [0,0,0],t.iti_rect_sml);
                     
-                    doPhotodiode(p,'on');
-                    Screen('Flip', p.win);
-                    doPhotodiode(p,'off');
+                    %doPhotodiode(p,'on');
+                    %Screen('Flip', p.win);
+                    %doPhotodiode(p,'off');
                     
                     %if p.MEG_enabled == 1
                     %    MEG.SendTrigger(0); % reset triggers
