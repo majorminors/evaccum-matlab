@@ -43,6 +43,7 @@ for runi = 1:numel(filenames)
     cue_trigger = p.MEGtriggers.cue;
     iti_trigger = p.MEGtriggers.trial;
     keys = [4096 8192 16384 -32768]; % index medium ring little - on right button box
+    
     cue_onset = (find(ismember(round(diff(trig)),cue_trigger))+1)'; % cue trigger onset (less useful because the onset might be cut off at the start and thus not always found preceding a sequence of 8 trials)
     cue_offset = (find(ismember(round(diff(trig)),-cue_trigger))+1)'; % cue trigger offset (more useful because it predicts a sequence of 8 trials, and is only likely to be missing if the corresponding sequence is also missing)
     iti_onset = (find(ismember(round(diff(trig)),iti_trigger))+1)'; % trial trigger onset
@@ -51,64 +52,71 @@ for runi = 1:numel(filenames)
     
     trialIDtrg  = [0; round(diff(trig)')]; trialID = trialIDtrg(trial_type_onset); % gets the amplitude of the trigger (which should be the thing you specified as the trigger) and then strips anything that is not a trial type trigger
     
-    
-    tmp_tronset = [];
-    tmp_trialID =[];
+    % see if we can't find naughty triggers
     multiTrigs=[];
     for ic = 1:numel(trial_type_onset) % go through each onset trigger
         
         % search before and after the onset trigger for triggers
         searchtwin=[0 round(diff(trig(trial_type_onset(ic)-5:trial_type_onset(ic)+5)))];
-        ttrigger = find(searchtwin>1);% & searchtwin <= max(triggers));
-%         ttrigger = ttrigger(1);
-        if numel(ttrigger) > 1
-            multiTrigs = [multiTrigs;[ttrigger,ic]];
+        ttrigger = find(searchtwin>1); % get the values in the search window
+        if numel(ttrigger) > 1 % if there's more than one value
+            multiTrigs = [multiTrigs;[ttrigger,ic]]; % catch them, and the 'trial' they represent
         end
         
-% %         plug that found value into a tmp var
-%         tmp_trialID(ic) = block(ic,10);
-%         
-%         
-%         tmp_tronset(ic) = coh_onset(ic)-400 + ttrigger-1;
+    end
+            
+    if settings.deleteMultiTrigs(runi)
+        trial_type_onset(multiTrigs(:,3)') = [];
+        trialID(multiTrigs(:,3)') = [];
+    end
+    
+    if settings.checkTrigs(runi) || (size(block,1) ~= numel(trial_type_onset))
+        
+        % plot the triggers
+        figure;
+        % plot the value of the triggerline at every timepoint
+        plot(trig);
+        hold on;
+        % plot the triggers we discovered by searching for any valid trial type trigger values
+        plot(trial_type_onset,trig(trial_type_onset),'-o');
+        % plot what SHOULD be happening
+        whatShouldHappen = reshape(squeeze(d.stim_mat_all(:,9,:)),[],1); % could also do block(:,9)
+        plot(trial_type_onset,whatShouldHappen(1:numel(trial_type_onset)),'-g');
+        % plot the trial IDs it thinks it found
+        % notice that at the erroneous triggers, this thinks it has found a 2
+        % and a 26, although that is not reflected in the actual trigger value
+        % which is at 250 both times. Can't think of a reason for this unless
+        % it's doing that thing where it took too long to get up to 250 and so
+        % it thinks there's a trigger in the ascent of the ITI trigger value?
+        plot(trial_type_onset,trialID(1:numel(trial_type_onset)),'-m'); % plot what trialID thinks it found
+        plot(trial_type_onset([multiTrigs(:,3)']),trig(trial_type_onset([multiTrigs(:,3)'])),'b*'); % plot our naughty triggers
+        % multiple triggers looks right - corresponds to erroneous triggers
+        % notice though, that the value of these multi triggers (Var1) are both
+        % identical and do not in either case appear to relate to what trialID (Var2) thinks they are:
+        viewNaughties = table(multiTrigs(:,1:2),trialID(multiTrigs(:,3))); disp(viewNaughties);
+
+        
+        howManySequences = floor(numel(trial_type_onset)/8); % how many full sequences: num trials divided by 8 (8 trials between cues)
+        howManyBlocks = floor(howManySequences/8); % how many full blocks: num full sequences divided by 8 (8 sequences of 8 trials [64 trials] in a block)
+    
+    end
+    
+    if settings.reduceTriggers(runi) == 1
+        
+        trial_type_onset = trial_type_onset(1:size(block,1));
+        
+    elseif setting.reduceTriggers(runi) == 2
+        
+        trial_type_onset = trial_type_onset(size(block,1):end);
         
     end
-%     % replace the bad trial triggers with our recovered triggers
-%     trial_type_onset   = tmp_tronset';
-%     trialIDtrg  =  tmp_trialID';
     
-    % plot the triggers
-    figure;
-    % plot the value of the triggerline at every timepoint
-    plot(trig);
-    hold on;
-    % plot the triggers we discovered by searching for any valid trial type trigger values
-    plot(trial_type_onset,trig(trial_type_onset),'-o');
-    % plot what SHOULD be happening
-    whatShouldHappen = reshape(squeeze(d.stim_mat_all(:,9,:)),[],1); % could also do block(:,9)
-    plot(trial_type_onset,whatShouldHappen(1:numel(trial_type_onset)),'-g');
-    % plot the trial IDs it thinks it found
-    % notice that at the erroneous triggers, this thinks it has found a 2
-    % and a 26, although that is not reflected in the actual trigger value
-    % which is at 250 both times. Can't think of a reason for this unless
-    % it's doing that thing where it took too long to get up to 250 and so
-    % it thinks there's a trigger in the ascent of the ITI trigger value?
-    plot(trial_type_onset,trialID(1:numel(trial_type_onset)),'-m');
-    
-    %plot(cue_offset,trig(cue_offset),'-m');
-    %plot(trial_onset,trig(trial_onset),'-y');
     
     % check now that we have the right number of triggers
-    if numel(trigger_onset) ~= size(block,1)
+    if size(block,1) ~= numel(trial_type_onset)
         error('Inconsistent number of onset triggers vs trials')
     end
     
-    % do the check we did before - same number of trial triggers as trials,
-    % and they sum to they should
-    if numel(trialID) ~= numel(block(:,10)) || sum(trialID ~= block(:,10))
-        if sum(trialIDtrg ~= block(:,10)) % compare with the d.stim_mat_all column with trigger amplitudes
-            error('Discrepancy between triggers coded conditions and trials')
-        end
-    end
     
     clear tmp_RT tKeyp responset
     
@@ -124,11 +132,11 @@ for runi = 1:numel(filenames)
         tmpres = (find(ismember(diff(tmp),keys),1,'first')+1)';%first to avoid multiple button presses % time of button press within trial period (iti to iti)
         if ~isempty(tmpres) % if response
             responset(ions)  = trial_type_onset(ions)+tmpres-1; % get time of button press within block
-            if length(coh_onset) < ions % if this is after the number of trials (coherence onset triggers) that it should be
+            if length(trial_type_onset) < ions % if this is after the number of trials (onset triggers) that it should be
                 responset(ions) = 0; % zero it all out
                 tmp_RT(ions) = 0;
             else % otherwise get the time between the coherence onset and the response onset
-                tmp_RT(ions)       = ttime(responset(ions))-(ttime(coh_onset(ions))+.034);% 34ms projector's delay % this is reaction time (i.e. time of button press from coherence onset)
+                tmp_RT(ions)       = ttime(responset(ions))-(ttime(trial_type_onset(ions))+.034);% 34ms projector's delay % this is reaction time (i.e. time of button press from coherence onset)
             end
         else % if there's no response, zero everything out
             responset(ions) = 0;
@@ -144,7 +152,7 @@ for runi = 1:numel(filenames)
     
     tmp = [rts(idx) transpose(tmp_RT(idx))]; % this compares rts here with rts there
     tmp = corr(tmp); % make sure they correlate
-    if tmp(2,1) <0.99 || isnan(tmp(2,1))   % takes the correlation from the output of corr
+    if tmp(2,1) <0.95 || isnan(tmp(2,1))   % takes the correlation from the output of corr
         error('large discrepancy between stim RT and MEG RT!')
     end
     
@@ -196,7 +204,7 @@ for runi = 1:numel(filenames)
     % set the trial window, including buffer for edge effects during filtering
     % - in the textbook - lowest frequency will determine
     twind = [-1500 2500];%in samples at 1000Hz sampling % what time window 1500 = 1.5s around the coherence onset
-    trl      = (coh_onset+34)+twind;%[trial-beginning trial-end] accounts for 34ms projector's delay.
+    trl      = (trial_type_onset+34)+twind;%[trial-beginning trial-end] accounts for 34ms projector's delay.
     trl(:,3) = -1500;% epoched trials begin 1500ms before coherence onset
     
     %add to session trial def
