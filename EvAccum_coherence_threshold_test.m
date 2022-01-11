@@ -58,7 +58,8 @@ p.training_enabled = 0; % BaaROKEN if 1, initiates training protocol (reduce dot
 p.screen_width = 40;   % Screen width in cm
 p.screen_height = 30;    % Screen height in cm
 p.screen_distance = 70; % Screen distance from participant in cm
-p.skip_synctests = 0; % force psychtoolbox to skip synctests. not advised. autoskipped during testing
+p.skip_synctests = 1; % force psychtoolbox to skip synctests. not advised. autoskipped during testing
+p.usePhotodiode = 0;
 
 % general settings
 p.coherence_spread = 2; % 1 is an even spread from 0-1, 2 has a more specified coherence values for people who are good at this - see trial settings

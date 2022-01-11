@@ -67,7 +67,7 @@ p.training_enabled = 0; % if 1, initiates training protocol (reduce dots present
 p.screen_width = 40;   % Screen width in cm
 p.screen_height = 30;    % Screen height in cm
 p.screen_distance = 70; % Screen distance from participant in cm
-p.skip_synctests = 0; % foaaarce psychtoolbox to skip synctests. not advised. autoskipped during testing
+p.skip_synctests = 1; % foaaarce psychtoolbox to skip synctests. not advised. autoskipped during testing
 p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anything other than 1) will not do iti
 p.iti_type = 2; % if 1 will do a normal fixation, if 2 will do a dots fixation
 
@@ -78,6 +78,7 @@ p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
 p.fix_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for duration of p.dots_duration
 p.num_blocks = 2; % each block currently feeds the two coherence values (block 1 is easy, block 2 is hard)
+p.usePhotodiode = 0;
 
 % for use in MEG
 p.MEG_enabled = 0;
