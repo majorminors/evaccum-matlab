@@ -77,7 +77,7 @@ p.screen_distance = 120; % Screen distance from participant in cm
 p.skip_synctests = 0; % force psychtoolbox to skip synctests. not advised. autoskipped during testing
 
 % general settings
-p.manually_set_coherence = 1; % if 1, will include prompts to set coherence manually
+p.manually_set_coherence = 0; % if 1, will include prompts to set coherence manually
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
@@ -87,7 +87,7 @@ p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anyt
 p.iti_type = 2; % if 1 will do a normal fixation, if 2 will do a dots fixation
 p.feedback_type = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
 p.num_blocks = 10;
-p.breakblocks = 0; %[7,13,19,25,31]; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
+p.breakblocks = [7,13]; %[7,13,19,25,31]; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
 p.keyswap = 1; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)
 p.MEG_enabled = 1; % using MEG
 p.MEG_emulator_enabled = 0; % using the emulator - be aware we can't quit using the quitkey with emulator
@@ -104,7 +104,7 @@ if ~ismember(p.iti_on,[0,1]); error('invalid value for p.iti_on'); end % check i
 if ~ismember(p.feedback_type,[0,1,2]); error('invalid value for p.feedback_type'); end % check if valid or error
 if ~ismember(p.MEG_enabled,[0,1]); error('invalid value for p.MEG_enabled'); end % check if valid or error
 if ~ismember(p.MEG_emulator_enabled,[0,1]); error('invalid value for p.MEG_emulator_enabled'); end % check if valid or error
-% if p.MEG_enabled == 1 && p.testing_enabled == 1; error('are you sure you want to be testing with MEG enabled? if so, comment out this line'); end
+if p.MEG_enabled == 1 && p.testing_enabled == 1; error('are you sure you want to be testing with MEG enabled? if so, comment out this line'); end
 if p.MEG_enabled == 1 && p.training_enabled == 1; error('you cannot train with MEG enabled currently'); end
 if p.MEG_emulator_enabled == 1 && p.MEG_enabled == 0
     warning('you cannot emulate MEG without enabling MEG - turning off emulation\n');
@@ -272,7 +272,7 @@ if p.usePhotodiode
     p.photodiodeYshift = 1080-45; % shift rectangle y pixels off edge of screen
     % so we thought we'd use a rectangle, but we'll actually do a circle to minimise surface area
     % using drawdots
-    p.photodiodeDiameter = 20; % I think you can do 50 on the MEG computer, but with drawdots this will vary based on graphics hardware
+    p.photodiodeDiameter = 50; % I think you can do 50 on the MEG computer, but with drawdots this will vary based on graphics hardware
 end
 
 % timing info
@@ -531,7 +531,7 @@ end
     for block = 1:p.act_block_num
         fprintf('entering block %u of %u\n',block, p.act_block_num); %report block number to command window
 
-        if p.useEyelink
+        if p.useEyelink && block ~= 1
             % do eyelink drift correction
             EyelinkDoDriftCorrect(el);
         end
@@ -543,6 +543,11 @@ end
         %t.breakblock = ismember(block,p.breakblocks);
         if ismember(block,p.breakblocks)
             t.takeabreak = 1; % break initiated (tells a screen to pop up)
+            
+            if p.useEyelink
+                % redo calibration
+                EyelinkDoTrackerSetup(el,'c');
+            end
         end
         
         % swap response keys halfway through blocks (rounded to nearest integer)
@@ -633,11 +638,6 @@ end
                 %% script continue
                 if ~p.MEG_emulator_enabled; KbQueueFlush(); end % flush the response queue from the response waiter
                 t.takeabreak = 2; % break event complete
-
-                if p.useEyelink
-                    % redo calibration
-                    EyelinkDoTrackerSetup(el);
-                end
             end
             
             % do keyswap and training
