@@ -29,10 +29,15 @@ settings.bMEG  = thisSubject.bad_meg;
 settings.behav = behav;
 settings.svbeh = megrt;
 settings.runid = thisSubject.runid;
+settings.checkTrigs = thisSubject.checkTrigs;
+settings.deleteMultiTrigs = thisSubject.deleteMultiTrigs;
+settings.reduceTriggers = thisSubject.reduceTriggers;
 
 filenames = {};trfiles = {};
 
 for runi = 1:numel(thisSubject.meg_runs)
+    
+
     
     convertedfile= sprintf([tarfld,filesep,outfirst], runi);
     if ~exist(convertedfile,'file')
