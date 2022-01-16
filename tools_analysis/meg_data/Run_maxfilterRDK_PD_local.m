@@ -8,7 +8,7 @@ addpath /hpc-software/matlab/cbu/
 
 addpath(genpath('/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/tools_analysis/'))
 
-droot = '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/data/meg_pilot_1/megdata/';
+droot = '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/data/meg_pilot_3/megdata/';
 maxfld= '/group/woolgar-lab/projects/Dorian/evaccum/evaccum-matlab/data/meg_pilot_1/megdata/%s/MEEG/MaxfilterOutput/'; % will this work
 addpath(droot);
 

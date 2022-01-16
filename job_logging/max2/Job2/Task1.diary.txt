@@ -1,0 +1,2 @@
+cat: Run2_sss.log: No such file or directory
+/hpc-software/neuromag/bin/util/maxfilter-2.2.12 -f /imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab/data/meg_pilot_3/S03/Run2_raw.fif -o Run2_sss.fif	 -ctc /neuro/databases/ctc/ct_sparse.fif 	 -cal /neuro/databases/sss/sss_cal.dat  -autobad 900 -badlimit 7 -frame head -origin 2.173 -4.095 33.258 -st 10 -corr 0.98  -linefreq 50 -hpistep 10 -hpisubt amp -hpicons -movecomp inter -hp Run2_headposition.pos -v | tee Run2_sss.log

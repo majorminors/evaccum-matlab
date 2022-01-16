@@ -28,11 +28,11 @@ for i = nfiles
     if settings.overwrite %Do some cleaning otherwise Maxfilter will abort
         delf = dir([fd,'/',fstem,'*']);delf = {delf.name};
         delf = strcat([fd,'/'],delf);
-        eval(sprintf('!rm -r %s',strjoin(delf,' ')));
+        eval(sprintf('!rm -rf %s',strjoin(delf,' ')));
     end
     
     if exist([fstem,'_sphere_fit.txt'],'file') 
-                eval(sprintf('!rm -r %s',[fstem,'_sphere_fit.txt']));
+                eval(sprintf('!rm -rf %s',[fstem,'_sphere_fit.txt']));
     end
     
     spherefit = meg_fit_sphere_rik(infname,outfname);%might want to add EEG points
@@ -116,8 +116,8 @@ for i = nfiles
         %    unix(mfcmd_rest)
         [status, maxres] = unix(mfcmd_rest); % this stops screen-dumping?
         if status ~= 0
+            disp(maxres)
             error('MaxFilter failed! FYI: this will happen if you run it in matlab desktop mode for some reason.')
-            maxres
         else
             disp(maxres);
             %plot head movements & fits
