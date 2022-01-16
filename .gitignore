@@ -1,6 +1,8 @@
 /00 Archive/
 /data/
 data/*
+/job_logging/
+job_logging/*
 /tools_exp/stimuli/Thumbs.db
 *.asv
 *.m~
