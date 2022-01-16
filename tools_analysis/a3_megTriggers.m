@@ -51,8 +51,21 @@ for runi = 1:numel(thisSubject.meg_runs)
             S.save          = 0;
             S.reviewtrials  = 0;
             S.channels      = 'all';
-            S.continuous    = 1;
-            S.checkboundary = 0;
+%             S.continuous    = 1;
+            S.mode          = 'continuous';
+            S.checkboundary = 1;
+% spm_jobman('initcfg');
+% matlabbatch{1}.spm.meeg.convert.dataset(1) = {fiffile};
+% matlabbatch{1}.spm.meeg.convert.mode.continuous.readall = 1;
+% matlabbatch{1}.spm.meeg.convert.channels{1}.all = 'all';
+% matlabbatch{1}.spm.meeg.convert.outfile = '';
+% matlabbatch{1}.spm.meeg.convert.eventpadding = 0;
+% matlabbatch{1}.spm.meeg.convert.blocksize = 3276800;
+% matlabbatch{1}.spm.meeg.convert.checkboundary = 1;
+% matlabbatch{1}.spm.meeg.convert.saveorigheader = 0;
+% matlabbatch{1}.spm.meeg.convert.inputformat = 'autodetect';
+% 
+% D = spm_jobman('run',matlabbatch);
             
             % DO IT:
             D = spm_eeg_convert(S);

@@ -43,13 +43,13 @@ for runi = 1:numel(filenames)
     cue_trigger = p.MEGtriggers.cue;
     iti_trigger = p.MEGtriggers.trial;
     keys = [4096 8192 16384 -32768]; % index medium ring little - on right button box
-    
+    photoDiodeTrigger = 5;
     cue_onset = (find(ismember(round(diff(trig)),cue_trigger))+1)'; % cue trigger onset (less useful because the onset might be cut off at the start and thus not always found preceding a sequence of 8 trials)
     cue_offset = (find(ismember(round(diff(trig)),-cue_trigger))+1)'; % cue trigger offset (more useful because it predicts a sequence of 8 trials, and is only likely to be missing if the corresponding sequence is also missing)
     iti_onset = (find(ismember(round(diff(trig)),iti_trigger))+1)'; % trial trigger onset
     trial_type_onset = (find(ismember(round(diff(trig)),trial_type_triggers))+1)'; % trial type trigger onset
-    
-    
+    photoDiode = (find(ismember(round(diff(trig)),photoDiodeTrigger))+1)'; % trial trigger onset
+
     trialIDtrg  = [0; round(diff(trig)')]; trialID = trialIDtrg(trial_type_onset); % gets the amplitude of the trigger (which should be the thing you specified as the trigger) and then strips anything that is not a trial type trigger
     
     % see if we can't find naughty triggers
@@ -105,7 +105,7 @@ for runi = 1:numel(filenames)
         
         trial_type_onset = trial_type_onset(1:size(block,1));
         
-    elseif setting.reduceTriggers(runi) == 2
+    elseif settings.reduceTriggers(runi) == 2
         
         trial_type_onset = trial_type_onset(size(block,1):end);
         

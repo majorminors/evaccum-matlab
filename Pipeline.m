@@ -14,11 +14,12 @@ scriptdir = fullfile(rootdir,'tools_analysis'); cd(scriptdir)
 datadir = fullfile(rootdir,'data','meg_pilot_3'); addpath(datadir);
 runLocal = 1;
 runBehav = 0;
-subjectRange = [2 3];
+subjectRange = 3;
 jobdir = fullfile(rootdir,'job_logging','max8');
 % functionToRun = @a1_importAndOrganiseScans;
-functionToRun = @a2_maxFilter;
-% functionToRun = @a3_megTriggers;
+%functionToRun = @a2_maxFilter;
+functionToRun = @a3_megTriggers;
+%functionToRun = @a3_2_megTriggers;
 
 allSubjects = importParticipants();
 if ~subjectRange; subjectRange = 1:numel(allSubjects); end

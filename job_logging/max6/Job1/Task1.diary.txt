@@ -1,4 +1,0 @@
-rm: missing operand
-Try 'rm --help' for more information.
-cat: Run1_sss.log: No such file or directory
-/hpc-software/neuromag/bin/util/maxfilter-2.2.12 -f /imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab/data/meg_pilot_3/S02/Run1_raw.fif -o Run1_sss.fif	 -ctc /neuro/databases/ctc/ct_sparse.fif 	 -cal /neuro/databases/sss/sss_cal.dat  -autobad 900 -badlimit 7 -frame head -origin 0.262 7.684 41.973 -st 10 -corr 0.98  -linefreq 50 -hpistep 10 -hpisubt amp -hpicons -movecomp inter -hp Run1_headposition.pos -v | tee Run1_sss.log

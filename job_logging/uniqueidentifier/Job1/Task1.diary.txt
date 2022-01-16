@@ -1,1 +1,0 @@
-rm: remove regular file ‘Run1_sphere_fit.txt’? 
