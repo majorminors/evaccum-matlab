@@ -401,10 +401,11 @@ clear block;
 %% set up MEG
 
 % MEG trigger info - these need to be sufficiently spaced in an analogue
-%   system to allow you to distinguish them if they don't quite reach their value
-p.MEGtriggers.onset = 1;
+%   system to allow you to distinguish them if they don't quite reach their
+%   value if you're combining inputs across channels
+% p.MEGtriggers.onset = 1;
 p.MEGtriggers.cue = 200;
-p.MEGtriggers.trial = 250;
+% p.MEGtriggers.trial = 250;
 
 % invoke the MEG functions if p.MEG_enabled
 if p.MEG_enabled == 1

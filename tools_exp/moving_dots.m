@@ -50,6 +50,7 @@ function [dots_onset_time, pressed, firstPress] = moving_dots(p,dots,MEG,exp_tri
 %    p.win                    window pointer for the dots
 %    p.frame_rate             frame rate for the window
 %    p.resolution             pixel resolution for the window
+%    p.usePhotodiode          do the photodiode bits or not (boolean)
 %
 % can also specify with 'p':
 %    p.fixation               moving_dots will build a default fixation but these parameters can be changed externally
@@ -235,19 +236,23 @@ for frame_num = 1:total_frames
     %% flip the screen and check for keypress
       
     if frame_num == 1
-        doPhotodiode(p,'on');
-        Screen('Flip', p.win);
-        doPhotodiode(p,'off');
         % if p.MEG_enabled then set up MEG for response recording
         if p.MEG_enabled == 1
             %fprintf('onset trig\n') % check this works
             MEG.ResetClock; % reset the timer
             button_pressed = 0; % a counter to make sure we catch the first time a button was pressed
             MEG.SendTrigger(p.stim_mat(exp_trial,9)); % send a trigger to tell us the dots started
+            % Triggers = 321 to 328 (STI001 to STI008)
             trig_reset = 0;
+        end
+        if p.usePhotodiode
+            doPhotodiode(p,'on');
         end
         dots_onset_time = Screen('Flip',p.win);
     else
+        if p.usePhotodiode
+            doPhotodiode(p,'off');
+        end
         Screen('Flip',p.win);
     end
     
