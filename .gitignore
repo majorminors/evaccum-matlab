@@ -1,8 +1,13 @@
 /00 Archive/
-/data/
 data/*
-/job_logging/
+!data/meg_pilot_3/
+data/meg_pilot_3/*
+!/data/meg_pilot_3/importParticipants.m
+!data/meg_pilot_4/
+data/meg_pilot_4/*
+!/data/meg_pilot_4/importParticipants.m
 job_logging/*
 /tools_exp/stimuli/Thumbs.db
 *.asv
 *.m~
+spmeeg*
