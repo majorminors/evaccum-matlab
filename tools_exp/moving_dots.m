@@ -241,7 +241,12 @@ for frame_num = 1:total_frames
             %fprintf('onset trig\n') % check this works
             MEG.ResetClock; % reset the timer
             button_pressed = 0; % a counter to make sure we catch the first time a button was pressed
-            MEG.SendTrigger(p.stim_mat(exp_trial,9)); % send a trigger to tell us the dots started
+            if p.fixation_dots
+                MEG.SendTrigger(2);
+            else
+                MEG.SendTrigger(1);
+                % MEG.SendTrigger(p.stim_mat(exp_trial,9)); % send a trigger to tell us the dots started
+            end
             % Triggers = 321 to 328 (STI001 to STI008)
             trig_reset = 0;
         end
