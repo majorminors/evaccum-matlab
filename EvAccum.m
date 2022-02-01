@@ -77,7 +77,7 @@ p.screen_distance = 120; % Screen distance from participant in cm
 p.skip_synctests = 0; % force psychtoolbox to skip synctests. not advised. autoskipped during testing
 
 % general settings
-p.manually_set_coherence = 1; % if 1, will include prompts to set coherence manually
+p.manually_set_coherence = 0; % if 1, will include prompts to set coherence manually
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
@@ -86,13 +86,13 @@ p.fix_trial_time = 1; % if 0 then trial will end on keypress, if 1 will go for d
 p.iti_on = 1; % if 1 will do an intertrial interval with fixation, if 0 (or anything other than 1) will not do iti
 p.iti_type = 2; % if 1 will do a normal fixation, if 2 will do a dots fixation
 p.feedback_type = 2; % if 0 (or anything other than 1 or 2) no feedback, if 1 then trialwise feedback, if 2 then blockwise feedback
-p.num_blocks = 10;
-p.breakblocks = 5; %[7,13,19,25,31]; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
+p.num_blocks = 20;
+p.breakblocks = [5,9,13,17]; %[7,13,19,25,31]; % before which blocks should we initiate a break (0 for no breaks, otherwise to manipulate based on a fraction of blocks, use 'p.num_blocks' or if testing 'p.num_test_blocks')
 p.keyswap = 1; % swaps keys at some point in experiment - 1 to not swap, 2 to swap once, 3 to swap twice etc (it's a division operation)% we don't need this anymore because there is no colour in the experiment (i.e. the keys do 'swap' now)
 p.MEG_enabled = 1; % using MEG
 p.MEG_emulator_enabled = 0; % using the emulator - be aware we can't quit using the quitkey with emulator
 p.usePhotodiode = 1; % use or don't use photodiode
-p.useEyelink = 0; % use or don't use eyetracker
+p.useEyelink = 1; % use or don't use eyetracker
 p.eyelinkDummyMode = 0; % use or don't use eyetracker dummy mode
 p.fixation_dots = 0; % we'll use this in moving_dots to distinguish triggers for fixation dots vs trial dots
 
