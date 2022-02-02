@@ -16,7 +16,7 @@ thisSubject.date_meg= '220201';
 
 thisSubject.meg_runs = {'run1_raw' 'run2_raw' 'run3_raw' 'run4_raw' 'run5_raw'};
 thisSubject.meg_labs = {'Run1' 'Run2' 'Run3' 'Run4' 'Run5'};
-thisSubject.runid = [1:4;4:8;9:12;13:16;17:20]; % each row is a vector of the blocks in that run (e.g. [1:6;7:12])
+thisSubject.runid = [1:4;5:8;9:12;13:16;17:20]; % each row is a vector of the blocks in that run (e.g. [1:6;7:12])
 thisSubject.runblks = '20';
 thisSubject.checkTrigs = 0;
  
@@ -27,7 +27,7 @@ thisSubject.note    = 'shifting in run3; noisy temporal channels in run5';
 thisSubject.usable = 1;
 
 thisSubject.mri      = 'CBU210277';
-thisSubject.date_mri = '';
+thisSubject.date_mri = '20210706';
         
 thisSubject.movement = [-0.5 20.7 -48.0;-1.9 19.6 -46.1;-1.6 19.4 -46.2;-0.9 18.5 -47.4;-2.0 18.0 -47.2]
 
