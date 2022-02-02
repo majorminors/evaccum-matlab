@@ -1,9 +1,6 @@
-function a1_importAndOrganiseScans(thisSubject)
+function a1_importAndOrganiseScans(thisSubject,datadir,overwrite)
 
-% set data directory
-rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab';
-datadir = fullfile(rootdir,'data','meg_pilot_3');
-overwrite = 0; % turn this on for auto overwrite
+if ~exist('overwrite','var'); overwrite = 0; end
 
 % using ale's language to avoid errors in changing the names
 base = fullfile(datadir,thisSubject.id);
@@ -26,6 +23,7 @@ cd(base);
 cellfun(@(x) mkdir(base,x),{'Preprocess','T1','MaxfilterOutput','ICAOutput','ScalpTimeStats'});
 
 %% import MEG data
+disp('importing meg data')
 %locate raw files folder
 source      = thisSubject.meg_folder;
 
@@ -39,6 +37,7 @@ cd(source);
 cellfun(@copyfile,sourcefiles,runfiles,'UniformOutput',false);
 
 %% import MRI structurals
+disp('importing mri struct(s)')
 if ~isempty(thisSubject.mri)
     % locate the right destination folder
     T1Folder = [base,filesep,'T1']; % we might need a filesep at the end
@@ -68,6 +67,8 @@ if ~isempty(thisSubject.mri)
 end
 
 cd(base); save([thisSubject.id,'_filesID.mat'],'runfiles','sourcefiles','thisSubject');
+
+disp('done')
 
 return
 end
