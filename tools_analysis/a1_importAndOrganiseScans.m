@@ -1,7 +1,7 @@
 function a1_importAndOrganiseScans(thisSubject)
 
 % set data directory
-rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab';
+rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-for-alex';
 datadir = fullfile(rootdir,'data','meg_pilot_3');
 overwrite = 0; % turn this on for auto overwrite
 

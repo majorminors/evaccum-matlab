@@ -4,7 +4,7 @@ addpath(genpath('/imaging/local/software/spm_cbu_svn/releases/spm12_fil_r7219/')
 
 addpath /hpc-software/matlab/cbu/
 
-rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab/';
+rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-for-alex/';
 addpath(genpath(fullfile(rootdir,'tools_analysis')))
 droot = fullfile(rootdir,'data','meg_pilot_3',thisSubject.id);
 behavioural_data = fullfile(rootdir,'data','meg_pilot_3','behavioural');

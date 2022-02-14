@@ -9,15 +9,15 @@
 %% new pipeline
 clear all
 
-rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab';
+rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-for-alex';
 scriptdir = fullfile(rootdir,'tools_analysis'); cd(scriptdir)
 datadir = fullfile(rootdir,'data','meg_pilot_3'); addpath(datadir);
 runLocal = 1;
 runBehav = 0;
-subjectRange = 3;
+subjectRange = 2;
 jobdir = fullfile(rootdir,'job_logging','max8');
 % functionToRun = @a1_importAndOrganiseScans;
-%functionToRun = @a2_maxFilter;
+% functionToRun = @a2_maxFilter;
 functionToRun = @a3_megTriggers;
 %functionToRun = @a3_2_megTriggers;
 
