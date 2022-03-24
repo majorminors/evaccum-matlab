@@ -556,6 +556,209 @@ thisSubject.movement = [-5.1,23.2,-50.6;-6.1,21,-51.8;-5.8,21.4,-51.9;-6.6,21.1,
 thisSubject = doExtras(thisSubject);
 subjects = [subjects,thisSubject]; clear thisSubject;
 
+%% --- S23 Amelia --- %%
+
+thisSubject.id  = 'S23';
+thisSubject.num  = 23;
+
+thisSubject.meg_fld  = 'meg22_077';
+thisSubject.date_meg= '220318';
+
+thisSubject.meg_runs = {'run1_raw' 'run2_raw' 'run3_raw' 'run4_raw'};
+thisSubject.meg_labs = {'Run1' 'Run2' 'Run3' 'Run4'};
+thisSubject.runid = [1:4;5:8;9:12;13:16]; % each row is a vector of the blocks in that run (e.g. [1:6;7:12])
+thisSubject.runblks = '16';
+ 
+thisSubject.bad_eeg = [];
+thisSubject.bad_meg = [];
+
+thisSubject.note    = '';
+thisSubject.usable = 1;
+
+thisSubject.mri      = '';
+thisSubject.date_mri = '';
+        
+thisSubject.movement = [0.1,17.5,-37.0;0.0,17.6,-37.1;2.4,15.9,-38.2;0.1,14.1,-38.2;-1.6,17.1,-38.4];
+
+thisSubject = doExtras(thisSubject);
+subjects = [subjects,thisSubject]; clear thisSubject;
+
+%% --- S24 Marco --- %%
+
+thisSubject.id  = 'S24';
+thisSubject.num  = 24;
+
+thisSubject.meg_fld  = 'meg22_078';
+thisSubject.date_meg= '220318';
+
+thisSubject.meg_runs = {'run1_raw' 'run2_raw'};
+thisSubject.meg_labs = {'Run1' 'Run2'};
+thisSubject.runid = [1:4;5,NaN,NaN,NaN]; % each row is a vector of the blocks in that run (e.g. [1:6;7:12])
+thisSubject.runblks = '16';
+ 
+thisSubject.bad_eeg = [];
+thisSubject.bad_meg = [];
+
+thisSubject.note    = 'abandoned at first block of run 2 because we got no good blocks';
+thisSubject.usable = 1;
+
+thisSubject.mri      = '';
+thisSubject.date_mri = '';
+        
+thisSubject.movement = [-5.7,6.2,-42.5;-6.0,6.8,-43.9];
+
+thisSubject = doExtras(thisSubject);
+subjects = [subjects,thisSubject]; clear thisSubject;
+
+%% --- S25 Meta --- %%
+
+thisSubject.id  = 'S25';
+thisSubject.num  = 25;
+
+thisSubject.meg_fld  = 'meg22_079';
+thisSubject.date_meg= '220321';
+
+thisSubject.meg_runs = {'run1_raw' 'run2_raw' 'run3_raw' 'run4_raw'};
+thisSubject.meg_labs = {'Run1' 'Run2' 'Run3' 'Run4'};
+thisSubject.runid = [1:4;5:8;9:12;13:16]; % each row is a vector of the blocks in that run (e.g. [1:6;7:12])
+thisSubject.runblks = '16';
+ 
+thisSubject.bad_eeg = [];
+thisSubject.bad_meg = [];
+
+thisSubject.note    = 'banging from upstairs in run 4';
+thisSubject.usable = 1;
+
+thisSubject.mri      = '';
+thisSubject.date_mri = '';
+        
+thisSubject.movement = [-0.6,14.0,-43.6;-0,12.2,-44.1;-0.8,13.6,-43.8;-1.5,14.2,-43.9];
+
+thisSubject = doExtras(thisSubject);
+subjects = [subjects,thisSubject]; clear thisSubject;
+
+%% --- S26 Camila --- %%
+
+thisSubject.id  = 'S26';
+thisSubject.num  = 26;
+
+thisSubject.meg_fld  = 'meg22_080';
+thisSubject.date_meg= '220322';
+
+thisSubject.meg_runs = {'run1_raw' 'run2_raw' 'run3_raw' 'run4_raw'};
+thisSubject.meg_labs = {'Run1' 'Run2' 'Run3' 'Run4'};
+thisSubject.runid = [1:4;5:8;9:12;13:16]; % each row is a vector of the blocks in that run (e.g. [1:6;7:12])
+thisSubject.runblks = '16';
+ 
+thisSubject.bad_eeg = [];
+thisSubject.bad_meg = [];
+
+thisSubject.note    = '';
+thisSubject.usable = 1;
+
+thisSubject.mri      = '';
+thisSubject.date_mri = '';
+        
+thisSubject.movement = [1.3,13.0,-41.7;-1.1,10.2,-49.4;4.5,14.2,-38.6;1.7,9.7,-42.4];
+
+thisSubject = doExtras(thisSubject);
+subjects = [subjects,thisSubject]; clear thisSubject;
+
+%% --- S27 Lisa --- %%
+% no trials---too magnetic
+
+%% --- S28 Kate --- %%
+
+thisSubject.id  = 'S28';
+thisSubject.num  = 28;
+
+thisSubject.meg_fld  = 'meg22_081';
+thisSubject.date_meg= '220323';
+
+thisSubject.meg_runs = {'run1_raw' 'run2_raw' 'run3_raw' 'run4_raw'};
+thisSubject.meg_labs = {'Run1' 'Run2' 'Run3' 'Run4'};
+thisSubject.runid = [1:4;5:8;9:12;13:16]; % each row is a vector of the blocks in that run (e.g. [1:6;7:12])
+thisSubject.runblks = '16';
+ 
+thisSubject.bad_eeg = [];
+thisSubject.bad_meg = [];
+
+thisSubject.note    = '';
+thisSubject.usable = 1;
+
+thisSubject.mri      = '';
+thisSubject.date_mri = '';
+        
+thisSubject.movement = [-0.1,11.6,-48.7;0.6,12.2,-48];
+
+thisSubject = doExtras(thisSubject);
+subjects = [subjects,thisSubject]; clear thisSubject;
+
+%% --- S29 David --- %%
+
+thisSubject.id  = 'S29';
+thisSubject.num  = 29;
+
+thisSubject.meg_fld  = 'meg22_083';
+thisSubject.date_meg= '220324';
+
+thisSubject.meg_runs = {'run1_raw' 'run2_raw' 'run3_raw' 'run4_raw'};
+thisSubject.meg_labs = {'Run1' 'Run2' 'Run3' 'Run4'};
+thisSubject.runid = [1:4;5:8;9:12;13:16]; % each row is a vector of the blocks in that run (e.g. [1:6;7:12])
+thisSubject.runblks = '16';
+ 
+thisSubject.bad_eeg = [];
+thisSubject.bad_meg = [];
+
+thisSubject.note    = 'no eyetracking';
+thisSubject.usable = 1;
+
+thisSubject.mri      = '';
+thisSubject.date_mri = '';
+        
+thisSubject.movement = [-4.5,13.2,-51.3;-5.9,12.1,-51.3;-5.3,13.2,-57;-4.9,11.5,-57.2];
+
+thisSubject = doExtras(thisSubject);
+subjects = [subjects,thisSubject]; clear thisSubject;
+
+%% --- S30 Sukritta --- %%
+
+thisSubject.id  = 'S30';
+thisSubject.num  = 30;
+
+thisSubject.meg_fld  = 'meg22_084';
+thisSubject.date_meg= '220324';
+
+thisSubject.meg_runs = {'run1_raw' 'run2_raw' 'run3_raw' 'run4_raw'};
+thisSubject.meg_labs = {'Run1' 'Run2' 'Run3' 'Run4'};
+thisSubject.runid = [1:4;5:8;9:12;13:16]; % each row is a vector of the blocks in that run (e.g. [1:6;7:12])
+thisSubject.runblks = '16';
+ 
+thisSubject.bad_eeg = [];
+thisSubject.bad_meg = [];
+
+thisSubject.note    = '';
+thisSubject.usable = 1;
+
+thisSubject.mri      = '';
+thisSubject.date_mri = '';
+        
+thisSubject.movement = [-3.3,8.0,-44.9;-3.9,5.4,-47.8;-4,4.7,-48.3;-2,4.0,-49.6];
+
+% S31 %
+thisSubject.id  = 'S30';
+thisSubject.num  = 30;
+thisSubject.meg_runs = {'run5_raw'};
+thisSubject.meg_labs = {'Run5'};
+thisSubject.runid = [17:20]; % each row is a vector of the blocks in that run (e.g. [1:6;7:12])
+thisSubject.runblks = '4';
+thisSubject.note    = '';
+thisSubject.movement = [-2.4,6.9,-46.1];
+%
+
+thisSubject = doExtras(thisSubject);
+subjects = [subjects,thisSubject]; clear thisSubject;
+
 % ------------------ %
 
 
