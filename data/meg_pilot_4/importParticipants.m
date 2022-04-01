@@ -759,8 +759,142 @@ thisSubject.movement = [-2.4,6.9,-46.1];
 thisSubject = doExtras(thisSubject);
 subjects = [subjects,thisSubject]; clear thisSubject;
 
-% ------------------ %
+%% --- S31 Chris --- %%
 
+thisSubject.id  = 'S31';
+thisSubject.num  = 31;
+
+thisSubject.meg_fld  = 'meg22_086';
+thisSubject.date_meg= '220328';
+
+thisSubject.meg_runs = {'run1_raw' 'run2_raw' 'run3_raw' 'run4_raw'};
+thisSubject.meg_labs = {'Run1' 'Run2' 'Run3' 'Run4'};
+thisSubject.runid = [1:4;5:8;9:12;13:16]; % each row is a vector of the blocks in that run (e.g. [1:6;7:12])
+thisSubject.runblks = '16';
+ 
+thisSubject.bad_eeg = [30,38];
+thisSubject.bad_meg = [];
+
+thisSubject.note    = '';
+thisSubject.usable = 1;
+
+thisSubject.mri      = '';
+thisSubject.date_mri = '';
+        
+thisSubject.movement = [-12.5,7.2,-49.6;-10.1,7.6,-51.5;-10.8,7.6,-53.0;-9.8,7.8,-53.4];
+
+thisSubject = doExtras(thisSubject);
+subjects = [subjects,thisSubject]; clear thisSubject;
+
+%% --- S34 Aaron --- %%
+
+thisSubject.id  = 'S34';
+thisSubject.num  = 34;
+
+thisSubject.meg_fld  = 'meg22_088';
+thisSubject.date_meg= '220329';
+
+thisSubject.meg_runs = {'run1_raw' 'run2_raw' 'run3_raw' 'run4_raw'};
+thisSubject.meg_labs = {'Run1' 'Run2' 'Run3' 'Run4'};
+thisSubject.runid = [1:4;5:8;9:12;13:16]; % each row is a vector of the blocks in that run (e.g. [1:6;7:12])
+thisSubject.runblks = '16';
+ 
+thisSubject.bad_eeg = [];
+thisSubject.bad_meg = [1712];
+
+thisSubject.note    = '';
+thisSubject.usable = 0;
+
+thisSubject.mri      = '';
+thisSubject.date_mri = '';
+        
+thisSubject.movement = [-2.7,16.8,-45.8;-0.8,16.1,-47.5];
+
+thisSubject = doExtras(thisSubject);
+subjects = [subjects,thisSubject]; clear thisSubject;
+
+%% --- S35 Naomi --- %%
+
+thisSubject.id  = 'S35';
+thisSubject.num  = 35;
+
+thisSubject.meg_fld  = 'meg22_089';
+thisSubject.date_meg= '220330';
+
+thisSubject.meg_runs = {'run1_raw' 'run2_raw' 'run3_raw' 'run4_raw'};
+thisSubject.meg_labs = {'Run1' 'Run2' 'Run3' 'Run4'};
+thisSubject.runid = [1:4;5:8;9:12;13:16]; % each row is a vector of the blocks in that run (e.g. [1:6;7:12])
+thisSubject.runblks = '16';
+ 
+thisSubject.bad_eeg = [];
+thisSubject.bad_meg = [];
+
+thisSubject.note    = '';
+thisSubject.usable = 0;
+
+thisSubject.mri      = '';
+thisSubject.date_mri = '';
+        
+thisSubject.movement = [-2,7.6,-45.8;-2.8,7.8,-51.7;-2.3,12.2,-58;-2.5,10.6,-48.3;-1.9,13,-56.2;-1.4,13.1,-48.9];
+
+thisSubject = doExtras(thisSubject);
+subjects = [subjects,thisSubject]; clear thisSubject;
+
+%% --- S36 Alex --- %%
+
+thisSubject.id  = 'S36';
+thisSubject.num  = 36;
+
+thisSubject.meg_fld  = 'meg22_090';
+thisSubject.date_meg= '220331';
+
+thisSubject.meg_runs = {'run1_raw' 'run2_raw' 'run3_raw' 'run4_raw'};
+thisSubject.meg_labs = {'Run1' 'Run2' 'Run3' 'Run4'};
+thisSubject.runid = [1:4;5:8;9:12;13:16]; % each row is a vector of the blocks in that run (e.g. [1:6;7:12])
+thisSubject.runblks = '16';
+ 
+thisSubject.bad_eeg = [];
+thisSubject.bad_meg = [];
+
+thisSubject.note    = '';
+thisSubject.usable = 0;
+
+thisSubject.mri      = '';
+thisSubject.date_mri = '';
+        
+thisSubject.movement = [0.4,6.1,-42.3;-0.3,4.3,-43.8;0.2,2.9,-44.3;0.4,2.2,-47.1];
+
+thisSubject = doExtras(thisSubject);
+subjects = [subjects,thisSubject]; clear thisSubject;
+
+%% --- S37 Alex --- %%
+
+thisSubject.id  = 'S37';
+thisSubject.num  = 37;
+
+thisSubject.meg_fld  = 'meg22_091';
+thisSubject.date_meg= '220401';
+
+thisSubject.meg_runs = {'run1_raw' 'run2_raw' 'run3_raw' 'run4_raw'};
+thisSubject.meg_labs = {'Run1' 'Run2' 'Run3' 'Run4'};
+thisSubject.runid = [1:4;5:8;9:12;13:16]; % each row is a vector of the blocks in that run (e.g. [1:6;7:12])
+thisSubject.runblks = '16';
+ 
+thisSubject.bad_eeg = [];
+thisSubject.bad_meg = [];
+
+thisSubject.note    = '';
+thisSubject.usable = 0;
+
+thisSubject.mri      = '';
+thisSubject.date_mri = '';
+        
+thisSubject.movement = [-9.0,10.2,-38.3;-8.5,12.4,-41.2;-8.5,10.9,-41.7;-8.6,11.8,-42.4];
+
+thisSubject = doExtras(thisSubject);
+subjects = [subjects,thisSubject]; clear thisSubject;
+
+% ------------------ %
 
 %%%%%%%%%%%%%%%%%%
 %% subfunctions %%
