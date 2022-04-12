@@ -830,7 +830,7 @@ thisSubject.bad_eeg = [];
 thisSubject.bad_meg = [];
 
 thisSubject.note    = '';
-thisSubject.usable = 0;
+thisSubject.usable = 1;
 
 thisSubject.mri      = '';
 thisSubject.date_mri = '';
@@ -867,7 +867,7 @@ thisSubject.movement = [0.4,6.1,-42.3;-0.3,4.3,-43.8;0.2,2.9,-44.3;0.4,2.2,-47.1
 thisSubject = doExtras(thisSubject);
 subjects = [subjects,thisSubject]; clear thisSubject;
 
-%% --- S37 Alex --- %%
+%% --- S37 Madeleine --- %%
 
 thisSubject.id  = 'S37';
 thisSubject.num  = 37;
@@ -884,12 +884,66 @@ thisSubject.bad_eeg = [];
 thisSubject.bad_meg = [];
 
 thisSubject.note    = '';
-thisSubject.usable = 0;
+thisSubject.usable = 1;
 
 thisSubject.mri      = '';
 thisSubject.date_mri = '';
         
 thisSubject.movement = [-9.0,10.2,-38.3;-8.5,12.4,-41.2;-8.5,10.9,-41.7;-8.6,11.8,-42.4];
+
+thisSubject = doExtras(thisSubject);
+subjects = [subjects,thisSubject]; clear thisSubject;
+
+%% --- S38 Joyce --- %%
+
+thisSubject.id  = 'S38';
+thisSubject.num  = 38;
+
+thisSubject.meg_fld  = 'meg22_092';
+thisSubject.date_meg= '220406';
+
+thisSubject.meg_runs = {'run1_raw' 'run2_raw'};
+thisSubject.meg_labs = {'Run1' 'Run2'};
+thisSubject.runid = [1:4;5:8]; % each row is a vector of the blocks in that run (e.g. [1:6;7:12])
+thisSubject.runblks = '8';
+ 
+thisSubject.bad_eeg = [];
+thisSubject.bad_meg = [];
+
+thisSubject.note    = '';
+thisSubject.usable = 0;
+
+thisSubject.mri      = '';
+thisSubject.date_mri = '';
+        
+thisSubject.movement = [0,0.3,-54.9;-0.5,-1.9,-56.6];
+
+thisSubject = doExtras(thisSubject);
+subjects = [subjects,thisSubject]; clear thisSubject;
+
+%% --- S40 Alex --- %%
+
+thisSubject.id  = 'S40';
+thisSubject.num  = 40;
+
+thisSubject.meg_fld  = 'meg22_093';
+thisSubject.date_meg= '220406';
+
+thisSubject.meg_runs = {'run1_raw' 'run2_raw' 'run3_raw' 'run4_raw'};
+thisSubject.meg_labs = {'Run1' 'Run2' 'Run3' 'Run4'};
+thisSubject.runid = [1:4;5:8;9:12;13:16]; % each row is a vector of the blocks in that run (e.g. [1:6;7:12])
+thisSubject.runblks = '16';
+ 
+thisSubject.bad_eeg = [];
+thisSubject.bad_meg = [];
+
+thisSubject.note    = '';
+thisSubject.usable = 1;
+
+thisSubject.mri      = '';
+thisSubject.date_mri = '';
+        
+thisSubject.movement = [-9.7,4.5,-57.8;-10.1,6.3,-56.7;-10.6,5.2,-60.2;-11.3,3.7,-62];
 
 thisSubject = doExtras(thisSubject);
 subjects = [subjects,thisSubject]; clear thisSubject;
