@@ -59,6 +59,7 @@ end
 
 
 %% Line and highpass filter
+% electric line 50Hz in the uk needs to be removed
 for runi = 1:length(outfirst)
     [pathstr,name,ext] = fileparts(outfirst{runi});
     outf = sprintf('%s/ff%s%s',pathstr,name,ext);
@@ -70,7 +71,7 @@ for runi = 1:length(outfirst)
         S   = [];
         S.D = outfirst{runi};
         S.band = 'high';
-        S.freq = 0.5;
+        S.freq = 0.5; % removes the drift
         D = spm_eeg_filter(S);
         
         %line filter
@@ -93,6 +94,7 @@ end
 
 
 %% Re-reference
+% re-referencing to the average
 for runi = 1:length(filenames)
     
     [pathstr,name,ext] = fileparts(filenames{runi});
@@ -134,6 +136,7 @@ modalities = {'MEGMAG', 'MEGPLANAR', 'EEG'};
 
 
 %path for templates
+% compares ICA with my lines of interest (e.g. ECG HEOG VEOG etc)
 arttopos = load('/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/meg_data/templates/MEGEEGArtifactTemplateTopographies');
 s_ref_chans = {'EOG061','EOG062','ECG063'};%check line 150
 %if ~settings.ctr
@@ -144,8 +147,14 @@ t_ref_chans = s_ref_chans;
 ICA.FiltPars = repmat(ICA.FiltPars,[3,1]);
 %end
 
+% takes spatial and temporal channels for comparison
+
 ICA.s_ref_labs = s_ref_chans;
 ICA.t_ref_labs = t_ref_chans;
+
+% scrambles  (permutes) signal and compares lines to determine correlation
+% against null distribution 
+% (95th percentile) for definition as artifact
 
 
 for iir = 1:numel(t_ref_chans); ICA.refs.tem{iir} = [];end % Reference signal for correlating with ICs
