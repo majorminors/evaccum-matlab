@@ -24,9 +24,11 @@ d = struct(); % set up a structure for the data info - these are outputs we want
 t = struct(); % set up a structure for temp data - these are things that are liable to change throughout the script
 
 % set up variables
-rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % % root directory - used to inform directory mappings
-datadir = fullfile(rootdir,'data','behav_pilot_2');
-p.save_figs = 1;
+rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab'; % % root directory - used to inform directory mappings
+datadir = fullfile(rootdir,'data','meg_pilot_4');
+%p.subjectrange = [1:4,7:9,12,20:23,26];
+p.subjectrange = [1:14,19:23,25,26,29:33,35:37];
+p.save_figs = 0;
 p.datafilepattern = '*_EvAccum.mat';
 p.vars = {'d','block'}; % which variables do you need
 p.savefilename = 'rt_dists';
@@ -43,7 +45,7 @@ save_file = fullfile(outdir,p.savefilename);
 %% get the data
 d.fileinfo = dir(fullfile(behavdatadir, p.datafilepattern)); % find all the datafiles and get their info
 d.allsubjs = {}; % create this so we can work with it
-for i = 1:length(d.fileinfo) % loop through each
+for i = p.subjectrange%length(d.fileinfo) % loop through each
     t.path = fullfile(behavdatadir, d.fileinfo(i).name); % get the full path to the file
     fprintf(1, 'working with %s\n', t.path); % print that so you can check
     
@@ -100,18 +102,21 @@ for i = 1:length(d.fileinfo) % loop through each
 end
 
 d.allsubjs = cell2mat(d.allsubjs); % convert it from a cell array
-
+condlabs = {'ecer' 'echr' 'hcer' 'hchr'};
 count = 0;
 figure;
 for coh_idx = 1:2
-    for rule_idx = 1:2
+    for rule_idx = [2,1]
         count = count + 1;
         idx = d.allsubjs(:,4)==coh_idx & d.allsubjs(:,5)==rule_idx;
         idx = idx & d.allsubjs(:,3);
         subplot(2,2,count)
+        xlabel(condlabs{count});
         h = histogram(d.allsubjs(idx,2),'FaceColor',[0.0 0.502 0.502]);
-        h.NumBins = 40;
-        ylim([0, 100]);
+        hold on
+        h.NumBins = 100;
+        ylim([0, 300]);
+        xlim([0,1.6])
     end
 end; clear idx coh_idx rule_idx count
 if p.save_figs
