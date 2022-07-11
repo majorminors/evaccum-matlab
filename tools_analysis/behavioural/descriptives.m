@@ -56,15 +56,17 @@ d = struct(); % set up a structure for the data info - these are outputs we want
 t = struct(); % set up a structure for temp data - these are things that are liable to change throughout the script
 
 % set up variables
-rootdir = '\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % % root directory - used to inform directory mappings
-datadir = fullfile(rootdir,'data','behav_pilot_1');
+rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab'; % % root directory - used to inform directory mappings
+datadir = fullfile(rootdir,'data','meg_pilot_4');
 p.strip_invalid = 1; % will strip invalid responses from output if 1 from allsubjs (can't get individual subjs working)
 p.datafilepattern = '*_EvAccum.mat';
+%p.subjectrange = [1:4,7:9,12,20:23,26];
+p.subjectrange = [1:14,19:23,25,26,29:33,35:37];
 p.vars = {'p','d','block'}; % which variables do you need
 p.savefilename = 'descriptives';
 p.notesfilename = [p.savefilename,'_notes.txt'];
 p.notes = 'see top of descriptives.m for organisation of data';
-p.conditions = {'LcLr','LcHr','HcLr','HcHr'}; % 2x2 coherence and rule
+p.conditions = {'EcEr','EcHr','HcEr','HcHr'}; % 2x2 coherence and rule
 p.conditioncodes = {1,2,3,4};
 
 % directory mapping
@@ -79,8 +81,9 @@ save_file = fullfile(outdir,p.savefilename);
 %% get that data
 
 d.fileinfo = dir(fullfile(behavdatadir, p.datafilepattern)); % find all the datafiles and get their info
+if p.subjectrange == 0; p.subjectrange = 1:numel(d.fileinfo); end
 d.allsubjs = {}; d.allsubjsstripped = []; % create these so we can work with it
-for i = 1:length(d.fileinfo) % loop through each
+for i = p.subjectrange%1:length(d.fileinfo) % loop through each
   t.path = fullfile(behavdatadir, d.fileinfo(i).name); % get the full path to the file
   fprintf(1, 'working with %s\n', t.path); % print that so you can check
   
@@ -158,39 +161,111 @@ for i = 1:length(d.fileinfo) % loop through each
 end; clear i
 
 %% get some descriptives
-for subj = 1:length(d.fileinfo)
+for subj = p.subjectrange%1:length(d.fileinfo)
     for condidx = 1:4
         t.condition = find(d.subjects(subj).strippeddata(:,1) == condidx);
+        t.conditionCorr = find(d.subjects(subj).strippeddata(:,1) == condidx & d.subjects(subj).strippeddata(:,4));
         d.subjects(subj).mean(condidx) = nanmean(d.subjects(subj).strippeddata(t.condition,3));
+        d.subjects(subj).meanCorr(condidx) = nanmean(d.subjects(subj).strippeddata(t.conditionCorr,3));
+        d.subjects(subj).firstBlockRT(condidx) = nanmean(d.subjects(subj).strippeddata(t.conditionCorr(64/4:64/2),3));
+        d.subjects(subj).lastBlockRT(condidx) = nanmean(d.subjects(subj).strippeddata(t.conditionCorr(end-64/4:end),3));
         d.subjects(subj).sem(condidx) = nansem(d.subjects(subj).strippeddata(t.condition,3));
+        d.subjects(subj).semCorr(condidx) = nansem(d.subjects(subj).strippeddata(t.conditionCorr,3));
         t.accuracy = d.subjects(subj).strippeddata(t.condition,4);
+        t.accuracyFirstBlock = d.subjects(subj).strippeddata(t.condition(64/4:64/2),4);
+        t.accuracylastBlock = d.subjects(subj).strippeddata(t.condition(end-64/4:end),4);
         d.subjects(subj).accuracy(condidx) = sum(t.accuracy)/length(t.accuracy)*100;
+        d.subjects(subj).accuracyFirstBlock(condidx) = sum(t.accuracyFirstBlock)/length(t.accuracyFirstBlock)*100;
+        d.subjects(subj).accuracylastBlock(condidx) = sum(t.accuracylastBlock)/length(t.accuracylastBlock)*100;
     end; clear condidx t
     d.subjects(subj).alldescriptives = [d.subjects(subj).mean;d.subjects(subj).sem;d.subjects(subj).accuracy];
 end; clear subj
 
+d.firstBlock = nanmean(cat(1,d.subjects(:).accuracyFirstBlock));
+d.lastBlock = nanmean(cat(1,d.subjects(:).accuracylastBlock));
+
+
 for condidx = 1:4
     t.condition = find(d.allsubjsstripped(:,2) == condidx);
+    t.conditionCorr = find(d.allsubjsstripped(:,2) == condidx & d.allsubjsstripped(:,5));
     d.mean(condidx) = nanmean(d.allsubjsstripped(t.condition,4));
+    d.meanCorr(condidx) = nanmean(d.allsubjsstripped(t.conditionCorr,4));
     d.sem(condidx) = nansem(d.allsubjsstripped(t.condition,4));
+    d.semCorr(condidx) = nansem(d.allsubjsstripped(t.conditionCorr,4));
     t.accuracy = d.allsubjsstripped(t.condition,5);
     d.accuracy(condidx) = sum(t.accuracy)/length(t.accuracy)*100;
 end; clear condidx t
 d.alldescriptives = [d.mean;d.sem;d.accuracy];
 
+warning('youre swapping values, because they are coded backwards!')
+[d.mean(2),d.mean(1)] = deal(d.mean(1),d.mean(2));
+[d.mean(4),d.mean(3)] = deal(d.mean(3),d.mean(4));
+[d.meanCorr(2),d.meanCorr(1)] = deal(d.meanCorr(1),d.meanCorr(2));
+[d.meanCorr(4),d.meanCorr(3)] = deal(d.meanCorr(3),d.meanCorr(4));
+[d.firstBlock(2),d.firstBlock(1)] = deal(d.firstBlock(1),d.firstBlock(2));
+[d.firstBlock(4),d.firstBlock(3)] = deal(d.firstBlock(3),d.firstBlock(4));
+[d.lastBlock(2),d.lastBlock(1)] = deal(d.lastBlock(1),d.lastBlock(2));
+[d.lastBlock(4),d.lastBlock(3)] = deal(d.lastBlock(3),d.lastBlock(4));
+
+yyaxis left
+xpoints = 1:4;
+plot(xpoints,d.firstBlock,'-o')
+ylim([min([d.firstBlock d.lastBlock])-1 max([d.firstBlock d.lastBlock])+1])
+ylabel('first block accuracy')
+yyaxis right
+plot(xpoints,d.lastBlock,'-o')
+ylim([min([d.firstBlock d.lastBlock])-1 max([d.firstBlock d.lastBlock])+1])
+ylabel('last block accuracy')
+xticks(xpoints) % instruct the plot to use our xpoints as ticks in case it decides to do some other weird thing
+xticklabels({'EcEr' 'EcHr' 'HcEr' 'HcHr'}) % add in the labels
+xlim([min(xpoints)-1 max(xpoints)+1])
+xlabel('Conditions'); % add in xlabel
+title('Accuracy in First and Last Blocks')
+
+
+
 %% figures
-figure; b = bar(d.mean);
-ylim([min(d.mean)-0.01 max(d.mean)+0.01]);
+subplot(1,2,1)
+%figure;
+b = bar(d.mean);
+xpoints = 1:size(d.mean,2);
+ylim([min(d.meanCorr)-0.01 max(d.mean)+0.01]);
 b.FaceColor = 'flat';
 hold on
 er = errorbar(1:size(d.mean,2),d.mean,d.sem);
 er.Color = [0 0 0];                            
 er.LineStyle = 'none';
+xticks(xpoints) % instruct the plot to use our xpoints as ticks in case it decides to do some other weird thing
+xticklabels({'EcEr' 'EcHr' 'HcEr' 'HcHr'}) % add in the labels
+xlabel('Conditions'); % add in xlabel
+ylabel('Mean (SEM)'); % add in ylabel
+title('Mean RTs per Condition'); % add in title
 export_fig(fullfile([save_file 'mean_fig.jpeg']),'-transparent');
+%% figures
+subplot(1,2,2)
+%figure;
+b = bar(d.meanCorr);
+xpoints = 1:size(d.meanCorr,2);
+ylim([min(d.meanCorr)-0.01 max(d.mean)+0.01]);
+b.FaceColor = 'flat';
+hold on
+er = errorbar(1:size(d.meanCorr,2),d.meanCorr,d.semCorr);
+er.Color = [0 0 0];                            
+er.LineStyle = 'none';
+xticks(xpoints) % instruct the plot to use our xpoints as ticks in case it decides to do some other weird thing
+xticklabels({'EcEr' 'EcHr' 'HcEr' 'HcHr'}) % add in the labels
+xlabel('Conditions'); % add in xlabel
+ylabel('Mean of Correct (SEM)'); % add in ylabel
+title('Mean Correct RTs per Condition'); % add in title
+export_fig(fullfile([save_file 'meanCorr_fig.jpeg']),'-transparent');
 
 figure; b = bar(d.accuracy);
-ylim([min(d.accuracy)-1 max(d.accuracy)+1]);
+ylim([70 80]);
 b.FaceColor = 'flat';
+xticklabels({'EcEr' 'EcHr' 'HcEr' 'HcHr'}) % add in the labels
+xlabel('Conditions'); % add in xlabel
+ylabel('Percentage Correct'); % add in ylabel
+title('Accuracy per Condition'); % add in title
 export_fig(fullfile([save_file 'accuracy_fig.jpeg']),'-transparent');
 
 %% saving data and notes
@@ -211,4 +286,40 @@ nonan_len = length(vector_data(~isnan(vector_data)));
 % Plug in values
 semval = nonan_std / sqrt(nonan_len);
 end
+
+%% meanplot
+function figHandle = meanplotThis(theTitle,theXlabel,theYlabel,theValues,customYlim)
+% values must be entered {'label',[<vector of values>]; etc}
+
+xpoints = 1:size(theValues,1); % get all the x points we need
+valueLabels = {}; % init
+for i = 1:size(theValues,1) % loop through the values
+    
+    means(1,i) = mean(theValues{i,2},'omitnan'); % calc the means
+    sem(1,i) = nansem(theValues{i,2}); % calc the sem (nansem is my own function---just rough and assumes symmetrical sem)
+    valueLabels{1,end+1} = theValues{i,1}; % concatenate labels
+    
+end
+
+figHandle = figure;
+plot(xpoints,means,'*') % plot the means along the xpoints
+hold on
+er = errorbar(xpoints,means,sem,'linestyle','none'); % plot sem as error bars
+extendy = max(sem)+max(sem)/2; % extend the y axis past the error bars by half the max sem value
+extendx = 1; % extend the x axis by one so our values aren't touching the sides of the plot
+axis([min(xpoints)-extendx max(xpoints)+extendx min(means)-extendy max(means)+extendy]); % actually do the extending
+if exist('customYlim','var')
+    ylim(customYlim);
+end
+xticks(xpoints) % instruct the plot to use our xpoints as ticks in case it decides to do some other weird thing
+xticklabels(valueLabels) % add in the labels
+xlabel(theXlabel); % add in xlabel
+ylabel(theYlabel); % add in ylabel
+title(theTitle); % add in title
+plot([min(xlim()),max(xlim())],[0,0], 'k--') % add a dotted line at zero
+hold off
+
+return
+end
+
   
