@@ -9,17 +9,18 @@
 %% new pipeline
 clear all
 
+
 rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab';
 scriptdir = fullfile(rootdir,'tools_analysis'); cd(scriptdir)
 datadir = fullfile(rootdir,'data','meg_pilot_4'); addpath(datadir);
 runLocal = 1;
 runBehav = 0;
 subjectRange = 0;
-jobdir = fullfile(rootdir,'job_logging','p4_pilot');
+jobdir = fullfile(rootdir,'job_logging','all_to_ica');
 % functionToRun = @a1_importAndOrganiseScans; additionalParams={datadir,0}; % datadir top level and overwrite (0|1)
-functionToRun = @a2_maxFilter; additionalParams={datadir,scriptdir,0}; % datadir top level, analysis tools/bin/libs and overwrite (0|1)
-% functionToRun = @a3_megTriggers;
-%functionToRun = @a3_2_megTriggers;
+% functionToRun = @a2_maxFilter; additionalParams={datadir,scriptdir,0}; % datadir top level, analysis tools/bin/libs and overwrite (0|1)
+% functionToRun = @a3_2_megTriggers; additionalParams={datadir,scriptdir}; % datadir top level, analysis tools/bin/libs
+functionToRun = @a4_2_preProcessing; additionalParams={datadir,scriptdir};
 
 allSubjects = importParticipants();
 if ~subjectRange; subjectRange = 1:numel(allSubjects); end

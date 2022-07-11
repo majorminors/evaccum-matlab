@@ -62,7 +62,7 @@ p.skip_synctests = 1; % force psychtoolbox to skip synctests. not advised. autos
 p.usePhotodiode = 0;
 
 % general settings
-p.coherence_spread = 2; % 1 is an even spread from 0-1, 2 has a more specified coherence values for people who are good at this - see trial settings
+p.coherence_spread = 1; % 1 is an even spread from 0-1, 2 has a more specified coherence values for people who are good at this - see trial settings
 p.screen_num = 0; % screen to display experiment on (0 unless multiple screens)
 p.fullscreen_enabled = 1; % 1 is full screen, 0 is whatever you've set p.window_size to
 p.testing_enabled = 0; % change to 0 if not testing (1 skips PTB synctests and sets number of trials and blocks to test values) - see '% test variables' below
