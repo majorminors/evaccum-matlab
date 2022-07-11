@@ -20,7 +20,7 @@ if ~exist(base,'dir'); mkdir(base); end
 cd(base);
 
 %create my folders
-cellfun(@(x) mkdir(base,x),{'Preprocess','T1','MaxfilterOutput','ICAOutput','ScalpTimeStats'});
+cellfun(@(x) mkdir(base,x),{'Preprocess','T1','MaxfilterOutput'});
 
 %% import MEG data
 disp('importing meg data')
