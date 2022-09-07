@@ -26,10 +26,10 @@ behavfile = fullfile(behavDir,[thisSubject.id '_Evaccum.mat']); % what is it cal
 megrtfile = fullfile(behavDir,[thisSubject.id '_MEGRTs.mat']); % and since I have put my MEG triggers somewhere else, we will specify that too
 addpath(rootDir);
 
-doFilter = 1;
-doICA = 1;
+doFilter = 0;
+doICA = 2;
 doReRef = 0;
-overwrite = 1;
+overwrite = 0;
 
 randomSeed = 7; % a random seed for ICA decomposition with oslafrica (use this same seed for reproducability)
 
