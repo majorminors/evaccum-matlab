@@ -600,7 +600,7 @@ thisSubject.bad_eeg = [];
 thisSubject.bad_meg = [];
 
 thisSubject.note    = 'abandoned at first block of run 2 because we got no good blocks';
-thisSubject.usable = 1;
+thisSubject.usable = 0;
 
 thisSubject.mri      = '';
 thisSubject.date_mri = '';
@@ -867,7 +867,7 @@ thisSubject.movement = [0.4,6.1,-42.3;-0.3,4.3,-43.8;0.2,2.9,-44.3;0.4,2.2,-47.1
 thisSubject = doExtras(thisSubject);
 subjects = [subjects,thisSubject]; clear thisSubject;
 
-% --- S37 Alex --- %%
+% --- S37 Madeleine --- %%
 
 thisSubject.id  = 'S37';
 thisSubject.num  = 37;
