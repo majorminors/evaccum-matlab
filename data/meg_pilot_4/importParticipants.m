@@ -52,7 +52,7 @@ thisSubject.bad_meg = [1712];
 thisSubject.note    = '';
 thisSubject.usable = 1;
 
-thisSubject.mri      = 'none yet';
+thisSubject.mri      = 'CBU220178';
 thisSubject.date_mri = '';
         
 thisSubject.movement = [-10.7 7.6 -42.5;-9.3 12 -43.5;-11.1 13.3 -40.4;-10.9 9.4 -44.1;-9.3 14.4 -42.3];
@@ -106,7 +106,7 @@ thisSubject.bad_meg = [];
 thisSubject.note    = '';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
+thisSubject.mri      = 'CBU220212';
 thisSubject.date_mri = '';
         
 thisSubject.movement = [-6.5,14.4,-58.4;-4.8,14.3,-54;-5,13,-56.3;-9.6,7.7,-61.2];
@@ -170,7 +170,7 @@ thisSubject.bad_meg = [];
 thisSubject.note    = '';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
+thisSubject.mri      = 'CBU220227';
 thisSubject.date_mri = '';
         
 thisSubject.movement = [0.4,13.3,-39.9;2.4,11.4,-41.5;-1.2,12.6,-43.4;3.7,11.8,-35.5];
@@ -224,7 +224,7 @@ thisSubject.bad_meg = [];
 thisSubject.note    = 'eye tracking a bit fucked because of goggles use, and also I stopped it after the first run and restarted it with title "Manual Recording Session"';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
+thisSubject.mri      = 'CBU220222';
 thisSubject.date_mri = '';
         
 thisSubject.movement = [0.2,15.9,-44.3;-0.7,15.5,-54.2;-0.3,14.1,-55.3;1.0,14.4,-55.3;-1.3,15.1,-55.7];
@@ -251,7 +251,7 @@ thisSubject.bad_meg = [];
 thisSubject.note    = 'first cue and maybe one or two trials are a false start';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
+thisSubject.mri      = 'CBU220203';
 thisSubject.date_mri = '';
         
 thisSubject.movement = [-0,-3.9,-46.9;-0.5,-4.3,-47.2;-1,-4.2,-49.2;-0.3,-2.2,-45.9];
@@ -389,7 +389,7 @@ thisSubject.bad_meg = [];
 thisSubject.note    = 'missed start of fourth block; runs 3-5 in a seperate file; lawnmowing during run4';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
+thisSubject.mri      = 'CBU220205';
 thisSubject.date_mri = '';
         
 thisSubject.movement = [0.2,15.1,-50.9;-0.5,15.0,-51.1;-1.0,15.1,-51.7;-2.1,11.5,-51.8;-1.1,10.8,-52.4;-0.6,10.9,-51.5];
@@ -428,7 +428,7 @@ thisSubject.bad_meg = [];
 thisSubject.note    = 'run 2-4 in a seperate file';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
+thisSubject.mri      = 'CBU220221';
 thisSubject.date_mri = '';
         
 thisSubject.movement = [-1.2,-5.5,-43.8;-1.2,-4.4,-61.5;-2.8,-3.5,-42.2;-4.8,1.4,-38.6;-3.6,-3.5,-40.5];
@@ -467,7 +467,7 @@ thisSubject.bad_meg = [];
 thisSubject.note    = '';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
+thisSubject.mri      = 'CBU220204';
 thisSubject.date_mri = '';
         
 thisSubject.movement = [1.5,15.6,-46.3;1.4,17.4,-46.2;0.7,15.9,-45.8;1.8,15.9,-48.4];
@@ -494,7 +494,7 @@ thisSubject.bad_meg = [];
 thisSubject.note    = '';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
+thisSubject.mri      = 'CBU220210';
 thisSubject.date_mri = '';
         
 thisSubject.movement = [-1.7,13.9,-45.1;1,13.6,-43.8;0.6,13.2,-44.8;1.1,10.7,-44.6];
@@ -521,7 +521,7 @@ thisSubject.bad_meg = [];
 thisSubject.note    = '';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
+thisSubject.mri      = 'CBU220226';
 thisSubject.date_mri = '';
         
 thisSubject.movement = [-1.7,-0.2,-54.8;-3.6,-0.2,-55.2;-3.5,-0.4,-55.1;-3.6,0.2,-56.3];
@@ -548,7 +548,7 @@ thisSubject.bad_meg = [];
 thisSubject.note    = '';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
+thisSubject.mri      = 'CBU220223';
 thisSubject.date_mri = '';
         
 thisSubject.movement = [-5.1,23.2,-50.6;-6.1,21,-51.8;-5.8,21.4,-51.9;-6.6,21.1,-53.5];
@@ -629,7 +629,7 @@ thisSubject.bad_meg = [];
 thisSubject.note    = 'banging from upstairs in run 4';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
+thisSubject.mri      = 'CBU220165';
 thisSubject.date_mri = '';
         
 thisSubject.movement = [-0.6,14.0,-43.6;-0,12.2,-44.1;-0.8,13.6,-43.8;-1.5,14.2,-43.9];
@@ -656,7 +656,7 @@ thisSubject.bad_meg = [];
 thisSubject.note    = '';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
+thisSubject.mri      = 'CBU220244';
 thisSubject.date_mri = '';
         
 thisSubject.movement = [1.3,13.0,-41.7;-1.1,10.2,-49.4;4.5,14.2,-38.6;1.7,9.7,-42.4];
@@ -713,7 +713,7 @@ thisSubject.bad_meg = [];
 thisSubject.note    = 'no eyetracking';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
+thisSubject.mri      = 'CBU220211';
 thisSubject.date_mri = '';
         
 thisSubject.movement = [-4.5,13.2,-51.3;-5.9,12.1,-51.3;-5.3,13.2,-57;-4.9,11.5,-57.2];
@@ -913,7 +913,7 @@ thisSubject.bad_meg = [];
 thisSubject.note    = '';
 thisSubject.usable = 0;
 
-thisSubject.mri      = '';
+thisSubject.mri      = 'CBU220243';
 thisSubject.date_mri = '';
         
 thisSubject.movement = [0,0.3,-54.9;-0.5,-1.9,-56.6];
