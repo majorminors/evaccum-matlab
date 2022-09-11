@@ -133,8 +133,8 @@ thisSubject.bad_meg = [];
 thisSubject.note    = 'run 3, 4, 5 in separate file';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
-thisSubject.date_mri = '';
+thisSubject.mri      = 'CBU220183';
+thisSubject.date_mri = '220303';
         
 thisSubject.movement = [4.5,10.8,-44.6;5.8,10.3,-44.7;5.3,6.9,-46.1;6.2,13.3,-44.1;4.8,7.5,-46.9];
 
