@@ -197,7 +197,7 @@ thisSubject.bad_meg = [];
 thisSubject.note    = '';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
+thisSubject.mri      = 'CBU220184';
 thisSubject.date_mri = '';
         
 thisSubject.movement = [-4.3,8.3,-47.3;-4.7,8.1,-48.7;-4.8,7.8,-51.2;-6.9,7.7,-52.6];
@@ -278,7 +278,7 @@ thisSubject.bad_meg = [];
 thisSubject.note    = 'some interference from eye makeup';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
+thisSubject.mri      = 'CBU220195';
 thisSubject.date_mri = '';
         
 thisSubject.movement = [-6.6,8.1,-42.8;-8.2,3.2,-44.7;-6.8,2.5,-46.1;-6.7,1.4,-46.6];
@@ -361,7 +361,7 @@ thisSubject.bad_meg = [];
 thisSubject.note    = '';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
+thisSubject.mri      = 'CBU220255';
 thisSubject.date_mri = '';
         
 thisSubject.movement = [-4.6,9.0,-46.3;-5,8.7,-49.8;-1.4,11.3,-55;-0.9,9.1,-50.9;-0.6,9.5,-50.8];
@@ -667,7 +667,7 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 % --- S27 Lisa --- %%
 % no trials - too magnetic
 
-%% --- S28 Kate --- %% U23
+%% --- S28 Kate --- %% 
 
 thisSubject.id  = 'S28';
 thisSubject.num  = 28;
@@ -684,7 +684,7 @@ thisSubject.bad_eeg = [];
 thisSubject.bad_meg = [];
 
 thisSubject.note    = '';
-thisSubject.usable = 1;
+thisSubject.usable = 0;
 
 thisSubject.mri      = '';
 thisSubject.date_mri = '';
@@ -694,7 +694,7 @@ thisSubject.movement = [-0.1,11.6,-48.7;0.6,12.2,-48];
 thisSubject = doExtras(thisSubject);
 subjects = [subjects,thisSubject]; clear thisSubject;
 
-%% --- S29 David --- %% U24
+%% --- S29 David --- %% U23
 
 thisSubject.id  = 'S29';
 thisSubject.num  = 29;
@@ -721,7 +721,7 @@ thisSubject.movement = [-4.5,13.2,-51.3;-5.9,12.1,-51.3;-5.3,13.2,-57;-4.9,11.5,
 thisSubject = doExtras(thisSubject);
 subjects = [subjects,thisSubject]; clear thisSubject;
 
-%% --- S30 Sukritta --- %% U25
+%% --- S30 Sukritta --- %% U24
 
 thisSubject.id  = 'S30';
 thisSubject.num  = 30;
@@ -740,7 +740,7 @@ thisSubject.bad_meg = [];
 thisSubject.note    = 'run 5 in a seperate file';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
+thisSubject.mri      = 'CBU220254';
 thisSubject.date_mri = '';
         
 thisSubject.movement = [-3.3,8.0,-44.9;-3.9,5.4,-47.8;-4,4.7,-48.3;-2,4.0,-49.6;-2.4,6.9,-46.1];
@@ -759,7 +759,7 @@ thisSubject.movement = [-3.3,8.0,-44.9;-3.9,5.4,-47.8;-4,4.7,-48.3;-2,4.0,-49.6;
 thisSubject = doExtras(thisSubject);
 subjects = [subjects,thisSubject]; clear thisSubject;
 
-%% --- S31 Chris --- %% U26
+%% --- S31 Chris --- %% U25
 
 thisSubject.id  = 'S31';
 thisSubject.num  = 31;
@@ -778,7 +778,7 @@ thisSubject.bad_meg = [];
 thisSubject.note    = '';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
+thisSubject.mri      = 'CBU220270';
 thisSubject.date_mri = '';
         
 thisSubject.movement = [-12.5,7.2,-49.6;-10.1,7.6,-51.5;-10.8,7.6,-53.0;-9.8,7.8,-53.4];
@@ -786,7 +786,7 @@ thisSubject.movement = [-12.5,7.2,-49.6;-10.1,7.6,-51.5;-10.8,7.6,-53.0;-9.8,7.8
 thisSubject = doExtras(thisSubject);
 subjects = [subjects,thisSubject]; clear thisSubject;
 
-%% --- S34 Aaron --- %% U27
+%% --- S34 Aaron --- %% U26
 
 thisSubject.id  = 'S34';
 thisSubject.num  = 34;
@@ -813,7 +813,7 @@ thisSubject.movement = [-2.7,16.8,-45.8;-0.8,16.1,-47.5];
 thisSubject = doExtras(thisSubject);
 subjects = [subjects,thisSubject]; clear thisSubject;
 
-%% --- S35 Naomi --- %% U28
+%% --- S35 Naomi --- %% U27
 
 thisSubject.id  = 'S35';
 thisSubject.num  = 35;
@@ -840,7 +840,7 @@ thisSubject.movement = [-2,7.6,-45.8;-2.8,7.8,-51.7;-2.3,12.2,-58;-2.5,10.6,-48.
 thisSubject = doExtras(thisSubject);
 subjects = [subjects,thisSubject]; clear thisSubject;
 
-%% --- S36 Alex --- %% U29
+%% --- S36 Alex --- %% U28
 
 thisSubject.id  = 'S36';
 thisSubject.num  = 36;
@@ -867,7 +867,7 @@ thisSubject.movement = [0.4,6.1,-42.3;-0.3,4.3,-43.8;0.2,2.9,-44.3;0.4,2.2,-47.1
 thisSubject = doExtras(thisSubject);
 subjects = [subjects,thisSubject]; clear thisSubject;
 
-%% --- S37 Madeleine --- %% U30
+%% --- S37 Madeleine --- %% U29
 
 thisSubject.id  = 'S37';
 thisSubject.num  = 37;
@@ -921,7 +921,7 @@ thisSubject.movement = [0,0.3,-54.9;-0.5,-1.9,-56.6];
 thisSubject = doExtras(thisSubject);
 subjects = [subjects,thisSubject]; clear thisSubject;
 
-%% --- S40 Alex --- %% U31
+%% --- S40 Alex --- %% U30
 
 thisSubject.id  = 'S40';
 thisSubject.num  = 40;
@@ -940,7 +940,7 @@ thisSubject.bad_meg = [];
 thisSubject.note    = '';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
+thisSubject.mri      = 'CBU220336';
 thisSubject.date_mri = '';
         
 thisSubject.movement = [-9.7,4.5,-57.8;-10.1,6.3,-56.7;-10.6,5.2,-60.2;-11.3,3.7,-62];
