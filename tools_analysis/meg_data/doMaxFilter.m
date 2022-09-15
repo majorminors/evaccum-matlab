@@ -17,7 +17,11 @@ nfiles(ceil(numel(nfiles)/2)) = 1;
 
 save('settings.mat','settings');
 
+count = 0; % since we're doing this from the central run, lets get a counter to report where we're up to
 for i = nfiles
+    
+    count = count+1;
+    fprintf('maxxxxxxing %.0f of %.0f raw files\n',count,numel(nfiles))
     
     infname  = settings.infname{i};
     outfname = settings.outfname{i};
@@ -117,7 +121,7 @@ for i = nfiles
         [status, maxres] = unix(mfcmd_rest); % this stops screen-dumping?
         if status ~= 0
             disp(maxres)
-            error('MaxFilter failed! FYI: this will happen if you run it in matlab desktop mode for some reason.')
+            error('MaxFilter failed! FYI: this could happen because you are on an unlicenced node (only f, g, or h have licences) or sometimes if you run in desktop mode (reason unknown).')
         else
             disp(maxres);
             %plot head movements & fits
