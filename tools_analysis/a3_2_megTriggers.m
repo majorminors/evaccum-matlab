@@ -1,4 +1,4 @@
-function a3_2_megTriggers(thisSubject,datadir,toolsdir)
+function a3_2_megTriggers(thisSubject,datadir,toolsdir,overwrite)
 
 %addpath /hpc-software/matlab/cbu/
 addpath([toolsdir '/fieldtrip-lite-20190410']);
@@ -14,6 +14,9 @@ behavData = fullfile(behavDataDir,[thisSubject.id '_EvAccum.mat']);
 % and we'll output this revised version of it to play with
 megrtFile = fullfile(behavDataDir,[thisSubject.id '_MEGRTs.mat']);
 addpath(genpath(toolsdir))
+
+if ~exist(megrtFile,'file') || overwrite
+    
 
 %% load the behavioural data
 
@@ -74,9 +77,24 @@ for runi = 1:numel(thisSubject.meg_labs)
     
     % lets grab our trigger onset times in nice readable variables that
     % will work well with matlabs IDE
-    trialOnsets = triggerInfo.photoDiode.onsetTimes;
+    switch thisSubject.id
+        case 'S05'
+            % photodiode is crazy for s05---lots of extra triggers
+            trialOnsets = triggerInfo.trialTriggers.onsetTimes;
+            if runi == 2
+                skipCorr = 1; % is >90
+            end
+        case 'S23'
+            if runi == 3
+                skipCorr = 1; % is ~78...
+            end
+            trialOnsets = triggerInfo.photoDiode.onsetTimes;
+        otherwise
+            trialOnsets = triggerInfo.photoDiode.onsetTimes;
+    end
     allResponseOnsets = sort([triggerInfo.responseTriggersLeft.onsetTimes;triggerInfo.responseTriggersRight.onsetTimes]);
         
+    
 
     
     % now we go through each trial onset trigger
@@ -141,16 +159,97 @@ for runi = 1:numel(thisSubject.meg_labs)
     
     % first we check we have the right number of triggers
     if size(block,1) ~= numel(trialOnsets)
-        error('Inconsistent number of onset triggers vs trials')
+        warning('the trial onsets and block-expected trials dont match')
+        disp('lets do some subject specific editing')
+        edited = 0;
+        % we need to edit
+        % trialOnsets
+        % megRTs
+        % responseTimes
+        
+        switch thisSubject.id
+            case 'S03'
+                % on run 4, there are a bunch of additional photodiodes
+                if sum(megRTs(size(block,1)+1:end)) == 0
+                    % so delete any megrts that happen after the block
+                    megRTs = megRTs(1:size(block,1));
+                    trialOnsets = trialOnsets(1:size(block,1));
+                    responseTimes = responseTimes(1:size(block,1));
+                    edited = 1;
+                end
+            case 'S10'
+                if runi == 1
+                    megRTs = megRTs(219:end);
+                    trialOnsets = trialOnsets(219:end);
+                    responseTimes = responseTimes(219:end);
+                    edited = 1;
+                end
+            case 'S11'
+                if runi == 4
+                    megRTs = megRTs(1:size(block,1));
+                    trialOnsets = trialOnsets(1:size(block,1));
+                    responseTimes = responseTimes(1:size(block,1));
+                    edited = 1;
+                end
+            case 'S15'
+                if runi == 2
+                    % we missed the first part of the block, so make all
+                    % those zeros
+                    tmp = size(block,1) - numel(trialOnsets);
+                    d.rt(vecrunid,1:tmp) = 0;
+                    megRTs = [zeros(1,tmp),megRTs];
+                    trialOnsets = [zeros(1,tmp)';trialOnsets];
+                    responseTimes = [zeros(1,tmp),responseTimes];
+                    edited = 1;
+                    skipCorr = 1;
+                elseif runi == 5
+                    megRTs = megRTs(1:size(block,1));
+                    trialOnsets = trialOnsets(1:size(block,1));
+                    responseTimes = responseTimes(1:size(block,1));
+                    edited = 1;
+                end
+            case 'S29'
+                if runi == 4
+                    megRTs = megRTs(1:size(block,1));
+                    trialOnsets = trialOnsets(1:size(block,1));
+                    responseTimes = responseTimes(1:size(block,1));
+                    edited = 1;
+                end
+            case 'S32'
+                if runi == 1
+                    megRTs = megRTs(1:size(block,1));
+                    trialOnsets = trialOnsets(1:size(block,1));
+                    responseTimes = responseTimes(1:size(block,1));
+                    edited = 1;
+                end
+            case 'S36'
+                if runi == 4
+                    megRTs = megRTs(1:size(block,1));
+                    trialOnsets = trialOnsets(1:size(block,1));
+                    responseTimes = responseTimes(1:size(block,1));
+                    edited = 1;
+                end
+        end
+        
+        if ~edited
+            error('Inconsistent number of onset triggers vs trials')
+        end
+    end
+    
+    if ~exist('skipCorr','var')
+        skipCorr = 0;
     end
 
-    % I'll also check that my megrts correlate well with my matlab rts
     behavRTs = d.rt(vecrunid,:)';behavRTs = behavRTs(:); % transpose relevant rows of d.rt---my behavioural rts---and then place each block in this run under one another in the same row
-    RTidx = behavRTs~=0 & behavRTs>0; % get an index of where there should be an rt
-    corrArray = [behavRTs(RTidx) transpose(megRTs(RTidx))]; % concatenate the two rt vectors
-    corrArray = corr(corrArray); % correlate them
-    if corrArray(2,1) <0.95 || isnan(corrArray(2,1)) % and error if something seems wrong
-        error('large discrepancy between stim RT and MEG RT!')
+    
+    if ~skipCorr
+        % I'll also check that my megrts correlate well with my matlab rts
+        RTidx = behavRTs~=0 & behavRTs>0; % get an index of where there should be an rt
+        corrArray = [behavRTs(RTidx) transpose(megRTs(RTidx))]; % concatenate the two rt vectors
+        corrArray = corr(corrArray); % correlate them
+        if corrArray(2,1) <0.95 || isnan(corrArray(2,1)) % and error if something seems wrong
+            error('large discrepancy between stim RT and MEG RT!')
+        end
     end
 
     % ok, that should do us
@@ -220,8 +319,8 @@ for runi = 1:numel(thisSubject.meg_labs)
     conditionlabels = cellstr(conditionlabels); % need to convert for the preprocessing
     
     save(sprintf(trialEpochFile,num2str(runi)),'trl','conditionlabels')
-    
-    clear conditionlabels % clear this at the end or it'll have trouble on the second run
+
+    clear conditionlabels megRTs responseTimes % clear these at the end or it'll have trouble on the second run
 end
 
 megBehaviouralData(:,end+1) = 1:length(megBehaviouralData(:,1));
@@ -231,6 +330,10 @@ allconditionlabels = megBehaviouralData(:,7);
 if sum(strcmp(allconditionlabels,tmplabs)) ~= numel(tmplabs); error(['incongruent condition labels:' thisSubject.meg_labs{runi}]);end
 
 save(megrtFile,'megBehaviouralData','alltrl','allconditionlabels')
+
+else
+    disp('megrt file found, and not overwriting')
+end
 
 
 return
