@@ -1,5 +1,8 @@
 function a2_maxFilter(thisSubject,datadir,toolsdir,overwrite)
 
+warning('maxfilter will only work on f, g, and h nodes (i.e. compute nodes)')
+% no idea how to force the script to use them though
+
 if ~exist('overwrite','var'); overwrite = 0; end
 
 addpath /hpc-software/matlab/cbu/
@@ -38,7 +41,7 @@ for ifile = 1:length(d)
 end
 
 [PATHSTR,NAME,EXT] = fileparts(settings.outfname{ifile}); % just check one of these exists
-if overwrite || ~exist([PATHSTR,filesep,NAME,'_trans',EXT],'file') % and if so
+if overwrite || ~exist([PATHSTR,filesep,NAME,'_trans',EXT],'file') % and if not (or overwrite)
     doMaxFilter(settings) % max it up!
 end
 
