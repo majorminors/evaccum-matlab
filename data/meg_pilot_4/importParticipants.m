@@ -53,7 +53,7 @@ thisSubject.note    = '';
 thisSubject.usable = 1;
 
 thisSubject.mri      = 'CBU220178';
-thisSubject.date_mri = '';
+thisSubject.date_mri = '20220302';
         
 thisSubject.movement = [-10.7 7.6 -42.5;-9.3 12 -43.5;-11.1 13.3 -40.4;-10.9 9.4 -44.1;-9.3 14.4 -42.3];
 
@@ -80,7 +80,7 @@ thisSubject.note    = '';
 thisSubject.usable = 1;
 
 thisSubject.mri      = 'CBU220146';
-thisSubject.date_mri = '';
+thisSubject.date_mri = '20220223';
         
 thisSubject.movement = [-6.2,1.0,-34.8;-6.2,0.9,-39.6;-7.8,-4.3,-38.2;-6.6,-6.6,-42.1];
 
@@ -107,7 +107,7 @@ thisSubject.note    = '';
 thisSubject.usable = 1;
 
 thisSubject.mri      = 'CBU220212';
-thisSubject.date_mri = '';
+thisSubject.date_mri = '20220310';
         
 thisSubject.movement = [-6.5,14.4,-58.4;-4.8,14.3,-54;-5,13,-56.3;-9.6,7.7,-61.2];
 
@@ -134,7 +134,7 @@ thisSubject.note    = 'run 3, 4, 5 in separate file';
 thisSubject.usable = 1;
 
 thisSubject.mri      = 'CBU220183';
-thisSubject.date_mri = '220303';
+thisSubject.date_mri = '20220303';
         
 thisSubject.movement = [4.5,10.8,-44.6;5.8,10.3,-44.7;5.3,6.9,-46.1;6.2,13.3,-44.1;4.8,7.5,-46.9];
 
@@ -171,7 +171,7 @@ thisSubject.note    = '';
 thisSubject.usable = 1;
 
 thisSubject.mri      = 'CBU220227';
-thisSubject.date_mri = '';
+thisSubject.date_mri = '20220315';
         
 thisSubject.movement = [0.4,13.3,-39.9;2.4,11.4,-41.5;-1.2,12.6,-43.4;3.7,11.8,-35.5];
 
@@ -198,7 +198,7 @@ thisSubject.note    = '';
 thisSubject.usable = 1;
 
 thisSubject.mri      = 'CBU220184';
-thisSubject.date_mri = '';
+thisSubject.date_mri = '20220303';
         
 thisSubject.movement = [-4.3,8.3,-47.3;-4.7,8.1,-48.7;-4.8,7.8,-51.2;-6.9,7.7,-52.6];
 
@@ -225,7 +225,7 @@ thisSubject.note    = 'eye tracking a bit fucked because of goggles use, and als
 thisSubject.usable = 1;
 
 thisSubject.mri      = 'CBU220222';
-thisSubject.date_mri = '';
+thisSubject.date_mri = '20220314';
         
 thisSubject.movement = [0.2,15.9,-44.3;-0.7,15.5,-54.2;-0.3,14.1,-55.3;1.0,14.4,-55.3;-1.3,15.1,-55.7];
 
@@ -252,7 +252,7 @@ thisSubject.note    = 'first cue and maybe one or two trials are a false start';
 thisSubject.usable = 1;
 
 thisSubject.mri      = 'CBU220203';
-thisSubject.date_mri = '';
+thisSubject.date_mri = '20220309';
         
 thisSubject.movement = [-0,-3.9,-46.9;-0.5,-4.3,-47.2;-1,-4.2,-49.2;-0.3,-2.2,-45.9];
 
@@ -279,7 +279,7 @@ thisSubject.note    = 'some interference from eye makeup';
 thisSubject.usable = 1;
 
 thisSubject.mri      = 'CBU220195';
-thisSubject.date_mri = '';
+thisSubject.date_mri = '20220303';
         
 thisSubject.movement = [-6.6,8.1,-42.8;-8.2,3.2,-44.7;-6.8,2.5,-46.1;-6.7,1.4,-46.6];
 
@@ -305,8 +305,8 @@ thisSubject.bad_meg = [];
 thisSubject.note    = '';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
-thisSubject.date_mri = '';
+thisSubject.mri      = 'CBU210600';
+thisSubject.date_mri = '20211101';
         
 thisSubject.movement = [5,1,-46.5;4.8,0.7,-47.6;8,-0.2,-46.7;7,0,-46.6];
 
@@ -333,8 +333,8 @@ thisSubject.bad_meg = [];
 thisSubject.note    = '';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
-thisSubject.date_mri = '';
+thisSubject.mri      = 'CBU210183';
+thisSubject.date_mri = '20210610';
         
 thisSubject.movement = [3.1,7.5,-38.3;3.2,7.0,-38.9;3,4.8,-41.4;0.8,3.7,-39.1];
 
@@ -362,7 +362,7 @@ thisSubject.note    = '';
 thisSubject.usable = 1;
 
 thisSubject.mri      = 'CBU220255';
-thisSubject.date_mri = '';
+thisSubject.date_mri = '20220324';
         
 thisSubject.movement = [-4.6,9.0,-46.3;-5,8.7,-49.8;-1.4,11.3,-55;-0.9,9.1,-50.9;-0.6,9.5,-50.8];
 
@@ -390,7 +390,7 @@ thisSubject.note    = 'missed start of fourth block; runs 3-5 in a seperate file
 thisSubject.usable = 1;
 
 thisSubject.mri      = 'CBU220205';
-thisSubject.date_mri = '';
+thisSubject.date_mri = '20220309';
         
 thisSubject.movement = [0.2,15.1,-50.9;-0.5,15.0,-51.1;-1.0,15.1,-51.7;-2.1,11.5,-51.8;-1.1,10.8,-52.4;-0.6,10.9,-51.5];
 
@@ -429,7 +429,7 @@ thisSubject.note    = 'run 2-4 in a seperate file';
 thisSubject.usable = 1;
 
 thisSubject.mri      = 'CBU220221';
-thisSubject.date_mri = '';
+thisSubject.date_mri = '20220314';
         
 thisSubject.movement = [-1.2,-5.5,-43.8;-1.2,-4.4,-61.5;-2.8,-3.5,-42.2;-4.8,1.4,-38.6;-3.6,-3.5,-40.5];
 
@@ -468,7 +468,7 @@ thisSubject.note    = '';
 thisSubject.usable = 1;
 
 thisSubject.mri      = 'CBU220204';
-thisSubject.date_mri = '';
+thisSubject.date_mri = '20220309';
         
 thisSubject.movement = [1.5,15.6,-46.3;1.4,17.4,-46.2;0.7,15.9,-45.8;1.8,15.9,-48.4];
 
@@ -495,7 +495,7 @@ thisSubject.note    = '';
 thisSubject.usable = 1;
 
 thisSubject.mri      = 'CBU220210';
-thisSubject.date_mri = '';
+thisSubject.date_mri = '20220310';
         
 thisSubject.movement = [-1.7,13.9,-45.1;1,13.6,-43.8;0.6,13.2,-44.8;1.1,10.7,-44.6];
 
@@ -522,7 +522,7 @@ thisSubject.note    = '';
 thisSubject.usable = 1;
 
 thisSubject.mri      = 'CBU220226';
-thisSubject.date_mri = '';
+thisSubject.date_mri = '20220315';
         
 thisSubject.movement = [-1.7,-0.2,-54.8;-3.6,-0.2,-55.2;-3.5,-0.4,-55.1;-3.6,0.2,-56.3];
 
@@ -549,7 +549,7 @@ thisSubject.note    = '';
 thisSubject.usable = 1;
 
 thisSubject.mri      = 'CBU220223';
-thisSubject.date_mri = '';
+thisSubject.date_mri = '20220314';
         
 thisSubject.movement = [-5.1,23.2,-50.6;-6.1,21,-51.8;-5.8,21.4,-51.9;-6.6,21.1,-53.5];
 
@@ -575,8 +575,8 @@ thisSubject.bad_meg = [];
 thisSubject.note    = '';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
-thisSubject.date_mri = '';
+thisSubject.mri      = 'CBU190911';
+thisSubject.date_mri = '20191105';
         
 thisSubject.movement = [0.1,17.5,-37.0;0.0,17.6,-37.1;2.4,15.9,-38.2;0.1,14.1,-38.2;-1.6,17.1,-38.4];
 
@@ -657,7 +657,7 @@ thisSubject.note    = '';
 thisSubject.usable = 1;
 
 thisSubject.mri      = 'CBU220244';
-thisSubject.date_mri = '';
+thisSubject.date_mri = '20220321';
         
 thisSubject.movement = [1.3,13.0,-41.7;-1.1,10.2,-49.4;4.5,14.2,-38.6;1.7,9.7,-42.4];
 
@@ -714,7 +714,7 @@ thisSubject.note    = 'no eyetracking';
 thisSubject.usable = 1;
 
 thisSubject.mri      = 'CBU220211';
-thisSubject.date_mri = '';
+thisSubject.date_mri = '20220310';
         
 thisSubject.movement = [-4.5,13.2,-51.3;-5.9,12.1,-51.3;-5.3,13.2,-57;-4.9,11.5,-57.2];
 
@@ -741,7 +741,7 @@ thisSubject.note    = 'run 5 in a seperate file';
 thisSubject.usable = 1;
 
 thisSubject.mri      = 'CBU220254';
-thisSubject.date_mri = '';
+thisSubject.date_mri = '20220324';
         
 thisSubject.movement = [-3.3,8.0,-44.9;-3.9,5.4,-47.8;-4,4.7,-48.3;-2,4.0,-49.6;-2.4,6.9,-46.1];
 
@@ -759,10 +759,12 @@ thisSubject.movement = [-3.3,8.0,-44.9;-3.9,5.4,-47.8;-4,4.7,-48.3;-2,4.0,-49.6;
 thisSubject = doExtras(thisSubject);
 subjects = [subjects,thisSubject]; clear thisSubject;
 
-%% --- S31 Chris --- %% U25
+%% --- S32 Chris --- %% U25
+%
+% not notes here but looks like another split file 32 and 33
 
-thisSubject.id  = 'S31';
-thisSubject.num  = 31;
+thisSubject.id  = 'S32';
+thisSubject.num  = 32;
 
 thisSubject.meg_fld  = 'meg22_086';
 thisSubject.date_meg= '220328';
@@ -770,23 +772,23 @@ thisSubject.date_meg= '220328';
 thisSubject.meg_runs = {'run1_raw' 'run2_raw' 'run3_raw' 'run4_raw'};
 thisSubject.meg_labs = {'Run1' 'Run2' 'Run3' 'Run4'};
 thisSubject.runid = [1:4;5:8;9:12;13:16]; % each row is a vector of the blocks in that run (e.g. [1:6;7:12])
-thisSubject.runblks = 16;
+thisSubject.runblks = [16,4,12];
  
 thisSubject.bad_eeg = [30,38];
 thisSubject.bad_meg = [];
 
 thisSubject.note    = '';
-thisSubject.usable = 1;
+thisSubject.usable = 0;
 
 thisSubject.mri      = 'CBU220270';
-thisSubject.date_mri = '';
+thisSubject.date_mri = '20220330';
         
 thisSubject.movement = [-12.5,7.2,-49.6;-10.1,7.6,-51.5;-10.8,7.6,-53.0;-9.8,7.8,-53.4];
 
 thisSubject = doExtras(thisSubject);
 subjects = [subjects,thisSubject]; clear thisSubject;
 
-%% --- S34 Aaron --- %% U26
+%% --- S34 Aaron --- %% 
 
 thisSubject.id  = 'S34';
 thisSubject.num  = 34;
@@ -794,8 +796,8 @@ thisSubject.num  = 34;
 thisSubject.meg_fld  = 'meg22_088';
 thisSubject.date_meg= '220329';
 
-thisSubject.meg_runs = {'run1_raw' 'run2_raw' 'run3_raw' 'run4_raw'};
-thisSubject.meg_labs = {'Run1' 'Run2' 'Run3' 'Run4'};
+thisSubject.meg_runs = {'run1_raw' 'run2_raw'};
+thisSubject.meg_labs = {'Run1' 'Run2'};
 thisSubject.runid = [1:4;5:8;9:12;13:16]; % each row is a vector of the blocks in that run (e.g. [1:6;7:12])
 thisSubject.runblks = 16;
  
@@ -803,17 +805,17 @@ thisSubject.bad_eeg = [];
 thisSubject.bad_meg = [1712];
 
 thisSubject.note    = '';
-thisSubject.usable = 1;
+thisSubject.usable = 0;
 
-thisSubject.mri      = '';
-thisSubject.date_mri = '';
+thisSubject.mri      = 'CBU190403';
+thisSubject.date_mri = '20190529';
         
 thisSubject.movement = [-2.7,16.8,-45.8;-0.8,16.1,-47.5];
 
 thisSubject = doExtras(thisSubject);
 subjects = [subjects,thisSubject]; clear thisSubject;
 
-%% --- S35 Naomi --- %% U27
+%% --- S35 Naomi --- %% U26
 
 thisSubject.id  = 'S35';
 thisSubject.num  = 35;
@@ -840,7 +842,7 @@ thisSubject.movement = [-2,7.6,-45.8;-2.8,7.8,-51.7;-2.3,12.2,-58;-2.5,10.6,-48.
 thisSubject = doExtras(thisSubject);
 subjects = [subjects,thisSubject]; clear thisSubject;
 
-%% --- S36 Alex --- %% U28
+%% --- S36 Alex --- %% U27
 
 thisSubject.id  = 'S36';
 thisSubject.num  = 36;
@@ -867,7 +869,7 @@ thisSubject.movement = [0.4,6.1,-42.3;-0.3,4.3,-43.8;0.2,2.9,-44.3;0.4,2.2,-47.1
 thisSubject = doExtras(thisSubject);
 subjects = [subjects,thisSubject]; clear thisSubject;
 
-%% --- S37 Madeleine --- %% U29
+%% --- S37 Madeleine --- %% U28
 
 thisSubject.id  = 'S37';
 thisSubject.num  = 37;
@@ -914,14 +916,14 @@ thisSubject.note    = '';
 thisSubject.usable = 0;
 
 thisSubject.mri      = 'CBU220243';
-thisSubject.date_mri = '';
+thisSubject.date_mri = '20220321';
         
 thisSubject.movement = [0,0.3,-54.9;-0.5,-1.9,-56.6];
 
 thisSubject = doExtras(thisSubject);
 subjects = [subjects,thisSubject]; clear thisSubject;
 
-%% --- S40 Alex --- %% U30
+%% --- S40 Alex --- %% U29
 
 thisSubject.id  = 'S40';
 thisSubject.num  = 40;
@@ -941,7 +943,7 @@ thisSubject.note    = '';
 thisSubject.usable = 1;
 
 thisSubject.mri      = 'CBU220336';
-thisSubject.date_mri = '';
+thisSubject.date_mri = '20220428';
         
 thisSubject.movement = [-9.7,4.5,-57.8;-10.1,6.3,-56.7;-10.6,5.2,-60.2;-11.3,3.7,-62];
 
