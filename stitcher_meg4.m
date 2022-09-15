@@ -1,6 +1,6 @@
 clear all
 
-theseSubjects = [5,15,17,30];
+theseSubjects = [5,15,17,30,32];
 
 rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab';
 scriptdir = fullfile(rootdir,'tools_analysis');
