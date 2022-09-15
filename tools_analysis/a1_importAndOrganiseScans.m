@@ -35,10 +35,18 @@ runfiles    = cellfun(@(x) sprintf([base,filesep,'%s_raw.fif'],x), runlabs,'Unif
 
 cd(source);
 cellfun(@copyfile,sourcefiles,runfiles,'UniformOutput',false);
+disp('done importing meg data')
 
 %% import MRI structurals
 disp('importing mri struct(s)')
-if ~isempty(thisSubject.mri)
+if isempty(thisSubject.mri)
+    
+    disp('we have not found mri structurals')
+    
+else
+    
+    disp('we have found mri structurals')
+    
     % locate the right destination folder
     T1Folder = [base,filesep,'T1']; % we might need a filesep at the end
     
@@ -65,6 +73,7 @@ if ~isempty(thisSubject.mri)
     copyfile(target,T1Folder);
     
 end
+disp('done importing mri struct(s)')
 
 cd(base); save([thisSubject.id,'_filesID.mat'],'runfiles','sourcefiles','thisSubject');
 
