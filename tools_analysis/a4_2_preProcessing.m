@@ -13,7 +13,8 @@ function a4_2_preProcessing(thisSubject,datadir,toolsdir)
 addpath /hpc-software/matlab/cbu/
 addpath(genpath('/neuro/meg_pd_1.2/'));       % FIFACCESS toolbox if use some meg_misc functions below
 addpath(genpath('/imaging/local/software/spm_cbu_svn/releases/spm12_fil_r7219/'));
-addpath(genpath(fullfile(toolsdir,'eeglab13_5_4b')))
+rmpath(fullfile(toolsdir,'fieldtrip-20190410'))
+%addpath(genpath(fullfile(toolsdir,'eeglab13_5_4b')))
 addpath(genpath(fullfile(toolsdir,'meg_data')))
 addpath(fullfile(toolsdir,'..','..','..','Toolboxes','osl','osl-core'))
 
@@ -26,9 +27,9 @@ behavfile = fullfile(behavDir,[thisSubject.id '_Evaccum.mat']); % what is it cal
 megrtfile = fullfile(behavDir,[thisSubject.id '_MEGRTs.mat']); % and since I have put my MEG triggers somewhere else, we will specify that too
 addpath(rootDir);
 
-doFilter = 0;
-doICA = 2;
-doReRef = 0;
+doFilter = 1;
+doICA = 1;
+doReRef = 1;
 overwrite = 0;
 
 randomSeed = 7; % a random seed for ICA decomposition with oslafrica (use this same seed for reproducability)
@@ -47,6 +48,7 @@ end
 % them in the Preprocess folder
 for runi = 1:numel(inputFiles)
     if ~exist(outputFiles{runi},'file') || overwrite
+        fprintf('converting %.0f of %.0f raw files\n',runi,numel(inputFiles))
         S=[];
         S.dataset       = inputFiles{runi};
         S.outfile       = outputFiles{runi};
@@ -57,6 +59,9 @@ for runi = 1:numel(inputFiles)
         S.checkboundary = 0;
         
         spm_eeg_convert(S);
+    else
+        fprintf('copying %.0f of %.0f raw files\n',runi,numel(inputFiles))
+        copyfile(inputFiles{runi},outputFiles{runi});
     end
 end
 
@@ -66,6 +71,7 @@ if doFilter
     inputFiles = outputFiles;
     % electric line 50Hz in the uk needs to be removed
     for runi = 1:length(inputFiles)
+        fprintf('filtering %.0f of %.0f raw files\n',runi,numel(inputFiles))
         % let's save these into a new folder
         [pathstr,name,ext] = fileparts(inputFiles{runi});
         % by default spm_eeg_filter saves with prefix 'f', and we filter twice
@@ -101,6 +107,8 @@ if doReRef
     inputFiles = outputFiles;
     % re-referencing to the average
     for runi = 1:length(inputFiles)
+        
+        fprintf('rereferencing %.0f of %.0f raw files\n',runi,numel(inputFiles))
         
         [pathstr,name,ext] = fileparts(outputFiles{runi});
         inputFile=sprintf('%s/M%s%s',pathstr,name,ext);
@@ -155,6 +163,8 @@ end
 if doICA
     inputFiles = outputFiles;
     for runi = 1:length(inputFiles)
+        
+        fprintf('ica for %.0f of %.0f raw files\n',runi,numel(inputFiles))
         
         [pathstr,name,ext] = fileparts(inputFiles{runi});
         outputFile=sprintf('%s/ica%s%s',pathstr,name,ext);
