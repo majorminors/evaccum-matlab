@@ -189,7 +189,7 @@ for runi = 1:numel(thisSubject.meg_labs)
                     megRTs = megRTs(1:size(block,1));
                     trialOnsets = trialOnsets(1:size(block,1));
                     responseTimes = responseTimes(1:size(block,1));
-                    edited = 1;
+                    edited = 1; 
                 end
             case 'S15'
                 if runi == 2

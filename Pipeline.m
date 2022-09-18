@@ -15,12 +15,12 @@ scriptdir = fullfile(rootdir,'tools_analysis'); cd(scriptdir)
 datadir = fullfile(rootdir,'data','meg_pilot_4'); addpath(datadir);
 runLocal = 1;
 runBehav = 0;
-subjectRange = 2;
-jobdir = fullfile(rootdir,'job_logging','preproc_29subs_02');
+subjectRange = 14;
+jobdir = fullfile(rootdir,'job_logging','preproc_29subs_04');
 % functionToRun = @a1_importAndOrganiseScans; additionalParams={datadir,1}; % datadir top level and overwrite (0|1)
-functionToRun = @a2_maxFilter; additionalParams={datadir,scriptdir,1}; % datadir top level, analysis tools/bin/libs and overwrite (0|1)
+% functionToRun = @a2_maxFilter; additionalParams={datadir,scriptdir,1}; % datadir top level, analysis tools/bin/libs and overwrite (0|1)
 % functionToRun = @a3_2_megTriggers; additionalParams={datadir,scriptdir,0}; % datadir top level, analysis tools/bin/libs
-% functionToRun = @a4_2_preProcessing; additionalParams={datadir,scriptdir};
+functionToRun = @a4_2_preProcessing; additionalParams={datadir,scriptdir};
 
 allSubjects = importParticipants();
 if ~subjectRange; subjectRange = 1:numel(allSubjects); end
@@ -72,7 +72,7 @@ if ~runLocal
     disp('creating scheduler object');
     % create a scheduler object
     clear S;
-    S = cbu_scheduler('custom',{'compute',3,12,86400}); % cutsom params: compute job, 46 workers, 12 GB per worker, 14400 secs = 4 hours
+    S = cbu_scheduler('custom',{'compute',3,12,172800}); % cutsom params: compute job, 46 workers, 12 GB per worker, 14400 secs = 4 hours
     %     S.SubmitArguments=[S.SubmitArguments ' --exclusive=user']; % when we were testing a possible memory issue
     
     if ~exist(jobdir,'dir')
