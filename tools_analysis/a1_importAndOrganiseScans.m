@@ -34,6 +34,7 @@ runlabs     = thisSubject.meg_labs;
 runfiles    = cellfun(@(x) sprintf([base,filesep,'%s_raw.fif'],x), runlabs,'UniformOutput',false);
 
 cd(source);
+if overwrite;for runi = 1:numel(runfiles);if exist(runfiles{runi},'file');delete(runfiles{runi});end;end;end
 cellfun(@copyfile,sourcefiles,runfiles,'UniformOutput',false);
 disp('done importing meg data')
 
