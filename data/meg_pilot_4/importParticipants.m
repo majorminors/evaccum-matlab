@@ -50,7 +50,7 @@ thisSubject.bad_eeg = [];
 thisSubject.bad_meg = [1712];
 
 thisSubject.note    = '';
-thisSubject.usable = 1;
+thisSubject.usable = 0;
 
 thisSubject.mri      = 'CBU220178';
 thisSubject.date_mri = '20220302';
@@ -888,8 +888,8 @@ thisSubject.bad_meg = [];
 thisSubject.note    = '';
 thisSubject.usable = 1;
 
-thisSubject.mri      = '';
-thisSubject.date_mri = '';
+thisSubject.mri      = 'CBU210591';
+thisSubject.date_mri = '20211027';
         
 thisSubject.movement = [-9.0,10.2,-38.3;-8.5,12.4,-41.2;-8.5,10.9,-41.7;-8.6,11.8,-42.4];
 
