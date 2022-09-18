@@ -11,10 +11,10 @@ function a4_2_preProcessing(thisSubject,datadir,toolsdir)
 % 7. extract trial information and epoch using that
 
 addpath /hpc-software/matlab/cbu/
-addpath(genpath('/neuro/meg_pd_1.2/'));       % FIFACCESS toolbox if use some meg_misc functions below
-addpath(genpath('/imaging/local/software/spm_cbu_svn/releases/spm12_fil_r7219/'));
-rmpath(fullfile(toolsdir,'fieldtrip-20190410'))
-%addpath(genpath(fullfile(toolsdir,'eeglab13_5_4b')))
+addpath('/neuro/meg_pd_1.2/');       % FIFACCESS toolbox if use some meg_misc functions below
+addpath('/imaging/local/software/spm_cbu_svn/releases/spm12_fil_r7219/');
+addpath(fullfile(toolsdir,'fieldtrip-20190410')); ft_defaults;
+addpath(genpath(fullfile(toolsdir,'eeglab13_5_4b')))
 addpath(genpath(fullfile(toolsdir,'meg_data')))
 addpath(fullfile(toolsdir,'..','..','..','Toolboxes','osl','osl-core'))
 
@@ -27,12 +27,18 @@ behavfile = fullfile(behavDir,[thisSubject.id '_Evaccum.mat']); % what is it cal
 megrtfile = fullfile(behavDir,[thisSubject.id '_MEGRTs.mat']); % and since I have put my MEG triggers somewhere else, we will specify that too
 addpath(rootDir);
 
-doFilter = 1;
-doICA = 1;
-doReRef = 1;
+% each step adds prefixes, so we will have to search for those files if they exist
+doFilter = 0; filterDone = 1; % we filter first
+doReRef = 0; rerefDone = 1; % then reref
+doICA = 0; icaDone = 1; % then do the ICA
+doEpoch = 1; epochDone = 0; % then epoch
 overwrite = 0;
 
 randomSeed = 7; % a random seed for ICA decomposition with oslafrica (use this same seed for reproducability)
+
+if all([doFilter; filterDone])==true; error('filterDone will cause problems if you are also doing a filter'); end
+if all([doReRef; rerefDone])==true; error('doReRef will cause problems if you are also doing rereferencing'); end
+if all([doICA; icaDone])==true; error('doICA will cause problems if you are also doing ica'); end
 
 inputFiles = {}; % init this
 outputFiles= {}; % init this
@@ -44,8 +50,6 @@ for runNum = 1:numel(thisSubject.meg_runs)
 end
 
 %% if we haven't already, lets convert fif files
-% we might have already converted these, but let's convert again and place
-% them in the Preprocess folder
 for runi = 1:numel(inputFiles)
     if ~exist(outputFiles{runi},'file') || overwrite
         fprintf('converting %.0f of %.0f raw files\n',runi,numel(inputFiles))
@@ -59,61 +63,64 @@ for runi = 1:numel(inputFiles)
         S.checkboundary = 0;
         
         spm_eeg_convert(S);
-    else
-        fprintf('copying %.0f of %.0f raw files\n',runi,numel(inputFiles))
-        copyfile(inputFiles{runi},outputFiles{runi});
     end
 end
 
+% now let's catch up to where we're up to with the preprocessing
+filterPrefix = 'ff'; % by default spm_eeg_filter saves with prefix 'f', and we filter twice so we'll end up with 'ff'
+rerefPrefix = 'M'; % we rereference with spm montage, so it will add an 'M' to the files
+ICAPrefix = 'ica'; % we add this to the file ourselves
+epochPrefix = 'e'; % we also choose this
+
+if filterDone; outputFiles = addPrefix(outputFiles,filterPrefix);end
+if rerefDone; outputFiles = addPrefix(outputFiles,rerefPrefix);end
+if icaDone; outputFiles = addPrefix(outputFiles,ICAPrefix);end
 
 %% Line and highpass filter
 if doFilter
+    % old output files become the input files
     inputFiles = outputFiles;
+    % and new output files will have the filter prefix appended to the
+    outputFiles = addPrefix(inputFiles,filterPrefix);
     % electric line 50Hz in the uk needs to be removed
     for runi = 1:length(inputFiles)
         fprintf('filtering %.0f of %.0f raw files\n',runi,numel(inputFiles))
-        % let's save these into a new folder
-        [pathstr,name,ext] = fileparts(inputFiles{runi});
-        % by default spm_eeg_filter saves with prefix 'f', and we filter twice
-        % so we'll end up with 'ff', so we look for those or make them
-        outputFile = sprintf('%s/ff%s%s',pathstr,name,ext);
-        if ~exist(outputFile,'file') || overwrite
+        if ~exist(outputFile{runi},'file') || overwrite
             
             %highpass
             S   = [];
             S.D = inputFiles{runi};
             S.band = 'high';
             S.freq = 0.5; % removes the drift
-            D = spm_eeg_filter(S);
+            D = spm_eeg_filter(S); % by default spm_eeg_filter saves with prefix 'f'
             
             %line filter
             S   = [];
             S.D = D;
             S.band = 'stop';
             S.freq = [49 51];% This defines the notch filter frequency range, i.e. around 50Hz
-            D = spm_eeg_filter(S);
+            D = spm_eeg_filter(S); % by default spm_eeg_filter saves with prefix 'f'
             
             
             outputFiles{runi} = D.fullfile;
             D.save
-        else
-            outputFiles{runi} = outputFile;
         end
     end
 end
 
 %% Set bad channels and Re-reference
+%
+% we rereference with spm montage, so it will add an 'M' to the files
 if doReRef
+    % old output files become the input files
     inputFiles = outputFiles;
+    % and new output files will have the reref prefix appended to the input files
+    outputFiles = addPrefix(inputFiles,rerefPrefix);
     % re-referencing to the average
     for runi = 1:length(inputFiles)
         
         fprintf('rereferencing %.0f of %.0f raw files\n',runi,numel(inputFiles))
-        
-        [pathstr,name,ext] = fileparts(outputFiles{runi});
-        inputFile=sprintf('%s/M%s%s',pathstr,name,ext);
-        
-        if (~exist(inputFile,'file') || overwrite)
+        if (~exist(outputFile{runi},'file') || overwrite)
             
             %add our bad channels
             
@@ -153,21 +160,21 @@ if doReRef
             D = reref(inputFiles{runi});
             outputFiles{runi} = D{2}.Dfname;
             
-        else
-            outputFiles{runi}=inputFile;
         end
     end
 end
 
+
 %% do ICA
+
 if doICA
+    % old output files become the input files
     inputFiles = outputFiles;
+    % and new output files will have the ica prefix appended to the input files
+    outputFiles = addPrefix(inputFiles,ICAPrefix);
     for runi = 1:length(inputFiles)
         
         fprintf('ica for %.0f of %.0f raw files\n',runi,numel(inputFiles))
-        
-        [pathstr,name,ext] = fileparts(inputFiles{runi});
-        outputFile=sprintf('%s/ica%s%s',pathstr,name,ext);
         
         % we need to prepare an EEG layout for africa
         D = spm_eeg_load(inputFiles{runi});
@@ -176,7 +183,7 @@ if doICA
         cfg.elec = D.sensors('EEG');
         eeg_layout = ft_prepare_layout(cfg);
         
-        if ~exist(outputFile,'file') || overwrite || doICA == 2
+        if ~exist(outputFiles{runi},'file') || overwrite || doICA == 2
             
             rng(randomSeed); % random seed for reproducing ICA decomposition
             
@@ -190,7 +197,7 @@ if doICA
             if doICA == 1
                 
                 D = spm_eeg_load(inputFiles{runi});
-                D = D.copy(outputFile); % so it doesn't save over the previous step
+                D = D.copy(outputFiles{runi}); % make a new copy with a different name so it doesn't save over the previous step
                 
                 % first automatically remove the bad components
                 % with no modality specified will look for MEG
@@ -237,43 +244,122 @@ if doICA
             
             outputFiles{runi} = D.fullfile;
             
-        else
-            outputFiles{runi} = outputFile;
         end
         
     end
 end
 
-%% downsample and epoch
-inputFiles = outputFiles;
+%% epoch and merge
 
-% we need the behavioural data from the MEGtriggers script
-if ~exist(megrtfile,'file')
-    error('Prepare behavioural files first!')
+if doEpoch
+    % old output files become the input files
+    inputFiles = outputFiles;
+    % and new output files will have the epoch prefix appended to the input files
+    outputFiles = addPrefix(inputFiles,epochPrefix);
+    
+    % we need the behavioural data from the MEGtriggers script
+    if ~exist(megrtfile,'file')
+        error('Prepare behavioural files first!')
+    end
+    
+    % trial info files needed for epoching (put together in megtriggers script)
+    trls = getnames(outputFolder,[],'run*_trl.mat');
+    trls = arrayfun(@(x)(strcat([outputFolder filesep],x)), trls);
+    
+    load(megrtfile,'megBehaviouralData'); % load behavioural file from MRGtrgRT script
+    numtrials = megBehaviouralData(:,end-1:end); % pull the last two columns of megBehaviouralData: what run the trial belonged to, and a unique number for the trial respectively
+    numtrials = str2double(numtrials); % convert to double
+    
+    spm_jobman('initcfg');
+    
+    for runFile = 1:length(inputFiles)
+        
+        clear matlabbatch;
+        
+        %Epoch+Rearrange labels
+        matlabbatch{1}.spm.meeg.preproc.epoch.D(1) = cellstr(inputFiles{runFile});
+        matlabbatch{1}.spm.meeg.preproc.epoch.trialchoice.trlfile = cellstr(trls{runFile});
+        
+        matlabbatch{1}.spm.meeg.preproc.epoch.bc = 0;
+        matlabbatch{1}.spm.meeg.preproc.epoch.eventpadding = 0;
+        matlabbatch{1}.spm.meeg.preproc.epoch.prefix = epochPrefix;
+        
+        output = spm_jobman('run',matlabbatch);
+        
+        %% Add  info needed for MVPA
+        D = spm_eeg_load(output{1}.Dfname{1});
+        %info to store: [trial num, block num, here you can add anything you wish]
+        thesetrials = numtrials(find(numtrials(:,1) == runFile),2); % find the trial numbers related to this runFile which is the index for each file - files are the Maxfilter outputs ...trans.fif for each run - so what trials for this run
+        info = num2cell([thesetrials';runFile.*ones(1,numel(thesetrials))],1); % put that into 'info'
+        D = trialtag(D, ':', info) ;save(D); % tack 'info' onto the trial data
+        
+        %     clear matlabbatch;
+        %     matlabbatch{1}.spm.meeg.preproc.prepare.D(1) = cellstr(output{1}.Dfname);
+        %
+        %     %matlabbatch{2}.spm.meeg.preproc.prepare.D(1) = cfg_dep('Epoching: Epoched Datafile', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','Dfname'));
+        %     matlabbatch{1}.spm.meeg.preproc.prepare.task{1}.sortconditions.label = {
+        %         'HcHr'
+        %         'EcHr'
+        %         'HcEr'
+        %         'EcEr'
+        %         }';
+        %
+        %     matlabbatch{2}.spm.meeg.preproc.downsample.D(1) = cfg_dep('Prepare: Prepared Datafile', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','Dfname'));
+        %     matlabbatch{2}.spm.meeg.preproc.downsample.fsample_new = 500;
+        %     matlabbatch{2}.spm.meeg.preproc.downsample.method = 'resample';
+        %     matlabbatch{2}.spm.meeg.preproc.downsample.prefix = 'd';
+        %
+        %
+        %     output = spm_jobman('run',matlabbatch);
+        %
+        
+        
+        
+        %get ready for another round
+        clear matlabbatch;
+        outfiles{runFile} = output{1}.Dfname; %#ok
+        
+        %check that number of trials corresponds
+        D = spm_eeg_load(outfiles{runFile}{1});
+        trl = load(trls{runFile},'trl');
+        if numel(D.conditions)~= size(trl.trl,1); error([D.fname,' discrepant number of trials!']);end
+        clear trl D;
+    end
+    
+    
+    
 end
 
-% trial info files needed for epoching (put together in megtriggers script)
-trls = getnames(outputFolder,[],'run*_trl.mat');
-trls = {trls{:,1}};
 
-load(megrtfile,'megBehaviouralData'); % load behavioural file from MRGtrgRT script
-numtrials = megBehaviouralData(:,end-1:end); % pull the last two columns of megBehaviouralData: what run the trial belonged to, and a unique number for the trial respectively
-numtrials = str2double(numtrials); % convert to double
+%% merge
+% make a temp folder to work in, because I can't figure out how to
+% determine the name or save location of spm_eeg_merge
+tmpFld = [outputFolder filesep 'tmpMerge'];
+mkdir(tmpFld)
+cd(tmpFld)
 
-%Xfiles=preprocPipeline(inputFiles,trls,numtrials);
+S=[];
 
-% %% Re-reference
-% Xfiles = outputf{1};clear outf;
+% collect the files to be merged
+% S.D needs to be  a char array
+S.D = char([outfiles{:}]);
 
-% [pathstr,name,ext] = fileparts(Xfiles);
-% outf=sprintf('%s/M%s%s',pathstr,name,ext);
-% %if ~exist(outf,'file') || overwrite
-%
-% D = reref(Xfiles);
-%
-%
-%
-% Xfiles = D{2}.Dfname{1};
+% add options and perform the merge
+S.recode = 'same';
+S.prefix = 'merged_';
+D = spm_eeg_merge(S); % will save in the current folder and apparently with the first name in S.D?
+
+% so since itll be saved same filename as the first file, lets grab the
+% 'Run1' part and change it to something information
+% started work trying to make this a bit name agnostic, but gave up for
+% time
+prefixes = regexp(D.fname,[S.prefix '(\w*)Run'],'tokens'); % grab all the prefixes - everything before 'Run'
+toReplace = regexp(D.fname,[prefixes{:}{:} '(\w*)_trans'],'tokens'); % grab whatever is between the prefixes and '_trans'
+newFilename = replace(D.fname,toReplace{:}{:},'allRuns'); % replace that with something more informative
+copyfile(D.fname,[outputFolder filesep newFilename],'f'); % copy the file from here to where it should go
+
+cd(toolsdir) % go back home
+rmdir(tmpFld,'s') % remove that temp folder we were working in
 
 return
 end
@@ -301,7 +387,7 @@ return
 end
 
 
-function Xfiles=preprocPipeline(infname,trls,numtrials)
+function Xfiles=epochIt(infname,trls,numtrials)
 
 spm_jobman('initcfg');
 
@@ -329,25 +415,25 @@ for runFile = 1:numel(infname)
     info = num2cell([thesetrials';runFile.*ones(1,numel(thesetrials))],1); % put that into 'info'
     D = trialtag(D, ':', info) ;save(D); % tack 'info' onto the trial data
     
-    clear matlabbatch;
-    matlabbatch{1}.spm.meeg.preproc.prepare.D(1) = cellstr(output{1}.Dfname);
-    
-    %matlabbatch{2}.spm.meeg.preproc.prepare.D(1) = cfg_dep('Epoching: Epoched Datafile', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','Dfname'));
-    matlabbatch{1}.spm.meeg.preproc.prepare.task{1}.sortconditions.label = {
-        'HcHr'
-        'EcHr'
-        'HcEr'
-        'EcEr'
-        }';
-    
-    matlabbatch{2}.spm.meeg.preproc.downsample.D(1) = cfg_dep('Prepare: Prepared Datafile', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','Dfname'));
-    matlabbatch{2}.spm.meeg.preproc.downsample.fsample_new = 500;
-    matlabbatch{2}.spm.meeg.preproc.downsample.method = 'resample';
-    matlabbatch{2}.spm.meeg.preproc.downsample.prefix = 'd';
-    
-    
-    output = spm_jobman('run',matlabbatch);
-    
+    %     clear matlabbatch;
+    %     matlabbatch{1}.spm.meeg.preproc.prepare.D(1) = cellstr(output{1}.Dfname);
+    %
+    %     %matlabbatch{2}.spm.meeg.preproc.prepare.D(1) = cfg_dep('Epoching: Epoched Datafile', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','Dfname'));
+    %     matlabbatch{1}.spm.meeg.preproc.prepare.task{1}.sortconditions.label = {
+    %         'HcHr'
+    %         'EcHr'
+    %         'HcEr'
+    %         'EcEr'
+    %         }';
+    %
+    %     matlabbatch{2}.spm.meeg.preproc.downsample.D(1) = cfg_dep('Prepare: Prepared Datafile', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','Dfname'));
+    %     matlabbatch{2}.spm.meeg.preproc.downsample.fsample_new = 500;
+    %     matlabbatch{2}.spm.meeg.preproc.downsample.method = 'resample';
+    %     matlabbatch{2}.spm.meeg.preproc.downsample.prefix = 'd';
+    %
+    %
+    %     output = spm_jobman('run',matlabbatch);
+    %
     
     
     
@@ -379,6 +465,16 @@ D = spm_eeg_merge(S);
 
 
 Xfiles = D.fullfile;
+
+return
+end
+
+function outFiles = addPrefix(files,prefix)
+
+for fileIdx = 1:length(files)
+    [pathstr,name,ext] = fileparts(files{fileIdx});
+    outFiles{fileIdx} = sprintf(['%s/' prefix '%s%s'],pathstr,name,ext);
+end
 
 return
 end
