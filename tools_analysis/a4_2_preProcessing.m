@@ -31,14 +31,15 @@ addpath(rootDir);
 doFilter = 0; filterDone = 1; % we filter first
 doReRef = 0; rerefDone = 1; % then reref
 doICA = 0; icaDone = 1; % then do the ICA
-doEpoch = 1; epochDone = 0; % then epoch
+doEpoch = 0; epochDone = 1; % then epoch
 overwrite = 0;
 
 randomSeed = 7; % a random seed for ICA decomposition with oslafrica (use this same seed for reproducability)
 
 if all([doFilter; filterDone])==true; error('filterDone will cause problems if you are also doing a filter'); end
-if all([doReRef; rerefDone])==true; error('doReRef will cause problems if you are also doing rereferencing'); end
-if all([doICA; icaDone])==true; error('doICA will cause problems if you are also doing ica'); end
+if all([doReRef; rerefDone])==true; error('rerefDone will cause problems if you are also doing rereferencing'); end
+if all([doICA; icaDone])==true; error('icaDone will cause problems if you are also doing ica'); end
+if all([doEpoch; epochDone])==true; error('epochDone will cause problems if you are also epoching'); end
 
 inputFiles = {}; % init this
 outputFiles= {}; % init this
@@ -75,6 +76,7 @@ epochPrefix = 'e'; % we also choose this
 if filterDone; outputFiles = addPrefix(outputFiles,filterPrefix);end
 if rerefDone; outputFiles = addPrefix(outputFiles,rerefPrefix);end
 if icaDone; outputFiles = addPrefix(outputFiles,ICAPrefix);end
+if epochDone; outputFiles = addPrefix(outputFiles,epochPrefix);end
 
 %% Line and highpass filter
 if doFilter
@@ -191,23 +193,36 @@ if doICA
             
             % https://ohba-analysis.github.io/osl-docs/matlab/osl_example_africa.html#!
             
-            % if we don't add "D = osl_africa..." it will save it as whatever
-            % the D was that was loaded!
+            % it is important that bad epochs are excluded prior to running AFRICA
+            % look for bad channels
+            D = osl_detect_artefacts(D,'badchannels',true,'badtimes',false,'modalities',modalities);
+            % then look for bad segments
+            D = osl_detect_artefacts(D,'badchannels',false,'badtimes',true,'modalities',modalities);
+
             
             if doICA == 1
                 
+                % osl_africa usually doesn't autosave after running, but it
+                % does for ICA, because it's time consuming
+                % so we load our input files
                 D = spm_eeg_load(inputFiles{runi});
-                D = D.copy(outputFiles{runi}); % make a new copy with a different name so it doesn't save over the previous step
+                % then we'll make a new copy with a different name so it doesn't save over the previous step
+                D = D.copy(outputFiles{runi}); 
+             
+                % now each time we call osl_africa, call it as:
+                % D = osl_africa...
+                % because of the autosave, the D in memory won't be the
+                % same D saved to disk!
                 
                 % first automatically remove the bad components
                 % with no modality specified will look for MEG
-                osl_africa(D,...
+                D = osl_africa(D,...
                     'do_ica',true,...
                     'used_maxfilter',true,...
                     'artefact_channels',{'EOG','ECG'}...
                     );
                 % now will look for EEG
-                osl_africa(D,...
+                D = osl_africa(D,...
                     'do_ica',true,...
                     'auto_artefact_chans_corr_thresh',.35,...
                     'eeg_layout',eeg_layout.cfg.output,...
@@ -216,10 +231,14 @@ if doICA
                     'artefact_channels',{'EOG','ECG'}...
                     );
                 % automatically does artefact identification (default), and removes them
+                
                 % this creates D.ica
                 
                 
             elseif doICA == 2
+                
+                % WIP: this does a manual identification, but I haven't
+                % checked it saves properly and whatnot
                 
                 D = spm_eeg_load(inputFiles{runi});
                 
@@ -255,7 +274,7 @@ if doEpoch
     % old output files become the input files
     inputFiles = outputFiles;
     % and new output files will have the epoch prefix appended to the input files
-    outputFiles = addPrefix(inputFiles,epochPrefix);
+    outputFiles = addPrefix(inputFiles,epochPrefix); % this is actually unnecessary
     
     % we need the behavioural data from the MEGtriggers script
     if ~exist(megrtfile,'file')
@@ -290,6 +309,13 @@ if doEpoch
         D = spm_eeg_load(output{1}.Dfname{1});
         %info to store: [trial num, block num, here you can add anything you wish]
         thesetrials = numtrials(find(numtrials(:,1) == runFile),2); % find the trial numbers related to this runFile which is the index for each file - files are the Maxfilter outputs ...trans.fif for each run - so what trials for this run
+        if strcmp(thisSubject.id,'S15')
+            if runFile == 2
+                % don't tag those first missing trials
+                thesetrials = thesetrials(size(thesetrials,1) - size(D,3) + 1:end);
+                skipTrlNums = 1;
+            end
+        end
         info = num2cell([thesetrials';runFile.*ones(1,numel(thesetrials))],1); % put that into 'info'
         D = trialtag(D, ':', info) ;save(D); % tack 'info' onto the trial data
         
@@ -317,12 +343,13 @@ if doEpoch
         
         %get ready for another round
         clear matlabbatch;
-        outfiles{runFile} = output{1}.Dfname; %#ok
+        outputFiles{runFile} = output{1}.Dfname; %#ok
         
         %check that number of trials corresponds
-        D = spm_eeg_load(outfiles{runFile}{1});
+        D = spm_eeg_load(outputFiles{runFile}{1});
         trl = load(trls{runFile},'trl');
-        if numel(D.conditions)~= size(trl.trl,1); error([D.fname,' discrepant number of trials!']);end
+        if ~exist('skipTrlNums','var'); skipTrlNums = 0; end
+        if numel(D.conditions)~= size(trl.trl,1) && ~skipTrlNums; error([D.fname,' discrepant number of trials!']);end
         clear trl D;
     end
     
@@ -341,8 +368,13 @@ cd(tmpFld)
 S=[];
 
 % collect the files to be merged
-% S.D needs to be  a char array
-S.D = char([outfiles{:}]);
+if epochDone
+    S.D = char(outputFiles{:});
+else
+    % S.D needs to be  a char array, and if we epoch we collect these from
+    % output{1}.Dfname - result of matlab batch processing
+    S.D = char([outputFiles{:}]);
+end
 
 % add options and perform the merge
 S.recode = 'same';
@@ -353,10 +385,12 @@ D = spm_eeg_merge(S); % will save in the current folder and apparently with the 
 % 'Run1' part and change it to something information
 % started work trying to make this a bit name agnostic, but gave up for
 % time
-prefixes = regexp(D.fname,[S.prefix '(\w*)Run'],'tokens'); % grab all the prefixes - everything before 'Run'
-toReplace = regexp(D.fname,[prefixes{:}{:} '(\w*)_trans'],'tokens'); % grab whatever is between the prefixes and '_trans'
-newFilename = replace(D.fname,toReplace{:}{:},'allRuns'); % replace that with something more informative
-copyfile(D.fname,[outputFolder filesep newFilename],'f'); % copy the file from here to where it should go
+% prefixes = regexp(D.fname,[S.prefix '(\w*)Run'],'tokens'); % grab all the prefixes - everything before 'Run'
+% toReplace = regexp(D.fname,[prefixes{:}{:} '(\w*)_trans'],'tokens'); % grab whatever is between the prefixes and '_trans'
+% newFilename = replace(D.fname,toReplace{:}{:},'allRuns'); % replace that with something more informative
+% copyfile(D.fname,[outputFolder filesep newFilename],'f'); % copy the file from here to where it should go
+
+system('mv -f * ..'); % move everyhting here one directory up
 
 cd(toolsdir) % go back home
 rmdir(tmpFld,'s') % remove that temp folder we were working in
@@ -387,87 +421,6 @@ return
 end
 
 
-function Xfiles=epochIt(infname,trls,numtrials)
-
-spm_jobman('initcfg');
-
-
-%% epoch + merge
-
-for runFile = 1:numel(infname)
-    
-    clear matlabbatch;
-    
-    %Epoch+Rearrange labels
-    matlabbatch{1}.spm.meeg.preproc.epoch.D(1) = cellstr(infname{runFile});
-    matlabbatch{1}.spm.meeg.preproc.epoch.trialchoice.trlfile = cellstr(trls{runFile});
-    
-    matlabbatch{1}.spm.meeg.preproc.epoch.bc = 0;
-    matlabbatch{1}.spm.meeg.preproc.epoch.eventpadding = 0;
-    matlabbatch{1}.spm.meeg.preproc.epoch.prefix = 'e';
-    
-    output = spm_jobman('run',matlabbatch);
-    
-    %% Add  info needed for MVPA
-    D = spm_eeg_load(output{1}.Dfname{1});
-    %info to store: [trial num, block num, here you can add anything you wish]
-    thesetrials = numtrials(find(numtrials(:,1) == runFile),2); % find the trial numbers related to this runFile which is the index for each file - files are the Maxfilter outputs ...trans.fif for each run - so what trials for this run
-    info = num2cell([thesetrials';runFile.*ones(1,numel(thesetrials))],1); % put that into 'info'
-    D = trialtag(D, ':', info) ;save(D); % tack 'info' onto the trial data
-    
-    %     clear matlabbatch;
-    %     matlabbatch{1}.spm.meeg.preproc.prepare.D(1) = cellstr(output{1}.Dfname);
-    %
-    %     %matlabbatch{2}.spm.meeg.preproc.prepare.D(1) = cfg_dep('Epoching: Epoched Datafile', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','Dfname'));
-    %     matlabbatch{1}.spm.meeg.preproc.prepare.task{1}.sortconditions.label = {
-    %         'HcHr'
-    %         'EcHr'
-    %         'HcEr'
-    %         'EcEr'
-    %         }';
-    %
-    %     matlabbatch{2}.spm.meeg.preproc.downsample.D(1) = cfg_dep('Prepare: Prepared Datafile', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','Dfname'));
-    %     matlabbatch{2}.spm.meeg.preproc.downsample.fsample_new = 500;
-    %     matlabbatch{2}.spm.meeg.preproc.downsample.method = 'resample';
-    %     matlabbatch{2}.spm.meeg.preproc.downsample.prefix = 'd';
-    %
-    %
-    %     output = spm_jobman('run',matlabbatch);
-    %
-    
-    
-    
-    %get ready for another round
-    clear matlabbatch;
-    outfiles{runFile} = output{1}.Dfname; %#ok
-    
-    %check that number of trials corresponds
-    D = spm_eeg_load(outfiles{runFile}{1});
-    trl = load(trls{runFile},'trl');
-    if numel(D.conditions)~= size(trl.trl,1); error([D.fname,' discrepant number of trials!']);end
-    clear trl D;
-    
-    
-    
-end
-
-
-%% merge
-S=[];
-
-%S.D needs to be  a char array
-S.D = char([outfiles{:}]);
-
-S.recode = 'same';
-S.prefix = 'merged_';
-D = spm_eeg_merge(S);
-
-
-
-Xfiles = D.fullfile;
-
-return
-end
 
 function outFiles = addPrefix(files,prefix)
 
