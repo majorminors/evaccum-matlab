@@ -10,7 +10,7 @@ cd(settings.maxfld); % you want to be wherever you want your files saved lest yo
 
 %% 1 do SSS filtering
 
-% aling to the central run
+% aligning to the central run
 nfiles = 1:length(settings.infname);
 nfiles(1) = nfiles(ceil(numel(nfiles)/2));
 nfiles(ceil(numel(nfiles)/2)) = 1;

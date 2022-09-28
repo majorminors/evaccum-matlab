@@ -1,5 +1,15 @@
 function a2_maxFilter(thisSubject,datadir,toolsdir,overwrite)
 
+% https://imaging.mrc-cbu.cam.ac.uk/meg/maxpreproc
+% this script will:
+% auto detect bad channels if you haven't identified any
+% runs doMaxfilter which:
+%   applies signal space seperation (resulting in a <filename}_SSS.fif file)
+%       this removes noise from outside the meg sensors, and keeps those inside
+%   transform the SSS file to a different co-ordinate frame (resulting in a <filename>_trans.fif file)
+%       this transforms all blocks of data to either one specified raw fif file (e.g. the first data block for a subject) or to the default device co-ordinate scheme
+%       at the time of writing we align to the central run
+
 warning('maxfilter will only work on f, g, and h nodes (i.e. compute nodes)')
 % no idea how to force the script to use them though
 
