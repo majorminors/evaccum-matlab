@@ -34,29 +34,25 @@ artefactPrefix = 'b'
 icaPrefix = 'ica'; % we add this to the file ourselves
 epochPrefix = 'e'; % we also choose this
 
-inputFiles = {}; % init this
-outputFiles= {}; % init this
+%% convert and merge
 
-%% first lets put together the filenames of our input and output data
+inputFiles = {}; % init this
+
+% first we'll convert and move our files to the preprocessing folder
 % maxfilter in our pipeline has first run sss then transformed to a
 % the coordinate frames of the middle run for easy averaging, so we will do
 % this not on the sss file, but the trans file
 for runNum = 1:numel(thisSubject.meg_runs)
     % input files from input folder
-    inputFiles{runNum} = sprintf([inputFolder,filesep,thisSubject.meg_labs{runNum},'_trans.fif']);
+    tmpIn = sprintf([inputFolder,filesep,thisSubject.meg_labs{runNum},'_trans.fif']);
     % output files will go into output folder
-    outputFiles{runNum} = sprintf([outputFolder,filesep,thisSubject.meg_labs{runNum},'_trans.mat']);
-end
-
-% inputFiles and outputFiles names will change each preprocessing step
-
-%% if we haven't already, lets convert fif files to SPM M/EEG objects
-for runi = 1:numel(inputFiles)
-    if ~exist(outputFiles{runi},'file') || (overwrite && doConvert)
-        fprintf('converting %.0f of %.0f raw files\n',runi,numel(inputFiles))
+    tmpOut = sprintf([outputFolder,filesep,thisSubject.meg_labs{runNum},'_trans.mat']);
+    % if we haven't already, lets convert fif files to SPM M/EEG objects
+    if ~exist(tmpOut,'file') || (overwrite && doConvert)
+        fprintf('converting %.0f of %.0f raw files\n',runi,numel(thisSubject.meg_runs))
         S=[];
-        S.dataset       = inputFiles{runi};
-        S.outfile       = outputFiles{runi};
+        S.dataset       = tmpIn;
+        S.outfile       = tmpOut;
         S.save          = 0;
         S.reviewtrials  = 0;
         S.channels      = 'all';
@@ -65,13 +61,42 @@ for runi = 1:numel(inputFiles)
         
         spm_eeg_convert(S);
     end % doConvert if statement
-end % end conversion loop
-% update inputFiles
-inputFiles = outputFiles; % no need to add a prefix: we saved them to the outputFolder
+
+    % collate these
+    inputFiles{runNum} = tmpOut;
+
+    % also, we need to collate the epoching trl information, which is currently in different files according to run
+    thisTrlFile = sprintf(trlfile,num2str(runi));
+    thisEpochInfo = load(thisTrlFile); % should have vars 'trl' and 'conditionlabels' - this is how both osl and spm want it
+    epochInfo.trl = [epochInfo.trl;thisEpochInfo.trl];
+    epochInfo.conditionlabels = [epochInfo.conditionlabels;thisEpochInfo.conditionlabels];
+
+end; clear thisEpochInfo thisTrlFile % run loop
+
+% now let's merge the files into one
+% make a temp folder to work in, because I can't figure out how to
+% determine the name or save location of spm_eeg_merge
+tmpFld = [outputFolder filesep 'tmpMerge'];
+mkdir(tmpFld)
+cd(tmpFld)
+S=[];
+% collect the files to be merged
+S.D = char(inputFiles{:}); % might be char([outputFiles{:}])
+% add options and perform the merge
+S.recode = 'same';
+S.prefix = 'merged_';
+D = spm_eeg_merge(S); % will save in the current folder and apparently with the first name in S.D?
+% so let's move it and rename it something more informative
+system(['for file in *; do mv -f "$file" "../allRuns_trans.${file##*.}"; done']); % bash loop that moves everything one directory up, and changes the filename (but keeps the extension)
+cd(toolsdir) % go back home
+rmdir(tmpFld,'s') % remove that temp folder we were working in
+% now let's grab our newly merged file
+inputFile = sprintf([outputFolder,filesep,'allRuns_trans.mat']);
+clear tmpIn tmpOut tmpFld
 
 % so we now have an SPM M/EEG object saved
 % if we load:
-% D = spm_eeg_load(outputFiles{runi}) 
+% D = spm_eeg_load(inputFile) 
 % we can view some information about D just by running it alone
 % D
 % D is actually an "object" and therefore uses functions called 'methods' we can use to query information about it
@@ -103,7 +128,7 @@ osl_startup
 if manualChecks
     % we can now use OSLVIEW to look manually at continuous data (not epoched data)
     % we can also interactively flag bad channels and time periods with it
-    D = spm_eeg_load(inputFiles{1}); % load our first dataset
+    D = spm_eeg_load(inputFile);
     D = oslview(D);
 end
 
@@ -113,54 +138,52 @@ end
 % so let's filter that out
 % note that it's probably best to epoch AFTER filtering, so we don't end up with edge effect problems
 if doFilter
-    % we filter twice, so we add the filterPrefix twice
-    outputFiles = addPrefix(inputFiles,[filterPrefix filterPrefix]);
-    for runi = 1:numel(inputFiles)
-        if ~exist(outputFiles{runi},'file') || overwrite
-            % we'll do a band pass to start, though note that removing noise between
-            % the specified frequency range means we can't look at it!
-            % if we want to do spm_eeg_filter
-            S   = [];
-            S.D = inputFiles{runi};
-            S.band = 'high';
-            S.freq = 0.5; % removes the drift
-            S.prefix = filterPrefix; % f is the default
-            D = spm_eeg_filter(S); % by default spm_eeg_filter saves with prefix 'f'
-            % we can also use osl
+    % we filter twice, so we add the filterPrefix twice because spm_eeg_filter saves with a prefix
+    outputFile = addPrefix(inputFile,[filterPrefix filterPrefix]);
+    if ~exist(outputFile,'file') || overwrite
+        % we'll do a band pass to start, though note that removing noise between
+        % the specified frequency range means we can't look at it!
+        % if we want to do spm_eeg_filter
+        S   = [];
+        S.D = inputFile;
+        S.band = 'high';
+        S.freq = 0.5; % removes the drift
+        S.prefix = filterPrefix; % f is the default
+        D = spm_eeg_filter(S); % by default spm_eeg_filter saves with prefix 'f'
+        % we can also use osl
 %             D=spm_eeg_load(inputFiles{runi});
 %             D=osl_filter(D,[0.1 120],'prefix',filterPrefix); % this filter range is just the OSL default! change for your usecase
-            
-            % now line noise, plus any harmonics, but remember that filtering is blind to the origin of your signal, it might remove
-            % both line noise and any other neural signals at the same frequency, for example real gamma activity
-            % good to double-check data after filtering to avoid surprises later. oslview will let you do this
+        
+        % now line noise, plus any harmonics, but remember that filtering is blind to the origin of your signal, it might remove
+        % both line noise and any other neural signals at the same frequency, for example real gamma activity
+        % good to double-check data after filtering to avoid surprises later. oslview will let you do this
 %             D=spm_eeg_load(inputFiles{runi});
 %             D=osl_filter(D,-[48 52],'prefix',''); % removes line noise using a notch filter
 %             D=osl_filter(D,-[98 102],'prefix',filterPrefix); % removes harmonic of line noise using a notch filter
-            % similarly in spm_eeg
-            S   = [];
-            S.D = D;
-            S.band = 'stop';
-            S.freq = [49 51];% This defines the notch filter frequency range, i.e. around 50Hz
-            S.prefix = filterPrefix; % f is the default
-            D = spm_eeg_filter(S); % by default spm_eeg_filter saves with prefix 'f'
-        end % exist/overwrite statment
-    end % doFilter loop
+        % similarly in spm_eeg
+        S   = [];
+        S.D = D;
+        S.band = 'stop';
+        S.freq = [49 51];% This defines the notch filter frequency range, i.e. around 50Hz
+        S.prefix = filterPrefix; % f is the default
+        D = spm_eeg_filter(S); % by default spm_eeg_filter saves with prefix 'f'
+    end % exist/overwrite statment
 end % doFilter if statment
-% update inputFiles
-inputFiles = outputFiles; % now filtering prefixes have been prepended
+% update inputFile
+inputFile = outputFile; % now filtering prefixes have been prepended
 
 
 %% downsampling
 % we can also downsample here, if we want to speed things up or save space
 % we'd just use spm_eeg to do that like this:
-% S.D=inputFiles{runi};
+% S.D=inputFile;
 % S.fsample_new = 150; % in Hz
 % D = spm_eeg_downsample (S);
 % note that there's an interaction between downsampling and filtering though, so we might want to downsample earlier---maxfilter can also downsample for you FY
     
 if manualChecks
     % let's check the data again
-    D = spm_eeg_load(inputFiles{1}); % load our first dataset
+    D = spm_eeg_load(inputFile); % load our first dataset
     oslview(D);
 end
 
@@ -170,36 +193,34 @@ end
 % timepoints or the ICA might do weird stuff: https://ohba-analysis.github.io/osl-docs/matlab/osl_example_africa.html
 if doArtefacts
     % add the artefactPrefix
-    outputFiles = addPrefix(inputFiles,artefactPrefix);
-    for runi = 1:numel(inputFiles)
-        if ~exist(outputFiles{runi},'file') || overwrite
-            S=[];
-            S.D=inputFiles{runi};
-            S.outfile=outputFiles{runi};
-            D=spm_eeg_copy(S); % copy D object and add prefix
-            
-            modalities = {'MEGMAG','MEGPLANAR','EEG'};
-            
-            % look for bad channels
-            D = osl_detect_artefacts(D,'badchannels',true,'badtimes',false,'modalities',modalities);
-            
-            % then look for bad time segments
-            D = osl_detect_artefacts(D,'badchannels',false,'badtimes',true,'modalities',modalities);
-            
-            D.save;
-            
-        end % exist/overwrite if
-    end % badchannel loop
+    outputFile = addPrefix(inputFile,artefactPrefix);
+    if ~exist(outputFile,'file') || overwrite
+        S=[];
+        S.D=inputFile;
+        S.outfile=outputFile;
+        D=spm_eeg_copy(S); % copy D object and add prefix
+        
+        modalities = {'MEGMAG','MEGPLANAR','EEG'};
+        
+        % look for bad channels
+        D = osl_detect_artefacts(D,'badchannels',true,'badtimes',false,'modalities',modalities);
+        
+        % then look for bad time segments
+        D = osl_detect_artefacts(D,'badchannels',false,'badtimes',true,'modalities',modalities);
+        
+        D.save;
+        
+    end % exist/overwrite if
 end % doArtefacts
-% update inputFiles
-inputFiles = outputFiles; % now artefact prefix has been prepended
+% update inputFile
+inputFile = outputFile; % now artefact prefix has been prepended
     
 if manualChecks
     % this doesn't remove bad timepoints (segments) or channels - just
     % marks them for future manipulation
     % we can view these and we can also use oslview to manually mark and
     % remove artefacts
-    D = spm_eeg_load(inputFiles{1}); % load our first dataset
+    D = spm_eeg_load(inputFiles); % load our dataset
     D = oslview(D);
     % if we want to do manual removal, remember to save!
     D.save();
@@ -211,94 +232,91 @@ end
 
 if doICA
     % add the icaPrefix
-    outputFiles = addPrefix(inputFiles,icaPrefix);
-    for runi = 1:numel(inputFiles)
-        if ~exist(outputFiles{runi},'file') || overwrite
-        fprintf('ica for %.0f of %.0f raw files\n',runi,numel(inputFiles))
+    outputFile = addPrefix(inputFile,icaPrefix);
+    if ~exist(outputFile,'file') || overwrite
 
-        rng(randomSeed); % random seed for reproducing ICA decomposition
+    rng(randomSeed); % random seed for reproducing ICA decomposition
 
-        % we need to prepare an EEG layout for africa
-        D = spm_eeg_load(inputFiles{runi});
-        cfg = [];
-        cfg.output = 'eeg_layout.lay';
-        cfg.elec = D.sensors('EEG');
-        eeg_layout = ft_prepare_layout(cfg);
+    % we need to prepare an EEG layout for africa
+    D = spm_eeg_load(inputFile);
+    cfg = [];
+    cfg.output = 'eeg_layout.lay';
+    cfg.elec = D.sensors('EEG');
+    eeg_layout = ft_prepare_layout(cfg);
 
-        % osl_africa usually doesn't autosave after running, but it
-        % does for ICA, because it's time consuming
-        % so we load our input files
-        D = spm_eeg_load(inputFiles{runi});
+    % osl_africa usually doesn't autosave after running, but it
+    % does for ICA, because it's time consuming
+    % so we load our input files
+    D = spm_eeg_load(inputFile);
+    
+    % then we'll make a new copy with a different name so it doesn't save over the previous step
+    D = D.copy(outputFile); 
+
+    % now each time we call osl_africa, call it as:
+    % D = osl_africa...
+    % because of the autosave, the D in memory won't be the
+    % same D saved to disk!
+
+    if doICA < 2 % if less than 2 we'll (re)run the ica, else we'll skip (with the intention of allowing us to just run the manual checks on the existing ica
+    
+        % with no modality specified will look for MEG
+        D = osl_africa(D,...
+            'do_ica',true,...
+            'used_maxfilter',true,...
+            'artefact_channels',{'EOG','ECG'}...
+            );
+        % now will look for EEG
+        D = osl_africa(D,...
+            'do_ica',true,...
+            'auto_artefact_chans_corr_thresh',.35,...
+            'eeg_layout',eeg_layout.cfg.output,...
+            'modality',{'EEG'},...
+            'used_maxfilter',true,...
+            'artefact_channels',{'EOG','ECG'}...
+            );
+        % automatically does artefact identification (default), and removes them
         
-        % then we'll make a new copy with a different name so it doesn't save over the previous step
-        D = D.copy(outputFiles{runi}); 
+        % this creates D.ica
+        D.save(); % do we need this after auto ica? not sure
 
-        % now each time we call osl_africa, call it as:
-        % D = osl_africa...
-        % because of the autosave, the D in memory won't be the
-        % same D saved to disk!
+    end % check to see if running ICA
 
-        if doICA < 2 % if less than 2 we'll (re)run the ica, else we'll skip (with the intention of allowing us to just run the manual checks on the existing ica
-        
-            % with no modality specified will look for MEG
-            D = osl_africa(D,...
-                'do_ica',true,...
+    if manualChecks
+
+            % WIP: this does a manual identification, but I haven't
+            % checked it works/saves properly and whatnot
+            
+            D = spm_eeg_load(outputFiles); % load this, in case we're just re-running for doing manual checks
+
+            % we then want to redo the artefact rejection to make changes to the assignment if we like
+            osl_africa(D,...
+                'do_ica',false,...
+                'do_ident','manual',...
                 'used_maxfilter',true,...
                 'artefact_channels',{'EOG','ECG'}...
                 );
             % now will look for EEG
-            D = osl_africa(D,...
-                'do_ica',true,...
-                'auto_artefact_chans_corr_thresh',.35,...
+            osl_africa(D,...
+                'do_ica',false,...
+                'do_ident','manual',...
                 'eeg_layout',eeg_layout.cfg.output,...
                 'modality',{'EEG'},...
                 'used_maxfilter',true,...
                 'artefact_channels',{'EOG','ECG'}...
                 );
-            % automatically does artefact identification (default), and removes them
-            
-            % this creates D.ica
-            D.save(); % do we need this after auto ica? not sure
 
-        end % check to see if running ICA
+            D.save(); % we do need to save the MEEG object to commit marked bad components to disk after the manual ica
 
-        if manualChecks
+        end % end manual checks
 
-                % WIP: this does a manual identification, but I haven't
-                % checked it works/saves properly and whatnot
-                
-                D = spm_eeg_load(outputFiles{runi}); % load this, in case we're just re-running for doing manual checks
-
-                % we then want to redo the artefact rejection to make changes to the assignment if we like
-                osl_africa(D,...
-                    'do_ica',false,...
-                    'do_ident','manual',...
-                    'used_maxfilter',true,...
-                    'artefact_channels',{'EOG','ECG'}...
-                    );
-                % now will look for EEG
-                osl_africa(D,...
-                    'do_ica',false,...
-                    'do_ident','manual',...
-                    'eeg_layout',eeg_layout.cfg.output,...
-                    'modality',{'EEG'},...
-                    'used_maxfilter',true,...
-                    'artefact_channels',{'EOG','ECG'}...
-                    );
-
-                D.save(); % we do need to save the MEEG object to commit marked bad components to disk after the manual ica
-
-            end % end manual checks
-
-        end % exist/overwrite if
-    end % ica loop
+    end % exist/overwrite if
 end % doICA
-% update inputFiles
-inputFiles = outputFiles; % now ica prefix has been prepended
+% update inputFile
+inputFile = outputFile; % now ica prefix has been prepended
 
 if manualChecks
     % osl africa saves an 'online montage' (a linear combination of the original sensor data) that we can explore
-    D = spm_eeg_load(inputFiles{1}); % load our first dataset
+    D = spm_eeg_load(inputFile); % load our first dataset
     has_montage(D) % should show available montages
     D_pre_ica=D.montage('switch',0); % grab the original data
     D_post_ica=D.montage('switch',1); % grab the data transformed by the ica
@@ -334,28 +352,23 @@ end
 
 if doEpoch
     % add the icaPrefix
-    outputFiles = addPrefix(inputFiles,epochPrefix);
-    for runi = 1:numel(inputFiles)
-        if ~exist(outputFiles{runi},'file') || overwrite
+    outputFile = addPrefix(inputFile,epochPrefix);
+    if ~exist(outputFile,'file') || overwrite
 
-        % first we'll load up the continuous data
-        D_continuous=spm_eeg_load(inputFiles{runi});
+        % first we'll load up the continuous data in case we want to check it later
+        D_continuous=spm_eeg_load(inputFile);
         D_continuous=D_continuous.montage('switch',0); % make sure we select the data, and not the ica montage --- epoching will carry over to the ica montage
         
-        % now we need our trl file and condition labels, our megtriggers file saves this info in the same file
-        thisTrlFile = sprintf(trlfile,num2str(runi));
-        thisEpochInfo = load(thisTrlFile); % should have vars 'trl' and 'conditionlabels' - this is how both osl and spm want it
-
         if manualChecks
             % osl (I think?) lets us visualise what'll happen
             % trials go from 'o' to 'x'
             % bad trials are in black
-            report.trial_timings(inputFiles{runi}, thisEpochInfo);
+            report.trial_timings(inputFile, epochInfo);
         end
 
         S=[];
-        S = thisEpochInfo;
-        S.D = inputFiles{runi};
+        S = epochInfo; % we created this when we were converting and merging
+        S.D = inputFile;
         D = osl_epoch(S); % note that osl_epoch prefixes the file it creates with an e!
 
         if manualChecks
@@ -365,46 +378,43 @@ if doEpoch
             disp(D.badtrials);
         end
 
-        end % exist/overwrite if
-    end % epoching loop
+    end % exist/overwrite if
 end % doEpoch
-% update inputFiles
-inputFiles = outputFiles; % now epoch prefix has been prepended
+% update inputFile
+inputFile = outputFile; % now epoch prefix has been prepended
 
 %% artefact detection pt 2
 % now we'll re-run our artefact detection on our epoched data
 if doArtefacts
     % add the artefactPrefix
-    outputFiles = addPrefix(inputFiles,artefactPrefix);
-    for runi = 1:numel(inputFiles)
-        if ~exist(outputFiles{runi},'file') || overwrite
-            S=[];
-            S.D=inputFiles{runi};
-            S.outfile=outputFiles{runi};
-            D=spm_eeg_copy(S); % copy D object and add prefix
-            
-            modalities = {'MEGMAG','MEGPLANAR','EEG'};
-            
-            % look for bad channels
-            D = osl_detect_artefacts(D,'badchannels',true,'badtimes',false,'modalities',modalities);
-            
-            % then look for bad time segments
-            D = osl_detect_artefacts(D,'badchannels',false,'badtimes',true,'modalities',modalities);
-            
-            D.save;
+    outputFile = addPrefix(inputFile,artefactPrefix);
+    if ~exist(outputFile,'file') || overwrite
+        S=[];
+        S.D=inputFile;
+        S.outfile=outputFile;
+        D=spm_eeg_copy(S); % copy D object and add prefix
+        
+        modalities = {'MEGMAG','MEGPLANAR','EEG'};
+        
+        % look for bad channels
+        D = osl_detect_artefacts(D,'badchannels',true,'badtimes',false,'modalities',modalities);
+        
+        % then look for bad time segments
+        D = osl_detect_artefacts(D,'badchannels',false,'badtimes',true,'modalities',modalities);
+        
+        D.save;
 
-            if manualChecks
-                % osl also has a manual tool for this
-                % just click 'quit' on channels you want to skip (like EOG)
-                D=osl_rejectvisual(D,[-0.2 0.4]);
-                D.save();
-            end
-            
-        end % exist/overwrite if
-    end % badchannel loop
+        if manualChecks
+            % osl also has a manual tool for this
+            % just click 'quit' on channels you want to skip (like EOG)
+            D=osl_rejectvisual(D,[-0.2 0.4]);
+            D.save();
+        end
+        
+    end % exist/overwrite if
 end % doArtefacts
-% update inputFiles
-inputFiles = outputFiles; % now artefact prefix has been prepended
+% update inputFile
+inputFile = outputFile; % now artefact prefix has been prepended
 
 %% final checks
 % so now we'll have a dataset that has two montages (raw and ica), epoched into trials, with good and bad trials marked
