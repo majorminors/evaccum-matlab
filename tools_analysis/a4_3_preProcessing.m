@@ -3,7 +3,7 @@ function a4_3_preProcessing(thisSubject,datadir,toolsdir)
 addpath /hpc-software/matlab/cbu/
 addpath('/neuro/meg_pd_1.2/');       % FIFACCESS toolbox if use some meg_misc functions below
 addpath('/imaging/local/software/spm_cbu_svn/releases/spm12_fil_r7219/');
-addpath(fullfile(toolsdir,'fieldtrip-20190410')); ft_defaults;
+addpath(fullfile(toolsdir,'fieldtrip-20190410')); ft_defaults; % not needed if running locally, but needed if running on the cluster for some reason
 % addpath(genpath(fullfile(toolsdir,'eeglab13_5_4b')))
 addpath(genpath(fullfile(toolsdir,'meg_data')))
 addpath(fullfile(toolsdir,'..','..','..','Toolboxes','osl','osl-core'))
@@ -18,14 +18,14 @@ trlfile  = fullfile(outputFolder, 'run%s_trl.mat'); % this contains our trial re
 addpath(rootDir);
 
 
-manualChecks = 1; % enable manual checking and selecting throughout
-overwrite = 0;
+manualChecks = 0; % enable manual checking and selecting throughout
+overwrite = 1;
 
 % if any of these are 1, then it will just do it, if 0 will assume it has been done and skip processing but still search for the appropriately prefixed file
 doConvert = 1; % convert to SPM M/EEG object?
 doFilter = 1; % filter line noise and do a high pass filter?
 doArtefacts = 1; % detect bad channels and trials?
-doICA = 1; % run our ICA? if 2, will skip ica, and just do manual checks (if manualChecks is also on)
+doICA = 1; % run our ICA? if 2 (or higher) will also do a manual ica rejection (if manualChecks is on)
 doEpoch = 1; % epoch the data?
 
 randomSeed = 7; % a random seed for ICA decomposition with oslafrica (use this same seed for reproducability)
@@ -161,7 +161,7 @@ if doFilter
         S   = [];
         S.D = inputFile;
         S.band = 'high';
-        S.freq = 0.5; % removes the drift
+        S.freq = 0.5; % removes the slow drift
         S.prefix = filterPrefix; % f is the default
         D = spm_eeg_filter(S); % by default spm_eeg_filter saves with prefix 'f'
         % we can also use osl
@@ -205,7 +205,7 @@ if manualChecks
     D_filtered = spm_eeg_load(inputFile);
     if strcmp(D_filtered.type,'continuous')
         %oslview(D_raw); % if you'd like to compare these
-        oslview(D_filtered); % can also: D = oslview(D); if you want to edit the data now
+%         oslview(D_filtered); % can also: D = oslview(D); if you want to edit the data now
     else
         disp('not continuous data, cant use olsview')
     end
@@ -245,11 +245,11 @@ if manualChecks
     % marks them for future manipulation
     % we can view these and we can also use oslview to manually mark and
     % remove artefacts
-    D_deartefacted = spm_eeg_load(inputFiles); % load our dataset
+    D_deartefacted = spm_eeg_load(inputFile); % load our dataset
     if strcmp(D_deartefacted.type,'continuous')
         %oslview(D_raw); % if you'd like to compare these
         %oslview(D_filtered); % if you'd like to compare these
-        D_deartefacted = oslview(D_deartefacted);
+%         D_deartefacted = oslview(D_deartefacted);
     else
         disp('not continuous data, cant use olsview')
     end
@@ -282,6 +282,7 @@ if doICA
         D = spm_eeg_load(inputFile);
         
         % then we'll make a new copy with a different name so it doesn't save over the previous step
+        disp('copying file with new filename')
         D = D.copy(outputFile);
         
         % now each time we call osl_africa, call it as:
@@ -289,57 +290,28 @@ if doICA
         % because of the autosave, the D in memory won't be the
         % same D saved to disk!
         
-        if doICA < 2 % if less than 2 we'll (re)run the ica, else we'll skip (with the intention of allowing us to just run the manual checks on the existing ica
-            
-            % with no modality specified will look for MEG
-            D = osl_africa(D,...
-                'do_ica',true,...
-                'used_maxfilter',true,...
-                'artefact_channels',{'EOG','ECG'}...
-                );
-            % now will look for EEG
-            D = osl_africa(D,...
-                'do_ica',true,...
-                'auto_artefact_chans_corr_thresh',.35,...
-                'eeg_layout',eeg_layout.cfg.output,...
-                'modality',{'EEG'},...
-                'used_maxfilter',true,...
-                'artefact_channels',{'EOG','ECG'}...
-                );
-            % automatically does artefact identification (default), and removes them
-            
-            % this creates D.ica
-            D.save(); % do we need this after auto ica? not sure
-            
-        end % check to see if running ICA
         
-        if manualChecks
-            disp('now doing manual ica')
-            % WIP: this does a manual identification, but I haven't
-            % checked it works/saves properly and whatnot
-            
-            D = spm_eeg_load(outputFiles); % load this, in case we're just re-running for doing manual checks
-            
-            % we then want to redo the artefact rejection to make changes to the assignment if we like
-            osl_africa(D,...
-                'do_ica',false,...
-                'do_ident','manual',...
-                'used_maxfilter',true,...
-                'artefact_channels',{'EOG','ECG'}...
-                );
-            % now will look for EEG
-            osl_africa(D,...
-                'do_ica',false,...
-                'do_ident','manual',...
-                'eeg_layout',eeg_layout.cfg.output,...
-                'modality',{'EEG'},...
-                'used_maxfilter',true,...
-                'artefact_channels',{'EOG','ECG'}...
-                );
-            
-            D.save(); % we do need to save the MEEG object to commit marked bad components to disk after the manual ica
-            
-        end % end manual checks
+        % with no modality specified will look for MEG
+        D = osl_africa(D,...
+            'do_ica',true,...
+            'used_maxfilter',true,...
+            'artefact_channels',{'EOG','ECG'},...
+            'montagename','ols africa ica denoised meg'...
+            );
+        % now will look for EEG
+        D = osl_africa(D,...
+            'do_ica',true,...
+            'auto_artefact_chans_corr_thresh',.35,...
+            'eeg_layout',eeg_layout.cfg.output,...
+            'modality',{'EEG'},...
+            'used_maxfilter',true,...
+            'artefact_channels',{'EOG','ECG'},...
+            'montagename','ols africa ica denoised eeg'...
+            );
+        % automatically does artefact identification (default), and removes them
+        
+        % this creates D.ica
+        D.save(); % do we need this after auto ica? not sure
         
     else
         disp('file exists and not overwriting')
@@ -349,38 +321,77 @@ end % doICA
 inputFile = outputFile; % now ica prefix has been prepended
 
 if manualChecks
+    
+    if doICA > 1
+        disp('now doing manual ica')
+        % WIP: this does a manual identification, but I haven't
+        % checked it works/saves properly and whatnot
+        
+        D = spm_eeg_load(inputFile); % load this, in case we're just re-running for doing manual checks
+        cfg = [];
+        cfg.output = 'eeg_layout.lay';
+        cfg.elec = D.sensors('EEG');
+        eeg_layout = ft_prepare_layout(cfg);
+        
+        % we then want to redo the artefact rejection to make changes to the assignment if we like
+        D = osl_africa(D,...
+            'do_ica',false,...
+            'do_ident','manual',...
+            'used_maxfilter',true,...
+            'artefact_channels',{'EOG','ECG'},...
+            'montagename','ols africa ica denoised meg'...
+            );
+        % now will look for EEG
+        D = osl_africa(D,...
+            'do_ica',false,...
+            'do_ident','manual',...
+            'eeg_layout',eeg_layout.cfg.output,...
+            'modality',{'EEG'},...
+            'used_maxfilter',true,...
+            'artefact_channels',{'EOG','ECG'},...
+            'montagename','ols africa ica denoised eeg'...
+            );
+        
+        D.save(); % we do need to save the MEEG object to commit marked bad components to disk after the manual ica
+    end
+    
     % osl africa saves an 'online montage' (a linear combination of the original sensor data) that we can explore
     D = spm_eeg_load(inputFile); % load our first dataset
     has_montage(D) % should show available montages
     
-    D_pre_ica=D.montage('switch',0); % grab the original data
-    D_post_ica=D.montage('switch',1); % grab the data transformed by the ica
+    D_pre_ica = D.montage('switch',0); % grab the original data
+    D_post_ica = D.montage('switch',2); % grab the data transformed by the ica
     
     %oslview(D_raw); % if you'd like to compare these
     %oslview(D_filtered); % if you'd like to compare these
     %oslview(D_deartefacted); % if you'd like to compare these
     
     % but now we can start to plot interesting stuff
-    artefactSensor = 308; % change this to an ECG or EOG sensor - something that is artefactual
-    sensorToCheck = 306; % change this to a sensor near your artefact sensor - we will compare it to the artefact before and after ICA
+    artefactSensor = 2; % change this to an ECG or EOG sensor - something that is artefactual
+    sensorToCheck = 4; % change this to a sensor near your artefact sensor - we will compare it to the artefact before and after ICA
+    % note that the way we've done this means there are two ica montages,
+    % one for eeg and one for meg, so if we have selected the wrong
+    % montage+sensor combination, the plots will only show the artefact
+    % sensor
     figure;
     subplot(2,1,1);
     plot(D_pre_ica.time(1:10000),D_pre_ica(artefactSensor,1:10000)); % takes first 10000 sample points
     title('artefact channel')
-    xlim([10 20]);
+    xlim([0 10]);
     xlabel('Time (s)');
     
     subplot(2,1,2);
     plot(D_pre_ica.time(1:10000),D_pre_ica(sensorToCheck,1:10000)); % takes first 10000 sample points
     title('artefact contaminated channel')
-    xlim([10 20]);
+    xlim([0 10]);
     hold on;
     plot(D_post_ica.time(1:10000),D_post_ica(sensorToCheck,1:10000),'r');
-    xlim([10 20]);
+    xlim([0 10]);
     xlabel('Time (s)');
     legend({'pre ICA' 'post ICA'});
     
-    clear EOGsensor sensorToCheck
+    clear artefactSensor sensorToCheck
+    close all
 end
 
 %% epoch the data
@@ -397,15 +408,8 @@ if doEpoch
     if ~exist(outputFile,'file') || overwrite
         
         % first we'll load up the continuous data in case we want to check it later
-        D_continuous=spm_eeg_load(inputFile);
-        D_continuous=D_continuous.montage('switch',0); % make sure we select the data, and not the ica montage --- epoching will carry over to the ica montage
-        
-        if manualChecks
-            % osl (I think?) lets us visualise what'll happen
-            % trials go from 'o' to 'x'
-            % bad trials are in black
-            report.trial_timings(inputFile, epochInfo);
-        end
+        D_continuous = spm_eeg_load(inputFile);
+        D_continuous = D_continuous.montage('switch',0); % make sure we select the data, and not the ica montage --- epoching will carry over to the ica montage
         
         S=[];
         S = epochInfo; % we created this when we were converting and merging
@@ -413,8 +417,13 @@ if doEpoch
         D = osl_epoch(S); % note that osl_epoch prefixes the file it creates with an e!
         
         if manualChecks
-            % should mirror our earlier check
-            report.trial_timings(D);
+            % osl (I think?) lets us visualise what'll happen
+            % trials go from 'o' to 'x'
+            % bad trials are in black
+            % this takes bloody ages mate
+%             report.trial_timings(D);
+%             report.bad_trials(D);
+%             report.bad_channels(D,{'MEGMAG','MEGPLANAR','EEG'});
             disp('index of bad trials:');
             disp(D.badtrials);
         end
