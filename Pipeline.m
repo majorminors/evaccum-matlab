@@ -13,17 +13,20 @@ clear all
 rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab';
 scriptdir = fullfile(rootdir,'tools_analysis'); cd(scriptdir)
 datadir = fullfile(rootdir,'data','meg_pilot_4'); addpath(datadir);
-runLocal = 1;
+runLocal = 0;
 runBehav = 0;
-subjectRange = 14;
-jobdir = fullfile(rootdir,'job_logging','preproc_29subs_04');
+subjectRange = [-1 7]; % 0 does all; array like [-1 4] does 4 to end
+jobdir = fullfile(rootdir,'job_logging','preproc_29subs_05');
 % functionToRun = @a1_importAndOrganiseScans; additionalParams={datadir,1}; % datadir top level and overwrite (0|1)
 % functionToRun = @a2_maxFilter; additionalParams={datadir,scriptdir,1}; % datadir top level, analysis tools/bin/libs and overwrite (0|1)
-% functionToRun = @a3_2_megTriggers; additionalParams={datadir,scriptdir,0}; % datadir top level, analysis tools/bin/libs
-functionToRun = @a4_2_preProcessing; additionalParams={datadir,scriptdir};
+% functionToRun = @a3_2_megTriggers; additionalParams={datadir,scriptdir,1}; % datadir top level, analysis tools/bin/libs
+functionToRun = @a4_3_preProcessing; additionalParams={datadir,scriptdir};
+% functionToRun = @a5_epochExam; additionalParams={datadir,scriptdir};
 
 allSubjects = importParticipants();
 if ~subjectRange; subjectRange = 1:numel(allSubjects); end
+isneg = @(val) val < 0 ;
+if any(isneg(subjectRange)); subjectRange = subjectRange(~isneg(subjectRange)):1:numel(allSubjects); end
 
 % make an object to hold cbuscheduler jobs
 clear J;
@@ -37,10 +40,10 @@ for subjectidx = subjectRange
       
     % let's skip participants who are not useable
     if ~thisSubject.usable
+        disp('marked not usable - skipping')
        continue
     end
-    
-    
+        
     if runLocal
         warning('running locally');
         functionToRun(thisSubject,additionalParams{:}); cd(scriptdir);
@@ -55,6 +58,7 @@ for subjectidx = subjectRange
     
     
 end
+
     
 
 if ~runLocal
@@ -68,11 +72,12 @@ if ~runLocal
         end
     end
     J(clearArray) = [];
+    fprintf('you are looking at %.0f participants\n',numel(J));
     
     disp('creating scheduler object');
     % create a scheduler object
     clear S;
-    S = cbu_scheduler('custom',{'compute',3,12,172800}); % cutsom params: compute job, 46 workers, 12 GB per worker, 14400 secs = 4 hours
+    S = cbu_scheduler('custom',{'compute',10,4,28800}); % cutsom params: compute job, 46 workers, 12 GB per worker, 14400 secs = 4 hours
     %     S.SubmitArguments=[S.SubmitArguments ' --exclusive=user']; % when we were testing a possible memory issue
     
     if ~exist(jobdir,'dir')
@@ -85,8 +90,11 @@ if ~runLocal
     end
     
     S.JobStorageLocation = jobdir;
+    % stop it traversing the directory structure of all the functions in my
+    % scripts
+    jobopts.AutoAttachFiles=false;
     
     disp('submitting jobs');
     % submit the jobs
-    cbu_qsub(J,S,{rootdir,scriptdir});
+    cbu_qsub(J,S,{rootdir,scriptdir},jobopts);
 end
