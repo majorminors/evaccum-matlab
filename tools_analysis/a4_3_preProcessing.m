@@ -1,4 +1,4 @@
-function a4_3_preProcessing(thisSubject,datadir,toolsdir)
+function a4_3_preProcessing(thisSubject,datadir,toolsdir,runLocal)
 
 addpath /hpc-software/matlab/cbu/
 addpath('/neuro/meg_pd_1.2/');       % FIFACCESS toolbox if use some meg_misc functions below
@@ -6,7 +6,9 @@ addpath('/imaging/local/software/spm_cbu_svn/releases/spm12_fil_r7219/');
 addpath(fullfile(toolsdir,'fieldtrip-20190410')); ft_defaults; % not needed if running locally, but needed if running on the cluster for some reason
 % addpath(genpath(fullfile(toolsdir,'eeglab13_5_4b')))
 addpath(genpath(fullfile(toolsdir,'meg_data')))
-addpath(fullfile(toolsdir,'..','..','..','Toolboxes','osl','osl-core'))
+oslDir = fullfile('/imaging/woolgar/projects/Dorian/Toolboxes/osl'); % osl wants this if run in shared user mode
+addpath(fullfile(oslDir,'osl-core')); % osl_startup can error without this
+if runLocal; oslUserMode = 'user'; elseif ~runLocal; oslUserMode = 'shared';end
 
 rootDir = fullfile(datadir,thisSubject.id);
 inputFolder   = fullfile(rootDir,'MaxfilterOutput'); % where is the input? expects maxfiltered data, but you could do this on data that has not been maxfiltered
@@ -19,7 +21,7 @@ addpath(rootDir);
 
 
 manualChecks = 0; % enable manual checking and selecting throughout
-overwrite = 1;
+overwrite = 0;
 
 % if any of these are 1, then it will just do it, if 0 will assume it has been done and skip processing but still search for the appropriately prefixed file
 doConvert = 1; % convert to SPM M/EEG object?
@@ -33,6 +35,11 @@ filterPrefix = 'f'; % most programs default to an f, but note we filter twice so
 artefactPrefix = 'b';
 icaPrefix = 'ica'; % we add this to the file ourselves
 epochPrefix = 'e'; % we also choose this
+
+%% print subject
+
+disp('this is subject:')
+disp(thisSubject.id);
 
 %% convert and merge
 
@@ -133,7 +140,7 @@ end
 % though note that we'll use spm_eeg functions occasionally and can swap bits and
 % pieces out for other toolboxes (e.g. fieldtrop/eeglab)
 
-osl_startup
+osl_startup(oslDir,oslUserMode)
 
 if manualChecks
     % we can now use OSLVIEW to look manually at continuous data (not epoched data)
@@ -270,9 +277,11 @@ if doICA
         rng(randomSeed); % random seed for reproducing ICA decomposition
         
         % we need to prepare an EEG layout for africa
+        % I think spm_eeg_convert does this, but I can't figure out how to
+        % access it, so this is easier
         D = spm_eeg_load(inputFile);
         cfg = [];
-        cfg.output = 'eeg_layout.lay';
+        cfg.output = [outputFolder filesep 'eeg_layout.lay'];
         cfg.elec = D.sensors('EEG');
         eeg_layout = ft_prepare_layout(cfg);
         
@@ -329,7 +338,7 @@ if manualChecks
         
         D = spm_eeg_load(inputFile); % load this, in case we're just re-running for doing manual checks
         cfg = [];
-        cfg.output = 'eeg_layout.lay';
+        cfg.output = [outputFolder filesep 'eeg_layout.lay'];
         cfg.elec = D.sensors('EEG');
         eeg_layout = ft_prepare_layout(cfg);
         
@@ -477,7 +486,6 @@ inputFile = outputFile; % now artefact prefix has been prepended
 % we'll do all of that checking in a different script though
 
 osl_shutdown
-
 disp('done')
 
 return
