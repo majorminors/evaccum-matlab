@@ -950,6 +950,33 @@ thisSubject.movement = [-9.7,4.5,-57.8;-10.1,6.3,-56.7;-10.6,5.2,-60.2;-11.3,3.7
 thisSubject = doExtras(thisSubject);
 subjects = [subjects,thisSubject]; clear thisSubject;
 
+%% --- S41 Jay --- %% U29
+
+thisSubject.id  = 'S41';
+thisSubject.num  = 41;
+
+thisSubject.meg_fld  = 'meg22_201';
+thisSubject.date_meg= '221018';
+
+thisSubject.meg_runs = {'run1_raw' 'run2_raw' 'run3_raw' 'run4_raw'};
+thisSubject.meg_labs = {'Run1' 'Run2' 'Run3' 'Run4'};
+thisSubject.runid = [1:4;5:8;9:12;13:16]; % each row is a vector of the blocks in that run (e.g. [1:6;7:12])
+thisSubject.runblks = 16;
+ 
+thisSubject.bad_eeg = [];
+thisSubject.bad_meg = [];
+
+thisSubject.note    = '';
+thisSubject.usable = 1;
+
+thisSubject.mri      = '';
+thisSubject.date_mri = '';
+        
+thisSubject.movement = [2.2 1.1 -43.3; 2.0 0.7 -45.4; 2.5 -0.4 -44.6; 1.8 -1.7 -46.4];
+
+thisSubject = doExtras(thisSubject);
+subjects = [subjects,thisSubject]; clear thisSubject;
+
 % ------------------ %
 
 return
