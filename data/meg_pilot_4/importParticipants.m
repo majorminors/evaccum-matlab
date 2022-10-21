@@ -966,7 +966,7 @@ thisSubject.runblks = 16;
 thisSubject.bad_eeg = [];
 thisSubject.bad_meg = [];
 
-thisSubject.note    = '';
+thisSubject.note    = 'eye tracking not working in first block';
 thisSubject.usable = 1;
 
 thisSubject.mri      = '';
@@ -977,6 +977,32 @@ thisSubject.movement = [2.2 1.1 -43.3; 2.0 0.7 -45.4; 2.5 -0.4 -44.6; 1.8 -1.7 -
 thisSubject = doExtras(thisSubject);
 subjects = [subjects,thisSubject]; clear thisSubject;
 
+%% --- S41 Vamsi --- %%
+
+thisSubject.id  = 'S42';
+thisSubject.num  = 42;
+
+thisSubject.meg_fld  = 'meg22_205';
+thisSubject.date_meg= '221021';
+
+thisSubject.meg_runs = {'run1_raw' 'run2_raw' 'run3_raw' 'run4_raw'};
+thisSubject.meg_labs = {'Run1' 'Run2' 'Run3' 'Run4'};
+thisSubject.runid = [1:4;5:8;9:12;13:16]; % each row is a vector of the blocks in that run (e.g. [1:6;7:12])
+thisSubject.runblks = 16;
+ 
+thisSubject.bad_eeg = [];
+thisSubject.bad_meg = [];
+
+thisSubject.note    = '';
+thisSubject.usable = 1;
+
+thisSubject.mri      = '';
+thisSubject.date_mri = '';
+        
+thisSubject.movement = [-3.5 2.4 -48.7; -8.3 2.2 -49.4; -6.6 -0.0 -45.6; -4.6 -2.3 -45.9];
+
+thisSubject = doExtras(thisSubject);
+subjects = [subjects,thisSubject]; clear thisSubject;
 % ------------------ %
 
 return
