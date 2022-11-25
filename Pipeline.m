@@ -17,11 +17,11 @@ runLocal = 0;
 runBehav = 0;
 subjectRange = 0;%[-1 7]; % 0 does all; array like [-1 4] does 4 to end
 jobdir = fullfile(rootdir,'job_logging','epochexam_06');
-% functionToRun = @a1_importAndOrganiseScans; additionalParams={datadir,1}; % datadir top level and overwrite (0|1)
+functionToRun = @a1_importAndOrganiseScans; additionalParams={datadir,1}; % datadir top level and overwrite (0|1)
 % functionToRun = @a2_maxFilter; additionalParams={datadir,scriptdir,1}; % datadir top level, analysis tools/bin/libs and overwrite (0|1)
 % functionToRun = @a3_2_megTriggers; additionalParams={datadir,scriptdir,1}; % datadir top level, analysis tools/bin/libs
 % functionToRun = @a4_3_preProcessing; additionalParams={datadir,scriptdir,runLocal};
-functionToRun = @a5_epochExam; additionalParams={datadir,scriptdir,runLocal};
+% functionToRun = @a5_epochExam; additionalParams={datadir,scriptdir,runLocal};
 
 allSubjects = importParticipants();
 if ~subjectRange; subjectRange = 1:numel(allSubjects); end
