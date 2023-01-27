@@ -11,7 +11,7 @@
 %           percent correct
 
 % data related information saved in 'd'
-%   d.stim_mat_all contains triqal condition matrices for each block
+%   d.stim_mat_all contains trial condition matrices for each block
 %       (d.stim_mat_all(:,:,[block number])+
 
 %   rows indicate trials

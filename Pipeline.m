@@ -13,15 +13,17 @@ clear all
 rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab';
 scriptdir = fullfile(rootdir,'tools_analysis'); cd(scriptdir)
 datadir = fullfile(rootdir,'data','meg_pilot_4'); addpath(datadir);
-runLocal = 0;
+runLocal = 1;
 runBehav = 0;
-subjectRange = 0;%[-1 7]; % 0 does all; array like [-1 4] does 4 to end
-jobdir = fullfile(rootdir,'job_logging','epochexam_06');
-functionToRun = @a1_importAndOrganiseScans; additionalParams={datadir,1}; % datadir top level and overwrite (0|1)
-% functionToRun = @a2_maxFilter; additionalParams={datadir,scriptdir,1}; % datadir top level, analysis tools/bin/libs and overwrite (0|1)
-% functionToRun = @a3_2_megTriggers; additionalParams={datadir,scriptdir,1}; % datadir top level, analysis tools/bin/libs
-% functionToRun = @a4_3_preProcessing; additionalParams={datadir,scriptdir,runLocal};
-% functionToRun = @a5_epochExam; additionalParams={datadir,scriptdir,runLocal};
+subjectRange = 1;%[34 35 36 37];%0;%[-1 7]; % 0 does all; array like [-1 4] does 4 to end
+jobdir = fullfile(rootdir,'job_logging','megtriggers01');
+% functionToRun = @a1_importAndOrganiseScans; additionalParams={datadir,0}; % datadir top level and overwrite (0|1)
+% functionToRun = @a2_megTriggers; additionalParams={datadir,scriptdir,0}; % datadir top level, analysis tools/bin/libs
+% functionToRun = @a3_maxFilter; additionalParams={datadir,scriptdir,1}; % datadir top level, analysis tools/bin/libs and overwrite (0|1)
+functionToRun = @a4_preProc01_atypical_artefacts; additionalParams={datadir,scriptdir,1};
+% functionToRun = @a4_preProc02_filtering; additionalParams={datadir,scriptdir,1}; % run locally if manual
+% functionToRun = @a4_preProc03_ica; additionalParams={datadir,scriptdir,0}; % run locally if manual
+
 
 allSubjects = importParticipants();
 if ~subjectRange; subjectRange = 1:numel(allSubjects); end
@@ -34,10 +36,10 @@ J(1:numel(allSubjects))=deal(struct('task',[],'n_return_values',[], ...
     'input_args',[],'depends_on',[]));
 
 for subjectidx = subjectRange
-    disp('starting with subject: '); disp(subjectidx);
+    disp('starting with subject: ');
     
     thisSubject = allSubjects{subjectidx}; % let's make this easier to reference
-      
+    disp(thisSubject.id)
     % let's skip participants who are not useable
     if ~thisSubject.usable
         disp('marked not usable - skipping')

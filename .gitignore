@@ -11,3 +11,4 @@ job_logging/*
 *.asv
 *.m~
 spmeeg*
+.Rproj.user

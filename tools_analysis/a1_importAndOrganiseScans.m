@@ -1,20 +1,26 @@
 function a1_importAndOrganiseScans(thisSubject,datadir,overwrite)
+% this moves the raw meg files to your preferred data folder and moves any associated
+% mris to a folder (T1) too
+% it also sets up folders to use later (e.g. maxfilter folder, preproc
+% folder)
+% it would be worth cleaning this up, because it's gone through 2 or 3
+% half-assed updates and is messy
 
 if ~exist('overwrite','var'); overwrite = 0; end
 
 % using ale's language to avoid errors in changing the names
 base = fullfile(datadir,thisSubject.id);
 
-% if it exists choose whether to overwrite
-fprintf('creating folder %s: \n',base);
-if exist(base,'dir') && ~overwrite
-    t.prompt = 'this folder already exists, overwrite? ([y]/n) ';
-    t.ok = input(t.prompt,'s');
-    if isempty(t.ok); t.ok = 'y';
-    elseif ~strcmp(t.ok,'y'); error('aborted by user, not overwriting');
-    elseif strcmp(t.ok,'y'); rmdir(base,'s');
-    end
-end
+% % if it exists choose whether to overwrite
+% fprintf('creating folder %s: \n',base);
+% if exist(base,'dir') && ~overwrite
+%     t.prompt = 'this folder already exists, overwrite? ([y]/n) ';
+%     t.ok = input(t.prompt,'s');
+%     if isempty(t.ok); t.ok = 'y';
+%     elseif ~strcmp(t.ok,'y'); error('aborted by user, not overwriting');
+%     elseif strcmp(t.ok,'y'); rmdir(base,'s');
+%     end
+% end
 
 if ~exist(base,'dir'); mkdir(base); end
 cd(base);
@@ -34,8 +40,15 @@ runlabs     = thisSubject.meg_labs;
 runfiles    = cellfun(@(x) sprintf([base,filesep,'%s_raw.fif'],x), runlabs,'UniformOutput',false);
 
 cd(source);
-if overwrite;for runi = 1:numel(runfiles);if exist(runfiles{runi},'file');delete(runfiles{runi});end;end;end
-cellfun(@copyfile,sourcefiles,runfiles,'UniformOutput',false);
+for runi = 1:numel(runfiles)
+    if exist(runfiles{runi},'file') && overwrite
+        delete(runfiles{runi});
+    elseif exist(runfiles{runi},'file') && ~overwrite
+        continue
+    end
+    copyfile(sourcefiles{runi},runfiles{runi});
+end
+% cellfun(@copyfile,sourcefiles,runfiles,'UniformOutput',false);
 disp('done importing meg data')
 
 %% import MRI structurals
