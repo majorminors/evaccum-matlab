@@ -5,10 +5,10 @@ function trl = trlFromFile(cfg)
 %    trl = [trialStart trialEnd trialOffset; etc] for each trial
 %    conditionlabels = {'condition1' 'condition2'... for each trial
 
-if ~exist('cfg.pre')
+if ~isfield(cfg,'pre')
     cfg.pre = 0;
 end
-if ~exist('cfg.post')
+if ~isfield(cfg,'post')
     cfg.post = 0;
 end
 
@@ -32,14 +32,26 @@ clear tmp
 % 12)  we later add the fixation dots timings for each trial
 % 13)  we later add a row of unique numbers to tag each trial
 
+% let's grab the run idx
+
+if isfield(cfg,'run')
+    runIdx = find(behavTable(:,11)==cfg.run);
+    goodTrials = str2double(behavTable(runIdx,10))>0;
+else
+    goodTrials = str2double(behavTable(:,10))>0;
+end
+
 if ischar(cfg.pre)
     if strcmp(cfg.pre,'fixation')
-        cfg.pre = -behavTable(:,12); % start the 'trial' when the fixation dots started by subtracting the fixation times from the onset
+        cfg.pre = -(str2double(behavTable(runIdx,12))*1000); % start the 'trial' when the fixation dots started by subtracting the fixation times from the onset
+    elseif strcmp(cfg.pre,'response')
+        cfg.pre = (trl(:,1)-(trl(:,1)+str2double(behavTable(runIdx,10))))-500; % start the trial at trial onset+RT -500ms (so we can look for a plateau etc)
     end
 end
 if ischar(cfg.post)
     if strcmp(cfg.post,'response')
-        cfg.post = -trl(:,2)+behavTable(:,10); % finish the trial when the response happened by subtracting the time remaining in the trial after the response from the trial end
+        cfg.post = -(trl(:,2)-(trl(:,1)+str2double(behavTable(runIdx,10))))+200; % finish the trial when the response happened by getting the negative of trial end - (trial start+rt)
+%         cfg.pre = -(trl(:,1)-((trl(:,2)+cfg.post)-1000)); % get whatever 1000 ms prior to response is relative to the trl onset
     end
 end
 
@@ -62,6 +74,7 @@ trl(:,1) = trl(:,1)+cfg.pre;
 trl(:,2) = trl(:,2)+cfg.post;
 trl(:,3) = cfg.pre;
 
-trl = [trl conditioncodes'];
+trl = [trl conditioncodes' goodTrials];
+trl = fix(trl); % since matlab does it's absolute best to confuse stuff with e-notation, thus fucking with its own functions which don't, of course, understand e-notation
 
 end

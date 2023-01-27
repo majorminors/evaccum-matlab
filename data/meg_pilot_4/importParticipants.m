@@ -1258,7 +1258,7 @@ thissubject.meg_fld  = 'meg22_234';
 thissubject.date_meg= '221124';
 
 thissubject.meg_runs = {'run1_raw' 'run2_raw' 'run3_raw' 'run4_raw'};
-thissubject.meg_labs = {'run1' 'run2' 'run3' 'run4'};
+thissubject.meg_labs = {'Run1' 'Run2' 'Run3' 'Run4'};
 thissubject.runid = [1:4;5:8;9:12;13:16]; % each row is a vector of the blocks in that run (e.g. [1:6;7:12])
 thissubject.runblks = 16;
  

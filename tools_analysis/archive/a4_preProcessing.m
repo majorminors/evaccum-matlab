@@ -1,476 +1,105 @@
-function a4_preProcessing(thisSubject,datadir,toolsdir)
+function a4_4_preProcessing(thisSubject,datadir,toolsdir)
+% here we apply various filters to the data
 
-error('this script is an old attempt to convert the pipeline of A. Tomassini, but no longer works because Riks ICA expects artefact topographies and I never worked out how to get around that---as such this script should be considered unfinished')
-
+% set up paths
 addpath /hpc-software/matlab/cbu/
-addpath(genpath('/neuro/meg_pd_1.2/'));       % FIFACCESS toolbox if use some meg_misc functions below
-addpath(genpath('/imaging/local/software/spm_cbu_svn/releases/spm12_fil_r7219/'));
-addpath(genpath(fullfile(toolsdir,'eeglab13_5_4b')))
-addpath(genpath(fullfile(toolsdir,'meg_data')))
+addpath('/imaging/local/software/spm_cbu_svn/releases/spm12_fil_r7219/');
+addpath(fullfile(toolsdir,'fieldtrip-20190410')); ft_defaults;
+addpath(genpath(fullfile(toolsdir,'lib')))
+rootDir = fullfile(datadir,thisSubject.id);
+maxFilterFolder   = fullfile(rootDir,'MaxfilterOutput'); % where is the input? expects maxfiltered data, but you could do this on data that has not been maxfiltered
+preProcFolder  = fullfile(rootDir,'Preprocess'); % where should we put the output?
+behavDir   = fullfile(datadir,'behavioural'); % where is our behavioural data?
+behavfile = fullfile(behavDir,[thisSubject.id '_Evaccum.mat']); % what is it called?
+megrtfile = fullfile(behavDir,[thisSubject.id '_MEGRTs.mat']); % and since I have put my MEG triggers somewhere else, we will specify that too
+trlfile  = fullfile(preProcFolder, 'run%s_trl.mat'); % this contains our trial related info for epoching - should exist (generated with megTriggers script)
+addpath(rootDir);
 
+%% print subject for logging
 
-droot = fullfile(datadir,thisSubject.id);
-infld   = fullfile(droot,'MaxfilterOutput');
-tarfld  = fullfile(droot,'Preprocess');
-behavDir   = fullfile(datadir,'behavioural');
-behavfile = fullfile(behavDir,[thisSubject.id '_Evaccum.mat']);
-megrtfile = fullfile(behavDir,[thisSubject.id '_MEGRTs.mat']);
-icaSaveFile     = fullfile(droot,['ICAOutput/ICA_' thisSubject.id '.mat']);
-outpt   = fullfile(droot, 'Preprocess/MSL_%s.mat'); % this I think it what is saved for overwriting
-addpath(droot);
-
-
-settings.fld = tarfld;
-
-settings.freshstart = 1;%delete everything before starting again -not needed for 1st preprocessing run
-settings.overwrite = 1;
-settings.ICAoverwrite = 1;
-
-settings.outfname = [tarfld,filesep,thisSubject.id '_trans.mat'];
-%settings.ctr   = ID.ctr;
-settings.bEEG  = thisSubject.bad_eeg;
-settings.bMEG  = thisSubject.bad_meg;
-
-filenames = {}; %number of files
-outfirst= {};%converted files
+disp('this is subject:')
+disp(thisSubject.id);
 
 for runNum = 1:numel(thisSubject.meg_runs)
-    filenames{end+1} = sprintf([infld,filesep,thisSubject.meg_labs{runNum},'_trans.fif']);
-    outfirst{end+1} = sprintf([infld,filesep,thisSubject.meg_labs{runNum},'_trans.mat']);
-end
-
-cd(tarfld);
-
-%trial files needed for epoching
-trls = getnames(tarfld,[],'run*_trl.mat');
-trls = {trls{:,1}};
-
-%% prepare data
-%extract behavioural data
-%load(behavfile)
-
-if settings.freshstart
-    delete *fRun*_trans.*;
-    delete *SL_AT_RDK2_*; % change this to what you named it
-end
-
-for runi = 1:numel(filenames)
+    fprintf('preprocessing %.0f of %.0f files\n',runNum,numel(thisSubject.meg_runs))
     
-    if ~exist(outfirst{runi},'file')
-        %% convert fif files
-        S=[];
-        S.dataset       = filenames{runi};
-        S.outfile       = outfirst{runi};
-        S.save          = 0;
-        S.reviewtrials  = 0;
-        S.channels      = 'all';
-        S.continuous    = 1;
-        S.checkboundary = 0;
-        
-        % DO IT:
-        spm_eeg_convert(S);
-        
-    end
-end
-
-% behavioural data from triggers
-if ~exist(megrtfile,'file')
-    error('Prepare behavioural files first!')
-end
-
-
-%% Line and highpass filter
-% electric line 50Hz in the uk needs to be removed
-for runi = 1:length(outfirst)
-    [pathstr,name,ext] = fileparts(outfirst{runi});
-    outf = sprintf('%s/ff%s%s',pathstr,name,ext);
+    %% set up a fieldtrip config
+    cfg = [];
+    cfg.continuous = 'yes'; % this data is not epoched, it's continuous
+    % get the path to the file
+    % here I'm using the transmid output of my maxfiltering---this is the
+    % run transformed to the coordinates of the middle run, so all my runs
+    % are comparable
+    cfg.dataset = sprintf([maxFilterFolder,filesep,thisSubject.meg_labs{runNum},'_transmid.fif']);
+    thisHdr = ft_read_header(cfg.dataset); % grab some of the details (e.g. channels etc) for later
     
-    if ~exist(outf,'file') || settings.overwrite
-        
-        
-        %highpass
-        S   = [];
-        S.D = outfirst{runi};
-        S.band = 'high';
-        S.freq = 0.5; % removes the drift
-        D = spm_eeg_filter(S);
-        
-        %line filter
-        S   = [];
-        S.D = D;
-        S.band = 'stop';
-        S.freq = [49 51];% This defines the notch filter frequency range, i.e. around 50Hz
-        D = spm_eeg_filter(S);
-        
-        
-        filenames{runi} = D.fullfile;
-    else
-        filenames{runi}=outf;
-    end
-end
+    %% we can look at the data
+    % e.g. to see if we need to filter harmonics of line noise (see filtering section below)
+    % or do manual artefact detection at the outset if you know something
+    % weird happened
+%     cfg.channel = {'MEG'}; cfg.ylim = [-5e-11 5e-11];% grab just these, so we aren't plagued by all the STI channels and triggers etc
+% %     cfg.channel = {'EEG'}; cfg.ylim = [-0.0005 0.0005];
+%     cfg.blocksize = 10; % how many seconds of data to show at once
+%     % choose one of
+%     cfg.viewmode = 'butterfly';
+% %     cfg.viewmode = 'vertical';
+%     cfg = ft_databrowser(cfg);
 
+%% NOTE: if you looked at your data, be sure to re-run the previous ft config section before moving on
 
+    %% now we want to define the trials
+    % I have already produced a trial definition in spm/osl trl file
+    % format, so I will not do it as per fieldtrip tutorials, but instead
+    % import that file in the fieldtrip format (which is very similar)
+    cfg.trialfun = 'trlFromFile'; % this is my own trial function that simply reads in from the spm/osl trl file I made in a3_megTriggers
+    cfg.filename = sprintf(trlfile,num2str(runNum)); % I just arbitrarily add this to cfg struct so the function has something to read to find the file it needs
+    cfg = ft_definetrial(cfg);
+    % so I'll end up with epoch start, epoch end, offset, and condition codes
 
-
-
-
-%% Re-reference
-% re-referencing to the average
-for runi = 1:length(filenames)
+    %% now filter the data
     
-    [pathstr,name,ext] = fileparts(filenames{runi});
-    outf=sprintf('%s/M%s%s',pathstr,name,ext);
+    % we might want to high-pass filter to remove slow drift potentials/fields that
+    % the faster signals of interest ride on. But this risks losing slow
+    % fluctuations of brain potential, and introducing artefacts (ringing).
+    % temporal maxfilter high-pass filters already, so see if you need to do more of that.
+    % I have done my maxfilter at a 10 sec data buffer, which corresponds to  a cut-off freq of 0.1Hz (1/10s)
+    % I'm pretty sure my old script filtered again at 0.5 but I think I'll
+    % just leave this for now
+    cfg.hpfilter = 'no';
     
+    % we also might want to low pass here, the benefit being that it might
+    % remove high-frequency variance that is often noise in relation to the
+    % typically slower dynamics of interest. But this risks masking
+    % high-frequency (e.g. gamma band) activity, or even just useful
+    % information about the shape of some responses. I'm not going to
+    % because I'm pretty sure I care about gamma.
+    cfg.lpfilter = 'no';
     
+    % what we almost certainly want to do is notch filter any line noise (+
+    % harmonics of the line noise if necessary). Worth examining the data
+    % at this point to see if you have line noise/harmonics. Obviously this
+    % means you lose any information at this frequency.
+    % fieldtrip has a specific kind of filter for this: DFT (a sharp
+    % 'discrete fourier transform' but note this needs the data to have
+    % lots of data either side (5-10 secs). should be ok if each run starts
+    % with the 10-20 second recording that is standard at cbu), but will
+    % throw an error if you don't have enough/will warn you that it's using
+    % data mirroring to achieve this
+    % alternatively you can use their notch filter, they call a band-stop
+    % filter, so e.g. cfg.bsfilter & cfg.bsfreq = [49 51];
+    cfg.dftfilter = 'yes';
+    cfg.dftfreq = '50'; % we'll just do the line noise, but we could add harmonics here (.e.g [50 100])---the default will do [50 100 150]
+    % it's worth noting that ica could probably pick up line noise and
+    % harmonics too
     
-    if ~exist(outf,'file') || settings.overwrite
-        setBadCh(settings,filenames{runi});
-        
-        D = reref(filenames{runi});
-        filenames{runi} = D{2}.Dfname;
-        
-    else
-        filenames{runi}=outf;
-    end
-end
-
-for i = 1:numel(filenames);filenames{i}=char(filenames{i});end
-
-%% Do ICA
-
-clear D
-D = spm_eeg_load(filenames{1});
-
-%setup parameters
-ICA.PCA_dim = 60;                       % Number of PCs for ICA
-ICA.PCA_EEGdim = 60;
-ICA.FiltPars = [0.1 40];                % filter bandpass [1 40] %% [0.05 20];
-ICA.FiltPars = [ICA.FiltPars D.fsample];
-ICA.TemAbsPval = .05/ICA.PCA_dim;       %0.05;  % Too liberal if not permuted?
-ICA.SpaAbsPval = .05/ICA.PCA_dim;       %0.05;  % Too liberal if not permuted?
-ICA.TemRelZval = 3;                     % Relative temporal threshold in Z-values
-ICA.SpaRelZval = 2;                     % 3 is too strict? (since high topo correlation anyway)
-ICA.Nperm = 1600;%1600;                       %1600 for 95%CI of p=0.01; 0 turns off permutation
-ICA.VarThr = 0;                         % variance threshold (could be 100/PCA_dim, but suggest 0);
-ICA.Rseed = 1;                          % to make reproducible
-modalities = {'MEGMAG', 'MEGPLANAR', 'EEG'};
-
-
-%path for templates
-% compares ICA with my lines of interest (e.g. ECG HEOG VEOG etc)
-% but won't work for EEG, because EEG artefact templates only exist for 70
-% channel EEG cap
-% arttopos = load('/group/woolgar-lab/projects/Dorian/EvAccum/tools_analysis/meg_data/templates/MEGEEGArtifactTemplateTopographies');
-s_ref_chans = {'EOG001','EOG002','ECG003'};%check D.chanlabels to determine what these are
-%if ~settings.ctr
-%    t_ref_chans = {'EOG061','EOG062','ECG063','EMG064'};%needed as we don't have tremor templates
-%    ICA.FiltPars = repmat(ICA.FiltPars,[3,1]);
-%else
-t_ref_chans = s_ref_chans;
-ICA.FiltPars = repmat(ICA.FiltPars,[3,1]);
-%end
-
-% takes spatial and temporal channels for comparison
-
-ICA.s_ref_labs = s_ref_chans;
-ICA.t_ref_labs = t_ref_chans;
-
-% scrambles  (permutes) signal and compares lines to determine correlation
-% against null distribution 
-% (95th percentile) for definition as artifact
-
-
-for iir = 1:numel(t_ref_chans); ICA.refs.tem{iir} = [];end % Reference signal for correlating with ICs
-for iif = 1:numel(filenames)
-    D = spm_eeg_load(filenames{iif});
-    for a = 1:length(t_ref_chans)
-        ICA.refs.tem{a} = [ICA.refs.tem{a},D(find(strcmp(D.chanlabels,t_ref_chans{a})),:)];%#ok %epoched data need to be reshaped into a 2-d matrix
-    end
-end
-
-chans = {}; remove = {}; weights = {}; temcor = {}; spacor = {}; TraMat = {};sphere =[];%#ok
-
-toDoW = 1:length(modalities);%
-if exist(icaSaveFile,'file') && ~settings.overwrite
-    
-    load(icaSaveFile);
-    
-    toDoW(find(~cellfun(@isempty,all_ica.weights)))=[];%#ok
-    %needed to decide whether to run ADJUST
-    
-    
-end
-
-
-if ~isempty(toDoW) || settings.ICAoverwrite
-    
-    for m = toDoW %startm:length(modalities)
-        
-        for refIdx = 1:size(ICA.refs.tem,2)
-            ICA.refs.spa{refIdx} = cell(size(ICA.refs.tem{refIdx}));
-        end
-%         ICA.refs.spa = {arttopos.HEOG{m}', arttopos.VEOG{m}', arttopos.ECG{m}'}; % Assumes modalities ordered same way!!!
-        
-        ICA.d = [];
-        chans = find(strcmp(D.chantype,modalities{m}));
-        bad_ch = find(ismember(chans,D.badchannels));
-        
-        %remove badchannels from d and spat templates
-
-        
-        for iif = 1:numel(filenames)
-            D = spm_eeg_load(filenames{iif});
-            
-            % D = spm_eeg_load( sprintf('_trdef_cRun%d_JS_trans',iif));
-            ICA.d = [ICA.d,D(chans,:)];%All runs in one matrix
-            
-        end
-        
-        
-        
-        
-        %run Rik's ICA with MEG templating
-        [remove,weights,TraMat,temcor,spacor,varexpl,ICs,ICsEMG,sphere] = detect_ICA_artefacts_v2_PD(ICA);
-        
-        all_ica.temcor{m} = temcor;
-        all_ica.spacor{m} = spacor;
-        all_ica.remove{m} = remove;
-        all_ica.TraMat{m} = TraMat;
-        all_ica.varexpl{m} = varexpl;
-        
-        
-        
-        all_ica.weights{m} = weights;
-        all_ica.ICs{m} = ICs(1:5000,:);
-        %if ~settings.ctr
-        %    all_ica.ICsEMG{m} = ICsEMG(1:5000,:);
-        %end
-        all_ica.sphere{m} = sphere;
-        all_ica.chans{m} = chans;
-        
-    end
-    
-    saveicastuff = sprintf(' save %s  all_ica', icaSaveFile);
-    
-    eval(saveicastuff)
+    % note all filters default to a two-pass filter (back and forward)
+    % which results in a zero-phase shift of erp components, but you can
+    % change this in fieldtrip---both order and direction
     
 end
 
 
 
 
-%% Do preprocessing: downsampling & epoching + label sorting
-%Stimulus locked & Response locked
 
-load(megrtfile,'megBehaviouralData'); % load behavioural file from MRGtrgRT script
-numtrials = megBehaviouralData(:,end-1:end); % pull the last two columns of megBehaviouralData: what run the trial belonged to, and a unique number for the trial respectively
-numtrials = str2double(numtrials); % convert to double
-Xfiles=preprocPipeline(filenames,trls,numtrials);
-
-
-%% Run ADJUST to detect EEG artefacts
-
-% if length(all_ica.weights)==3 && (length(all_ica.remove)<3 || settings.ICAoverwrite)
-%     
-%     disp('running ADJUST');
-%     clear D; D = spm_eeg_load(Xfiles);
-%     
-%     EEG = pop_fileio(Xfiles,'channels',all_ica.chans{3});%at
-%     
-%     chLab = D.sensors('EEG').label;
-%     goodch = find(~ismember(1:70,D.badchannels));
-%     chLab = D.chanlabels(goodch)';
-%     chPos = D.sensors('EEG').chanpos;
-%     chPos = D.sensors('EEG').chanpos;
-%     chPos = chPos(goodch,:);
-%     eeglocs = [num2cell(1:length(chLab))',num2cell(chPos),num2cell(chLab)];
-%     dlmcell('eeglocations.xyz',eeglocs)
-%     EEG = pop_chanedit(EEG, 'load',{'eeglocations.xyz' 'filetype' 'xyz'});
-%     EEG.icasphere = all_ica.sphere{3};
-%     EEG.icaweights = all_ica.weights{3};
-%     EEG.icaact = []; % EEG.icaweights*EEG.icasphere*EEG.data;
-%     EEG.setname = 'EEG';
-%     remove = interface_ADJ_noplot(EEG,[subj,'_report']);
-%     
-%     
-%     finalics  = setdiff(1:ICA.PCA_dim,remove);
-%     iweights = pinv(EEG.icaweights);
-%     TraMat    = iweights(:,finalics) * EEG.icaweights(finalics,:);
-%     clear EEG;
-%     if length(remove)>5
-%         remove = remove(1:5);%remove only the 3 more influential components
-%     end
-%     all_ica.remove{3} = unique([all_ica.remove{3} remove]);
-%     all_ica.TraMat{3} = TraMat;
-%     
-%     saveicastuff = sprintf(' save %s  all_ica TraMat', savename);
-%     eval(saveicastuff)
-% end
-
-clear all_ica;
-
-%% Apply ICA art-removal
-
-disp('removing bad ICs for SL');
-outputf{1} = sprintf('%s/SL_%s.mat',pathstr,thisSubject.id);
-at_apply_ICA(Xfiles,outputf{1},icaSaveFile)
-
-
-
-%% Re-reference
-Xfiles = outputf{1};clear outf;
-
-
-[pathstr,name,ext] = fileparts(Xfiles);
-outf=sprintf('%s/M%s%s',pathstr,name,ext);
-
-%if ~exist(outf,'file') || settings.overwrite
-
-D = reref(Xfiles);
-
-
-
-Xfiles = D{2}.Dfname{1};
-
-%else
-%   Xfiles={};
-%end
-
-
-%% clean up
-delete *fRun*_trans.*;
-
-
-
-
-
-%% ancillary functions
-function  setBadCh(settings,fname)
-
-
-D = spm_eeg_load(fname);
-
-%remove old badchannels
-D=D.badchannels(D.badchannels,0);
-%identify eeg badchannels
-badch = [];
-if ~isempty(settings.bEEG)
-    for ib = 1:numel(settings.bEEG)
-        if settings.bEEG(ib)<10
-            badch(ib) = D.indchannel(['EEG00',num2str(settings.bEEG(ib))]);%#ok
-        else
-            badch(ib) = D.indchannel(['EEG0',num2str(settings.bEEG(ib))]);%#ok
-        end
-    end
 end
-
-if ~isempty(settings.bMEG)
-    for ib = 1:numel(settings.bMEG)
-        if settings.bMEG(ib)<1000
-            badch(end+1) = D.indchannel(['MEG0',num2str(settings.bMEG(ib))]);%#ok
-        else
-            badch(end+1) = D.indchannel(['MEG',num2str(settings.bMEG(ib))]);%#ok
-        end
-    end
-end
-%D = units(D, D.indchantype('EEG'), 'uV');
-%update with new badchannels
-D=D.badchannels(badch,1);
-D.save;
-
-function D = reref(fname)
-
-matlabbatch{1}.spm.meeg.preproc.prepare.D = {fname};
-matlabbatch{1}.spm.meeg.preproc.prepare.task{1}.avref.fname = 'avref_montage.mat';
-matlabbatch{2}.spm.meeg.preproc.montage.D = {fname};
-matlabbatch{2}.spm.meeg.preproc.montage.mode.write.montspec.montage.montagefile(1) = cfg_dep('Prepare: Average reference montage', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','avrefname'));
-matlabbatch{2}.spm.meeg.preproc.montage.mode.write.montspec.montage.keepothers = 1;
-matlabbatch{2}.spm.meeg.preproc.montage.mode.write.blocksize = 655360;
-matlabbatch{2}.spm.meeg.preproc.montage.mode.write.prefix = 'M';
-D = spm_jobman('run',matlabbatch);
-spm_unlink('avref_montage.mat')
-
-
-
-function Xfiles=preprocPipeline(infname,trls,numtrials)
-
-spm_jobman('initcfg');
-
-
-%% epoch + merge
-lab = 'SL';
-
-
-for iff = 1:numel(infname)
-    
-    clear matlabbatch;
-    
-    %Epoch+Rearrange labels
-    matlabbatch{1}.spm.meeg.preproc.epoch.D(1) = cellstr(infname{iff});
-    matlabbatch{1}.spm.meeg.preproc.epoch.trialchoice.trlfile = cellstr(trls{iff});
-    
-    matlabbatch{1}.spm.meeg.preproc.epoch.bc = 0;
-    matlabbatch{1}.spm.meeg.preproc.epoch.eventpadding = 0;
-    matlabbatch{1}.spm.meeg.preproc.epoch.prefix = lab;
-    
-    output = spm_jobman('run',matlabbatch);
-    
-    %% Add  info needed for MVPA
-    D = spm_eeg_load(output{1}.Dfname{1});
-    %info to store: [trial num, block num, here you can add anything you wish]
-    thesetrials = numtrials(find(numtrials(:,1) == iff),2); % find the trial numbers related to this 'iff' which is the index for each file - files are the Maxfilter outputs ...trans.fif for each run - so what trials for this run
-    info = num2cell([thesetrials';iff.*ones(1,numel(thesetrials))],1); % put that into 'info'
-    D = trialtag(D, ':', info) ;save(D); % tack 'info' onto the trial data
-    
-    clear matlabbatch;
-    matlabbatch{1}.spm.meeg.preproc.prepare.D(1) = cellstr(output{1}.Dfname);
-    
-    %matlabbatch{2}.spm.meeg.preproc.prepare.D(1) = cfg_dep('Epoching: Epoched Datafile', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','Dfname'));
-    matlabbatch{1}.spm.meeg.preproc.prepare.task{1}.sortconditions.label = {
-        'LcLr'
-        'HcLr'
-        'LcHr'
-        'HcHr'
-        }';
-    
-    matlabbatch{2}.spm.meeg.preproc.downsample.D(1) = cfg_dep('Prepare: Prepared Datafile', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','Dfname'));
-    matlabbatch{2}.spm.meeg.preproc.downsample.fsample_new = 500;
-    matlabbatch{2}.spm.meeg.preproc.downsample.method = 'resample';
-    matlabbatch{2}.spm.meeg.preproc.downsample.prefix = 'd';
-    
-    
-    output = spm_jobman('run',matlabbatch);
-    
-    
-    
-    
-    %get ready for another round
-    clear matlabbatch;
-    outfiles{iff} = output{1}.Dfname; %#ok
-    
-    %check that number of trials corresponds
-    D = spm_eeg_load(outfiles{iff}{1});
-    trl = load(trls{iff},'trl');
-    %if numel(D.conditions)~= size(trl.trl,1); error([D.fname,' discrepant number of trials!']);end
-    clear trl D;
-    
-    
-    
-end
-
-
-%% merge
-S=[];
-
-%S.D needs to be  a char array
-S.D = char([outfiles{:}]);
-
-S.recode = 'same';
-S.prefix = 'X';
-D = spm_eeg_merge(S);
-
-
-
-Xfiles = D.fullfile;
-
-
