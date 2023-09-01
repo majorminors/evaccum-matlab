@@ -1,15 +1,18 @@
 % here we will:
 % 1. view the raw values of onsets and responses by subject: check it looks
 % sensible
+% made this while investigating the results, then re-wrote most of this into
+% a subject-based function to run on the cluster (b2)
 
 clear all
 
-rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab';
+% rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab';
+rootdir = pwd;
 datadir = fullfile(rootdir,'data','meg_pilot_4'); addpath(datadir);
 toolsdir = fullfile(rootdir,'tools_analysis');
 ftDir = fullfile(toolsdir,'..','..','..','Toolboxes','fieldtrip');
 
-addpath(genpath(fullfile(toolsdir,'lib')))
+addpath(genpath(toolsdir))
 
 data_inspection(datadir, toolsdir, ftDir, 1,{'if' '.fif' ''})
 
@@ -93,7 +96,7 @@ for subjectNum = 1:numel(subjectFolders)
         cfg.trlfile = thisTrlFile;
         cfg.behavfile = thisBehavFile;
         cfg.run = thisRun;
-        cfg.pre = 'fixation';
+        cfg.lockTo = 'fixation';
         cfg.trl = trlFromFile(cfg);
         fixOnsetsData{fileNum} = ft_redefinetrial(cfg,rawData);
         fixOnsetsData{fileNum} = rejectArtefacts(fixOnsetsData{fileNum}, combinedLayout,ftDir);
@@ -131,7 +134,9 @@ for subjectNum = 1:numel(subjectFolders)
         cfg.trlfile = thisTrlFile;
         cfg.behavfile = thisBehavFile;
         cfg.run = thisRun;
-        cfg.post = 'response';
+        cfg.lockTo = 'response';
+        cfg.pre = -600;
+        cfg.post = 200;
         cfg.trl = trlFromFile(cfg);
         responseLockedData{fileNum} = ft_redefinetrial(cfg,rawData);
         responseLockedData{fileNum} = rejectArtefacts(responseLockedData{fileNum}, combinedLayout,ftDir);
@@ -221,16 +226,14 @@ for subjectNum = 1:numel(subjectFolders)
     midParEeg = {'EEG022' 'EEG023' 'EEG024' 'EEG033' 'EEG034' 'EEG035' 'EEG044' 'EEG045' 'EEG046' 'EEG055' 'EEG056' 'EEG057'};
     cfg.channel = midParMeg;
     ft_singleplotER(cfg, respLocked{subjectNum});
-    theseLims = xlim(); xlim([theseLims(2)-1 theseLims(2)]);
     hold on
-    plot([theseLims(2)-0.2 theseLims(2)-0.2], ylim, 'k--')
+    plot([0 0], ylim, 'k--')
     hold off
     print([thisFigDir filesep 'meg_resp_midparave.png'], '-dpng');
     cfg.channel = midParEeg;
     ft_singleplotER(cfg, respLocked{subjectNum})
-    theseLims = xlim(); xlim([theseLims(2)-1 theseLims(2)]);
     hold on
-    plot([theseLims(2)-0.2 theseLims(2)-0.2], ylim, 'k--')
+    plot([0 0], ylim, 'k--')
     hold off
     print([thisFigDir filesep 'eeg_resp_midparave.png'], '-dpng');
     
@@ -265,35 +268,48 @@ for subjectNum = 1:numel(subjectFolders)
     
     cfg.channel = midParMeg;
     ft_singleplotER(cfg, ecer_respLocked{subjectNum},echr_respLocked{subjectNum},hcer_respLocked{subjectNum},hchr_respLocked{subjectNum});
-    theseLims = xlim(); xlim([theseLims(2)-1 theseLims(2)]);
     hold on
-    plot([theseLims(2)-0.2 theseLims(2)-0.2], ylim, 'k--')
+    plot([0 0], ylim, 'k--')
     legend({'ecer' 'echr' 'hcer' 'hchr'},'Location','southwest')
     hold off
     print([thisFigDir filesep 'meg_resp_midparCondave.png'], '-dpng');
     cfg.channel = midParEeg;
     ft_singleplotER(cfg, ecer_respLocked{subjectNum},echr_respLocked{subjectNum},hcer_respLocked{subjectNum},hchr_respLocked{subjectNum});
-    theseLims = xlim(); xlim([theseLims(2)-1 theseLims(2)]);
     hold on
-    plot([theseLims(2)-0.2 theseLims(2)-0.2], ylim, 'k--')
+    plot([0 0], ylim, 'k--')
     legend({'ecer' 'echr' 'hcer' 'hchr'},'Location','southwest')
     hold off
     print([thisFigDir filesep 'eeg_resp_midparCondave.png'], '-dpng');
+    
+    cfg.channel = midParMeg;
+    ft_singleplotER(cfg, ec_respLocked{subjectNum},hc_respLocked{subjectNum},er_respLocked{subjectNum},hr_respLocked{subjectNum});
+    hold on
+    plot([0 0], ylim, 'k--')
+    legend({'ec' 'hc' 'er' 'hr'},'Location','southwest')
+    hold off
+    print([thisFigDir filesep 'meg_resp_midparTypeave.png'], '-dpng');
+    cfg.channel = midParEeg;
+    ft_singleplotER(cfg, ec_respLocked{subjectNum},hc_respLocked{subjectNum},er_respLocked{subjectNum},hr_respLocked{subjectNum});
+    hold on
+    plot([0 0], ylim, 'k--')
+    legend({'ec' 'hc' 'er' 'hr'},'Location','southwest')
+    hold off
+    print([thisFigDir filesep 'eeg_resp_midparTypeave.png'], '-dpng');
     
     close all
     
 end
 
-% first let's save that
-disp('saving')
-save(saveFile,'fixOnsets','cohOnsets','respLocked',...
-    'ecer_respLocked','echr_respLocked','hcer_respLocked','hchr_respLocked',...
-    '-v7.3');
+% first let's save that in case it crashes
+% disp('saving')
 % save(saveFile,'fixOnsets','cohOnsets','respLocked',...
 %     'ecer_respLocked','echr_respLocked','hcer_respLocked','hchr_respLocked',...
-%     'ec_respLocked','hc_respLocked','er_respLocked','hr_respLocked',...
 %     '-v7.3');
-disp('saved')
+% % save(saveFile,'fixOnsets','cohOnsets','respLocked',...
+% %     'ecer_respLocked','echr_respLocked','hcer_respLocked','hchr_respLocked',...
+% %     'ec_respLocked','hc_respLocked','er_respLocked','hr_respLocked',...
+% %     '-v7.3');
+% disp('saved')
 
 getFull = @(x) find(~cellfun(@isempty,x));
 grandFigdir = [saveFile '_figs'];
@@ -341,16 +357,14 @@ midParMeg = {'MEG0431' 'MEG0632' 'MEG0633' 'MEG0711' 'MEG0712' 'MEG0713' 'MEG072
 midParEeg = {'EEG022' 'EEG023' 'EEG024' 'EEG033' 'EEG034' 'EEG035' 'EEG044' 'EEG045' 'EEG046' 'EEG055' 'EEG056' 'EEG057'};
 cfg.channel = midParMeg;
 ft_singleplotER(cfg, respLockedGrand);
-theseLims = xlim(); xlim([theseLims(2)-1 theseLims(2)]);
 hold on
-plot([theseLims(2)-0.2 theseLims(2)-0.2], ylim, 'k--')
+plot([0 0], ylim, 'k--')
 hold off
 print([grandFigdir filesep 'meg_resp_midparave.png'], '-dpng');
 cfg.channel = midParEeg;
 ft_singleplotER(cfg, respLockedGrand)
-theseLims = xlim(); xlim([theseLims(2)-1 theseLims(2)]);
 hold on
-plot([theseLims(2)-0.2 theseLims(2)-0.2], ylim, 'k--')
+plot([0 0], ylim, 'k--')
 hold off
 print([grandFigdir filesep 'eeg_resp_midparave.png'], '-dpng');
 close all
@@ -368,20 +382,45 @@ cfg.showlabels = 'no';
 cfg.fontsize = 2;
 cfg.channel = midParMeg;
 ft_singleplotER(cfg, ecer_respLockedGrand,echr_respLockedGrand,hcer_respLockedGrand,hchr_respLockedGrand);
-theseLims = xlim(); xlim([theseLims(2)-1 theseLims(2)]);
 hold on
-plot([theseLims(2)-0.2 theseLims(2)-0.2], ylim, 'k--')
+plot([0 0], ylim, 'k--')
 legend({'ecer' 'echr' 'hcer' 'hchr'},'Location','southwest')
 hold off
 print([grandFigdir filesep 'meg_resp_midparCondave.png'], '-dpng');
 cfg.channel = midParEeg;
 ft_singleplotER(cfg, ecer_respLockedGrand,echr_respLockedGrand,hcer_respLockedGrand,hchr_respLockedGrand);
-theseLims = xlim(); xlim([theseLims(2)-1 theseLims(2)]);
 hold on
-plot([theseLims(2)-0.2 theseLims(2)-0.2], ylim, 'k--')
+plot([0 0], ylim, 'k--')
 legend({'ecer' 'echr' 'hcer' 'hchr'},'Location','southwest')
 hold off
 print([grandFigdir filesep 'eeg_resp_midparCondave.png'], '-dpng');
+close all
+
+cfg = [];
+ec_respLockedGrand = ft_timelockgrandaverage(cfg, ec_respLocked{getFull(ec_respLocked)});
+cfg = [];
+hc_respLockedGrand = ft_timelockgrandaverage(cfg, hc_respLocked{getFull(hc_respLocked)});
+cfg = [];
+er_respLockedGrand = ft_timelockgrandaverage(cfg, er_respLocked{getFull(er_respLocked)});
+cfg = [];
+hr_respLockedGrand = ft_timelockgrandaverage(cfg, hr_respLocked{getFull(hr_respLocked)});
+cfg = [];
+cfg.showlabels = 'no';
+cfg.fontsize = 2;
+cfg.channel = midParMeg;
+ft_singleplotER(cfg, ec_respLockedGrand,hc_respLockedGrand,er_respLockedGrand,hr_respLockedGrand);
+hold on
+plot([0 0], ylim, 'k--')
+legend({'ec' 'hc' 'er' 'hr'},'Location','southwest')
+hold off
+print([grandFigdir filesep 'meg_resp_midparTypeave.png'], '-dpng');
+cfg.channel = midParEeg;
+ft_singleplotER(cfg, ec_respLockedGrand,hc_respLockedGrand,er_respLockedGrand,hr_respLockedGrand);
+hold on
+plot([0 0], ylim, 'k--')
+legend({'ec' 'hc' 'er' 'hr'},'Location','southwest')
+hold off
+print([grandFigdir filesep 'eeg_resp_midparTypeave.png'], '-dpng');
 close all
 
 
