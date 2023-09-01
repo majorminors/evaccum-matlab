@@ -21,7 +21,7 @@ function a4_preProc_ica(thisSubject,datadir,toolsdir,overwrite,fileMods,manual)
 
 % it uses the fastica protocol
 
-% you should think a little about this, if you're doing decoding because
+% you should think a little about this, if you're doing decoding, because
 % e.g. maxfilter might have changed (reduced) the rank of the data.
 % rank refers to the transformation of the numerical/ordinal values of data
 % with a sorted rank. maxfilter can e.g. mark bad channels, so there are now
