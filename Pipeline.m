@@ -13,10 +13,10 @@ clear all
 rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab';
 scriptdir = fullfile(rootdir,'tools_analysis'); cd(scriptdir)
 datadir = fullfile(rootdir,'data','meg_pilot_4'); addpath(datadir);
-runLocal = 1;
+runLocal = 0;
 runBehav = 0;
-subjectRange = 1;%[34 35 36 37];%0;%[-1 7]; % 0 does all; array like [-1 4] does 4 to end
-jobdir = fullfile(rootdir,'job_logging','ica02');
+subjectRange = 0;%[34 35 36 37];%0;%[-1 7]; % 0 does all; array like [-1 4] does 4 to end
+jobdir = fullfile(rootdir,'job_logging','savelayout03');
 % functionToRun = -@a1_importAndOrganiseScans; additionalParams={datadir,0};
 % functionToRun = @a2_megTriggers; additionalParams={datadir,scriptdir,0}; 
 % functionToRun = @a3_maxFilter; additionalParams={datadir,scriptdir,1};
@@ -24,7 +24,7 @@ jobdir = fullfile(rootdir,'job_logging','ica02');
 % functionToRun = @a4_preProc_ica; additionalParams={datadir,scriptdir,0,{'f' '.fif' 'i'},0}; % run locally if manual
 % functionToRun = @a4_preProc_atypical_artefacts; additionalParams={datadir,scriptdir,1,{'if' '.fif' 'C'},0,0}; % run locally if manual
 % b1_data_inspection is a standalone file for local exploration
-functionToRun = @ab2_aggregate_data; additionalParams={datadir,scriptdir,1};
+functionToRun = @b2_aggregate_data; additionalParams={datadir,scriptdir,1};
 
 allSubjects = importParticipants();
 if ~subjectRange; subjectRange = 1:numel(allSubjects); end
@@ -40,7 +40,7 @@ for subjectidx = subjectRange
     
     thisSubject = allSubjects{subjectidx}; % let's make this easier to reference
     
-    fprintf('this is subject %s, which is subject index %.0f', thisSubject.id, subjectidx);
+    fprintf('%s (idx: %.0f)\n', thisSubject.id, subjectidx);
     
     % let's skip participants who are not useable
     if ~thisSubject.usable
