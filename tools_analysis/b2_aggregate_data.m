@@ -87,7 +87,7 @@ for fileNum = 1:numel(theseFiles)
     cfg = [];
     combinedLayout = ft_appendlayout(cfg, eegLayout, megLayout);
     % won't bother saving this one
-    
+
     %% now onset of coherent dots
     disp('compiling dataset based on onset')
     cfg = [];
@@ -96,7 +96,13 @@ for fileNum = 1:numel(theseFiles)
     cfg.pre = -500;
     cfg.run = thisRun;
     cfg.trl = trlFromFile(cfg);
-    cohOnsetsData{fileNum} = ft_redefinetrial(cfg,rawData);
+    cohOnsetsData{fileNum} = ft_redefinetrial(cfg,rawData);    
+    % baseline correction
+    cfg = [];
+    cfg.demean          = 'yes';
+    cfg.baselinewindow  = [-0.2 0]; % assumes we're demeaning coherence-locked stimuli
+    cohOnsetsData{fileNum} = ft_preprocessing(cfg,cohOnsetsData{fileNum});
+    % reject artefacts
     cohOnsetsData{fileNum} = rejectArtefacts(cohOnsetsData{fileNum}, combinedLayout,ftDir);
     
     %% get response locked data
@@ -109,8 +115,14 @@ for fileNum = 1:numel(theseFiles)
     cfg.pre = -600;
     cfg.post = 200;
     cfg.trl = trlFromFile(cfg);
-    respLockedData{fileNum} = ft_redefinetrial(cfg,rawData);
+    % if we want to look at the raw data
+%     respLockedData{fileNum} = ft_redefinetrial(cfg,rawData);
+    % if we want to look at the demeaned data
+    respLockedData{fileNum} = ft_redefinetrial(cfg,cohOnsetsData{fileNum});
+    % reject artefacts
     respLockedData{fileNum} = rejectArtefacts(respLockedData{fileNum}, combinedLayout,ftDir);
+
+    
     
 end
 
