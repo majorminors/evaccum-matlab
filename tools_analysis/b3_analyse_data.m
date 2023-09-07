@@ -1,3 +1,5 @@
+%% set up
+
 clear all
 
 % set up paths
@@ -11,11 +13,21 @@ ftDir = fullfile(toolsdir,'..','..','..','Toolboxes','fieldtrip');
 addpath(ftDir); ft_defaults;
 addpath(genpath(fullfile(toolsdir,'lib')))
 
+toolbox = fullfile(rootdir,'..','..','Toolboxes','gramm'); addpath(toolbox); clear toolbox
+toolbox = fullfile(rootdir,'..','..','Toolboxes','bayesFactor'); addpath(toolbox); clear toolbox
+
 erpFigDir = fullfile(datadir, 'erpFigs');
 if ~exist(erpFigDir); mkdir(erpFigDir); end
 
 % we'll loop through subject data dirs, so just get the path from there
 inputFileName = ['Preprocess' filesep 'timelocked_averages.mat'];
+
+% some colours
+teal = [0.2, 0.6, 0.7];
+coral = [0.9, 0.4, 0.3];
+lilac = [0.7, 0.5, 0.8];
+
+%% load
 
 % since our folders are all e.g. S01, S12 etc, let's load information about
 % the directories that have that pattern
@@ -37,101 +49,16 @@ for subjectNum = 1:numel(subjectFolders)
     theseFiles = dir([subjectFolders(subjectNum).folder filesep subjectFolders(subjectNum).name filesep inputFileName]);
     if isempty(theseFiles); continue; end
     
-    %% so here, load what you care about and play with them!
+    % so here, load what you care about and play with them!
     disp('loading')
-    whichVars = {'ec_responseLockedAverage' 'hc_responseLockedAverage' 'er_responseLockedAverage' 'hr_responseLockedAverage'};
+    whichVars = {'ec_responseLockedAverage' 'hc_responseLockedAverage' 'er_responseLockedAverage' 'hr_responseLockedAverage' 'ec_coherenceLockedAverage' 'hc_coherenceLockedAverage' 'er_coherenceLockedAverage' 'hr_coherenceLockedAverage'};
     
     data{subjectNum} = load(thisFile,whichVars{:});
     
 end; clear theseFiles thisFile subjectFolders subjectNum
 
-% analysis plan:
+%% get some layouts and calculate neighbours
 %
-% RQ: is there a difference between ramping activity related to perceptual
-%     processing and activity related to categorisation?
-% is there ramping activity that scales with the difficulty of the
-% perceptual difficulty for coherence as it does for categorisation
-%%
-% CPP or P300 (good justification here: https://www.nature.com/articles/s41562-020-0863-4 and here: https://www.sciencedirect.com/science/article/pii/S0006899319301386)
-%        - select the Pz, or some averaged cluster centred on Pz (e.g. the two
-%          closest neighbours)
-% can also compare the motor prep using bilateral beta across conditions,
-%     but the specifics of this I don't know yet->I would like to do at least
-%     one frequency-based analysis
-%
-%
-% 1. first subtract easy from hard seperately for coherence and rule to
-%     determine which sensors are the most sensitive to this effect. So we
-%     will have:
-%         - coherence difficulty sensors
-%         - rule difficulty sensors
-%         - then we ask how are these two sensor groups different in space?
-% 2. on these sensors and the classic CPP or P300, compare the amplitude and the slope across the four
-%     conditions
-%         - to compare amplitude, test mean amplitude within a window centred on the
-%           response locked grand average peak
-%         - to compare slope, test values from roughly 400ms prior to response
-%             - alternatively, if I have time, I can fit a straight line to
-%               the response locked waveform, but this seems hard
-%         - so just compare at every timepoint across the conditions with a
-%           bayes analysis
-%             - to do that, just write about them OR do the difference of
-%             the differences (coherence effect-categorisation effect) BUT
-%             ONLY IF THEY LOOK DIFFERENT
-%         - can select MEG equivs and also google it and do the exact same
-%         analysis but with the GRADs
-%         - so now we have are cat and coh comparable in terms of
-%         timecourse
-%% now is the topography equivalent across the two
-
-% 3. compare easy vs hard seperately for coherence and rule for every sensor
-%     at every time point (cluster test) to see if we get something similar
-%         - is this the same as amplitude, if we have a range of times at
-%           which the value is significantly different?
-%         - are coherence clusters happening in the same place as coherence
-%           sensitivity?
-%         - are rule clusters happening in the same place as rule
-%           sensitivity?
-%         - how does the timecourse compare in coherence and rule as per
-%           the above?
-
-% descriptive -> similar or different
-%%
-%
-% 4. find when the variability in the CPP correlate with
-%     the model parameters
-%         - sliding window, as per alessandro's paper
-%         - but also let's do coherence only and rule only model parameters
-%         - so theoretical trial-wise signal e.g. (boundary-bias/2)/(RT-non-decision time)
-%         - instead of this, we can correlate the difference in the drift
-%           rate between e.g. high/low coherence with the difference in CPP
-%           across participants---so a bigger difference in drift rate = a
-%           bigger difference in neural signal
-%         - do this across timepoints and we can say they correlate at the
-%         times as in the timecourse analysis
-%         - then we can do space after we see the topology analysis to
-%           constrain _where_ we look
-%% 5. then rdm
-% model fit through time for:
-%   - stimulus representation fit through time
-%   - categorisation representation fit through time
-%   - for high coherence and low coherence for example
-%   - and high or low categorisation
-%   - we'll do it whole brain decoding (mags+grads) and maybe also eeg
-%   - and we can run the same correlations as with the models and CPP and
-%   this would be our final analysis (so diff in decoding correlated to
-%   diff in models)
-% we should also do button presses because we will want time locked to stim
-%   and response
-
-%% and yes vary the models for c and r seperately to see if it distinguishes the important parameters
-
-
-%% so we can do cluster tests like below
-%%
-%%
-
-%% first calculate neighbours
 
 % meg is standard---can just use FTs version
 % megNeighbours = load(fullfile(ftDir,'template','neighbours','neuromag306mag_neighb.mat'));
@@ -141,6 +68,9 @@ megLayout = fullfile(datadir,'S01','Preprocess','meg_layout.lay');
 % there is a template for 64 chan eeg at fullfile(ftDir,'template','neighbours','easycap64ch-avg_neighb.mat')
 % I think better to make this ourselves from a participant layout
 eegLayout = fullfile(datadir,'S01','Preprocess','eeg_layout.lay');
+
+% now neighbours
+
 cfg = [];
 cfg.channel = 'EEG';
 cfg.method = 'distance';
@@ -153,7 +83,197 @@ cfg.method = 'distance';
 cfg.layout = megLayout;
 megNeighbours = ft_prepare_neighbours(cfg);
 
-%% is easy coh different from hard coh
+% and we'll collect useful sensors
+
+CPP = {'EEG040' 'EEG041' 'EEG042'};
+
+%% grab the data and average it
+%
+
+% coherence
+cfg = [];
+ecRespAll = returnStructs(data, 'ec_responseLockedAverage');
+ecRespAve = ft_timelockgrandaverage(cfg, ecRespAll{:});
+cfg = [];
+ecOnsAll = returnStructs(data, 'ec_coherenceLockedAverage');
+ecOnsAve = ft_timelockgrandaverage(cfg, ecOnsAll{:});
+cfg = [];
+hcRespAll = returnStructs(data, 'hc_responseLockedAverage');
+hcRespAve = ft_timelockgrandaverage(cfg, hcRespAll{:});
+cfg = [];
+hcOnsAll = returnStructs(data, 'hc_coherenceLockedAverage');
+hcOnsAve = ft_timelockgrandaverage(cfg, hcOnsAll{:});
+
+%
+% categorisation
+cfg = [];
+erRespAll = returnStructs(data, 'er_responseLockedAverage');
+erRespAve = ft_timelockgrandaverage(cfg, erRespAll{:});
+cfg = [];
+erOnsAll = returnStructs(data, 'er_coherenceLockedAverage');
+erOnsAve = ft_timelockgrandaverage(cfg, erOnsAll{:});
+cfg = [];
+hrRespAll = returnStructs(data, 'hr_responseLockedAverage');
+hrRespAve = ft_timelockgrandaverage(cfg, hrRespAll{:});
+cfg = [];
+hrOnsAll = returnStructs(data, 'hr_coherenceLockedAverage');
+hrOnsAve = ft_timelockgrandaverage(cfg, hrOnsAll{:});
+
+%% now get the differences
+
+for subject = 1:numel(ecRespAll)
+    fprintf('\nthis is subject %.0f of %.0f\n\n',subject,numel(ecRespAll))
+    
+    cOnsDiffAll{subject} = getDifference(ecOnsAll{subject}, hcOnsAll{subject});
+    cRespDiffAll{subject}= getDifference(ecRespAll{subject}, hcRespAll{subject});
+    rOnsDiffAll{subject} = getDifference(erOnsAll{subject}, hrOnsAll{subject});
+    rRespDiffAll{subject}= getDifference(erRespAll{subject}, hrRespAll{subject});
+
+end; clear subject
+
+cfg = [];
+cOnsDiffAve = ft_timelockgrandaverage(cfg, cOnsDiffAll{:});
+cRespDiffAve = ft_timelockgrandaverage(cfg, cRespDiffAll{:});
+rOnsDiffAve = ft_timelockgrandaverage(cfg, rOnsDiffAll{:});
+rRespDiffAve = ft_timelockgrandaverage(cfg, rRespDiffAll{:});
+
+%% and bayes test the differences
+
+[cOnsDiffAve.bfs cOnsDiffAve.reports cOnsDiffAve.code] = testDiffsAcrossTime(cOnsDiffAll,CPP);
+[cRespDiffAve.bfs cRespDiffAve.reports cRespDiffAve.code] = testDiffsAcrossTime(cRespDiffAll,CPP);
+[rOnsDiffAve.bfs rOnsDiffAve.reports rOnsDiffAve.code] = testDiffsAcrossTime(rOnsDiffAll,CPP);
+[rRespDiffAve.bfs rRespDiffAve.reports rRespDiffAve.code] = testDiffsAcrossTime(rRespDiffAll,CPP);
+
+
+%% the timecourse of univariate activity
+%
+
+% coh onset in eeg
+plotTimecourse(eegLayout,ecOnsAve,hcOnsAve,cOnsDiffAve,...
+    {'easy coh';'hard coh'},'northwest','Coherence Onset')
+
+cfg            = [];
+cfg.showlabels = 'yes';
+cfg.fontsize   = 6;
+cfg.layout     = eegLayout;
+% cfg.xlim       = [-0.2 0.6];
+% cfg.ylim       = [-1.6e-04 -1.46e-04];
+cfg.channel    = CPP;
+% cfg.channel    = 'EEG';
+cfg.linecolor = [teal; coral];
+figure;
+ft_singleplotER(cfg, ecOnsAve, hcOnsAve);
+line([0 0], get(gca,'YLim'), 'Color', 'k', 'LineStyle', '--')
+ylabel('Mean EEG Amplitude (uV)')
+xlabel('Time (s)')
+% figure;
+% ft_singleplotER(cfg, cOnsDiffAve);
+yyaxis right;
+plot(cOnsDiffAve.time,cOnsDiffAve.code,...
+    'LineStyle', 'none', 'Marker', '.', 'Color', lilac)
+ylabel('Bayes Evidence for Difference')
+ylim([0 10])
+yticks([0 1 2])
+yticklabels({'weak (<3)' 'moderate (3-10)' 'strong (10+)'})
+ax = gca;
+ax.YColor = lilac;
+clear ax
+legend({'easy coh';'hard coh'}, 'Location', 'northwest');
+title('CPP (CP1 CPz CP2) in EEG: Coherence Onset', 'FontSize', 14)
+
+% coh response in eeg
+cfg            = [];
+cfg.showlabels = 'yes';
+cfg.fontsize   = 6;
+cfg.layout     = eegLayout;
+% cfg.xlim       = [-0.2 0.6];
+% cfg.ylim       = [-1.6e-04 -1.46e-04];
+cfg.channel    = CPP;
+cfg.linecolor = [teal; coral];
+figure;
+ft_singleplotER(cfg, ecRespAve, hcRespAve);
+line([0 0], get(gca,'YLim'), 'Color', 'k', 'LineStyle', '--')
+ylabel('Mean EEG Amplitude (uV)')
+xlabel('Time (s)')
+% figure;
+% ft_singleplotER(cfg, cRespDiffAve);
+yyaxis right;
+plot(cRespDiffAve.time,cRespDiffAve.code,...
+    'LineStyle', 'none', 'Marker', '.', 'Color', lilac)
+ylabel('Bayes Evidence for Difference')
+ylim([0 10])
+yticks([0 1 2])
+yticklabels({'weak (<3)' 'moderate (3-10)' 'strong (10+)'})
+ax = gca;
+ax.YColor = lilac;
+clear ax
+legend({'easy coh';'hard coh'}, 'Location', 'northwest');
+title('CPP (CP1 CPz CP2) in EEG: Coherence Response', 'FontSize', 14)
+
+% rule onset in eeg
+cfg            = [];
+cfg.showlabels = 'yes';
+cfg.fontsize   = 6;
+cfg.layout     = eegLayout;
+% cfg.xlim       = [-0.2 0.6];
+% cfg.ylim       = [-1.6e-04 -1.46e-04];
+cfg.channel    = CPP;
+cfg.linecolor = [teal; coral];
+figure;
+ft_singleplotER(cfg, erOnsAve, hrOnsAve);
+line([0 0], get(gca,'YLim'), 'Color', 'k', 'LineStyle', '--')
+ylabel('Mean EEG Amplitude (uV)')
+xlabel('Time (s)')
+% figure;
+% ft_singleplotER(cfg, rOnsDiffAve);
+yyaxis right;
+plot(rOnsDiffAve.time,rOnsDiffAve.code,...
+    'LineStyle', 'none', 'Marker', '.', 'Color', lilac)
+ylabel('Bayes Evidence for Difference')
+ylim([0 10])
+yticks([0 1 2])
+yticklabels({'weak (<3)' 'moderate (3-10)' 'strong (10+)'})
+ax = gca;
+ax.YColor = lilac;
+clear ax
+legend({'easy rule';'hard rule'}, 'Location', 'southeast');
+title('CPP (CP1 CPz CP2) in EEG: Categorisation Onset', 'FontSize', 14)
+
+% rule response in eeg
+cfg            = [];
+cfg.showlabels = 'yes';
+cfg.fontsize   = 6;
+cfg.layout     = eegLayout;
+% cfg.xlim       = [-0.2 0.6];
+% cfg.ylim       = [-1.6e-04 -1.46e-04];
+cfg.channel    = CPP;
+cfg.linecolor = [teal; coral];
+figure;
+ft_singleplotER(cfg, erRespAve, hrRespAve);
+line([0 0], get(gca,'YLim'), 'Color', 'k', 'LineStyle', '--')
+ylabel('Mean EEG Amplitude (uV)')
+xlabel('Time (s)')
+% figure;
+% ft_singleplotER(cfg, rRespDiffAve);
+yyaxis right;
+plot(rOnsDiffAve.time,rOnsDiffAve.code,...
+    'LineStyle', 'none', 'Marker', '.', 'Color', lilac)
+ylabel('Bayes Evidence for Difference')
+ylim([0 10])
+yticks([0 1 2])
+yticklabels({'weak (<3)' 'moderate (3-10)' 'strong (10+)'})
+ax = gca;
+ax.YColor = lilac;
+clear ax
+legend({'easy rule';'hard rule'}, 'Location', 'northwest');
+title('CPP (CP1 CPz CP2) in EEG: Categorisation Response', 'FontSize', 14)
+
+
+
+%% the topology of univariate activity
+%
+
+% where is easy coh different from hard coh
 
 cfg = [];
 ecAll = returnStructs(data, 'ec_responseLockedAverage');
@@ -262,7 +382,7 @@ print([erpFigDir filesep 'meg_coh_sig_ERP_clusters.png'], '-dpng');
 close all
 
 
-%% is easy rule different from hard rule?
+% where is easy rule different from hard rule?
 
 cfg = [];
 erAll = returnStructs(data, 'er_responseLockedAverage');
@@ -371,5 +491,86 @@ f = gcf; f.Position = [10 10 1600 1600];
 print([erpFigDir filesep 'meg_rule_sig_ERP_clusters.png'], '-dpng');
 close all
 
+function difference = getDifference(data1,data2)
 
+cfg = [];
+cfg.operation = 'subtract';
+cfg.parameter = 'avg';
+difference = ft_math(cfg, data1, data2);
+
+return
+end
+
+function figHandle = plotSensor(structure,channelRow,time)
+% structure should be a fieldtrip data structure
+% channelRow should be the row number of the channel you want
+% time should be the range of timepoints you want
+
+selected_data = structure.avg(channelRow,time); % MLC24 is the 9th channel, -0.2 to 1.0 is sample 241 to 601
+selected_time = structure.time(time);
+figure;
+figHandle = plot(selected_time, selected_data)
+
+return
+end
+
+function [bfs report code] = testDiffsAcrossTime(dataStruct,channels)
+
+for i = 1:numel(dataStruct)
+    diffs(i,:) = mean(dataStruct{i}.avg(find(ismember(dataStruct{i}.label,channels)),:));
+end; clear i
+
+for i = 1:numel(dataStruct{1}.time)
+    bfs(i) = bf.ttest(diffs(:,i));
+    if bfs(i) <= 3
+        report{i} = 'weak';
+        code(i) = 0;
+    elseif (bfs(i)>3) && (bfs(i)<=10)
+        report{i} = 'moderate';
+        code(i) = 1;
+    elseif bfs(i)>10
+        report{i} = 'strong';
+        code(i) = 2;
+    end
+end; clear i
+
+
+return
+end
+
+
+function plotTimecourse(layout,data1,data2,data3,leg,legendloc,theTitle)
+
+% coh onset in eeg
+cfg            = [];
+cfg.showlabels = 'yes';
+cfg.fontsize   = 6;
+cfg.layout     = layout;
+% cfg.xlim       = [-0.2 0.6];
+cfg.ylim       = [-1.6e-04 -1.46e-04];
+cfg.channel    = CPP;
+% cfg.channel    = 'EEG';
+cfg.linecolor = [teal; coral];
+figure;
+ft_singleplotER(cfg, data1, data2);
+line([0 0], get(gca,'YLim'), 'Color', 'k', 'LineStyle', '--')
+ylabel('Mean EEG Amplitude (uV)')
+xlabel('Time (s)')
+% figure;
+% ft_singleplotER(cfg, cOnsDiffAve);
+yyaxis right;
+plot(data3.time,data3.code,...
+    'LineStyle', 'none', 'Marker', '.', 'Color', lilac)
+ylabel('Bayes Evidence for Difference')
+ylim([0 10])
+yticks([0 1 2])
+yticklabels({'weak (<3)' 'moderate (3-10)' 'strong (10+)'})
+ax = gca;
+ax.YColor = lilac;
+clear ax
+legend(leg, 'Location', legendloc);
+title(['CPP (CP1 CPz CP2) in EEG: ' theTitle], 'FontSize', 14)
+
+return
+end
 
