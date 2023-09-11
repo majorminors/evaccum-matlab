@@ -71,6 +71,15 @@ for fileNum = 1:numel(theseFiles)
         rawData = ft_preprocessing(cfg,loadFtData(thisFile)); % load it
     end
     
+    % let's do any additional filtering
+%     cfg = [];
+%     cfg.continuous = 'yes'; % this data is not epoched, it's continuous
+%     cfg.hpfilter        = 'yes';
+%     cfg.hpfreq          = 0.5;
+%     cfg.lpfilter        = 'yes';
+%     cfg.lpfreq          = 100;
+%     rawData = ft_preprocessing(cfg,rawData);
+    
     % let's make a layout using the data
     disp('prepping layouts')
     % make an eeg layout
