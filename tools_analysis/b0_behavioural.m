@@ -15,6 +15,20 @@ brainDataFile = ['Preprocess' filesep 'timelocked_averages.mat'];
 toolbox = fullfile(rootdir,'..','..','Toolboxes','gramm'); addpath(toolbox); clear toolbox
 toolbox = fullfile(rootdir,'..','..','Toolboxes','bayesFactor'); addpath(toolbox); clear toolbox
 
+
+teal = [0.2, 0.6, 0.7];
+coral = [0.9, 0.4, 0.3];
+lilac = [0.7, 0.5, 0.8];
+
+n_colors = 3;
+n_lightness = 10;
+
+r = [linspace(teal(1), coral(1), n_lightness); linspace(coral(1), lilac(1), n_lightness); linspace(lilac(1), teal(1), n_lightness)];
+g = [linspace(teal(2), coral(2), n_lightness); linspace(coral(2), lilac(2), n_lightness); linspace(lilac(2), teal(2), n_lightness)];
+b = [linspace(teal(3), coral(3), n_lightness); linspace(coral(3), lilac(3), n_lightness); linspace(lilac(3), teal(3), n_lightness)];
+
+colormap_matrix = reshape([r(:), g(:), b(:)], [], 3);
+
 %% load
 
 % since our folders are all e.g. S01, S12 etc, let's load information about
@@ -74,6 +88,8 @@ for subjectNum = 1:numel(subjectFolders)
     if ~isfield(s,'correct'); s.correct = []; end
     if ~isfield(s,'conditions'); s.conditions = []; end
     if ~isfield(s,'subject'); s.subject = []; end
+    if ~isfield(s,'coherence'); s.coherence = []; end
+    if ~isfield(s,'categorisation'); s.categorisation = []; end
     
     % average them
     for thisCond = unique(thisSubjData(:,7))'
@@ -96,35 +112,139 @@ for subjectNum = 1:numel(subjectFolders)
         cleanedCorr = str2double(thisSubjData(lIdx & str2double(thisSubjData(:,8)) > -1,8));
         s.correct = [s.correct;sum(cleanedCorr)/numel(cleanedCorr)*100];
         s.conditions = [s.conditions;{thisCond}];
+        if startsWith(thisCond,'Ec')
+            s.coherence = [s.coherence;{'Easy Coh'}];
+        elseif startsWith(thisCond,'Hc')
+            s.coherence = [s.coherence;{'Hard Coh'}];
+        else
+            error('what the hell')
+        end
+        if endsWith(thisCond,'Er')
+            s.categorisation = [s.categorisation;{'Easy Cat'}];
+        elseif endsWith(thisCond,'Hr')
+            s.categorisation = [s.categorisation;{'Hard Cat'}];
+        end
         s.subject = [s.subject;{subjectId}];
 
     end
     
 end
 
+%%
 
 close all
 clear g
-
-
 g(1,1) = gramm('x',s.conditions,'y',s.megrts);
 g(1,1).stat_summary('geom',{'bar' 'black_errorbar'},'type','sem','dodge',0.3,'width',0.3)
-% g(1,1).axe_property('YLim',[500 850]);
-% g(1,1).facet_grid([],r.fullConditions);
-g(1,1).set_names('x','Conditions','y','Mean RT (ms) with SEM','column','','row','','color','Mode','lightness','Congruency');
-g(1,1).set_title('a) Mean RTs');
-% g(1,1).set_color_options('map','d3_20','legend','expand');
+g(1,1).axe_property('YLim',[650 950]);
+g(1,1).set_names('x','Conditions','y','Mean RT (ms) with SEM');
+g(1,1).set_title('Mean RTs for each condition');
+g(1,1).set_color_options('map',teal);
+% figure('Position',[100 100 2000 1000]);
+g(1,2) = gramm('x',s.coherence,'y',s.megrts);
+g(1,2).stat_summary('geom',{'bar' 'black_errorbar'},'type','sem','dodge',0.3,'width',0.3)
+g(1,2).axe_property('YLim',[650 950]);
+g(1,2).set_names('x','Conditions','y','Mean RT (ms) with SEM');
+g(1,2).set_title('Mean RTs for Coherence Difficulty');
+g(1,2).set_color_options('map',coral);
+g(1,3) = gramm('x',s.categorisation,'y',s.megrts);
+g(1,3).stat_summary('geom',{'bar' 'black_errorbar'},'type','sem','dodge',0.3,'width',0.3)
+g(1,3).axe_property('YLim',[650 950]);
+g(1,3).set_names('x','Conditions','y','Mean RT (ms) with SEM');
+g(1,3).set_title('Mean RTs for Categorisation Difficulty');
+g(1,3).set_color_options('map',lilac);
+g.draw();
+
+disp('are easy and hard coherence different?')
+[a b c d] = ttest(s.megrts(strcmp(s.coherence,'Easy Coh')),s.megrts(strcmp(s.coherence,'Hard Coh')));
+fprintf('%.3f\n',b)
+disp(d)
+disp('are easy and hard categorisation different?')
+[a b c d] = ttest(s.megrts(strcmp(s.categorisation,'Easy Cat')),s.megrts(strcmp(s.categorisation,'Hard Cat')));
+fprintf('%.3f\n',b)
+disp(d)
+
+close all
+clear g
+g(1,1) = gramm('x',s.conditions,'y',s.correct);
+g(1,1).stat_summary('geom',{'bar' 'black_errorbar'},'type','sem','dodge',0.3,'width',0.3)
+g(1,1).axe_property('YLim',[60 90]);
+g(1,1).set_names('x','Conditions','y','Mean Accuracy (%) with SEM');
+g(1,1).set_title('Mean Accuracy for each condition');
+g(1,1).set_color_options('map',teal);
+% figure('Position',[100 100 2000 1000]);
+g(1,2) = gramm('x',s.coherence,'y',s.correct);
+g(1,2).stat_summary('geom',{'bar' 'black_errorbar'},'type','sem','dodge',0.3,'width',0.3)
+% g(1,2).axe_property('YLim',[650 950]);
+g(1,2).set_names('x','Conditions','y','Mean Accuracy (%) with SEM');
+g(1,2).set_title('Mean Accuracy for Coherence Difficulty');
+g(1,2).set_color_options('map',coral);
+g(1,3) = gramm('x',s.categorisation,'y',s.correct);
+g(1,3).stat_summary('geom',{'bar' 'black_errorbar'},'type','sem','dodge',0.3,'width',0.3)
+% g(1,3).axe_property('YLim',[650 950]);
+g(1,3).set_names('x','Conditions','y','Mean Accuracy (%) with SEM');
+g(1,3).set_title('Mean Accuracy for Categorisation Difficulty');
+g(1,3).set_color_options('map',lilac);
+g.draw();
+
+disp('are easy and hard coherence different?')
+[a b c d] = ttest(s.correct(strcmp(s.coherence,'Easy Coh')),s.correct(strcmp(s.coherence,'Hard Coh')));
+fprintf('%.3f\n',b)
+disp(d)
+disp('are easy and hard categorisation different?')
+[a b c d] = ttest(s.correct(strcmp(s.categorisation,'Easy Cat')),s.correct(strcmp(s.categorisation,'Hard Cat')));
+fprintf('%.3f\n',b)
+disp(d)
+
+writetable(makeTableWithNans(...
+    {'EcEr' 'EcHr' 'HcEr' 'HcHr'},...
+    s.megrts(strcmp(s.conditions,'EcEr')),...
+    s.megrts(strcmp(s.conditions,'EcHr')),...
+    s.megrts(strcmp(s.conditions,'HcEr')),...
+    s.megrts(strcmp(s.conditions,'HcHr'))),...
+    [datadir filesep 'rts-for-jasp.csv'])
+
+writetable(makeTableWithNans(...
+    {'EcEr' 'EcHr' 'HcEr' 'HcHr'},...
+    s.correct(strcmp(s.conditions,'EcEr')),...
+    s.correct(strcmp(s.conditions,'EcHr')),...
+    s.correct(strcmp(s.conditions,'HcEr')),...
+    s.correct(strcmp(s.conditions,'HcHr'))),...
+    [datadir filesep 'accuracy-for-jasp.csv'])
+
+close all
+clear g
+g(1,1) = gramm('x',s.coherence,'y',s.megrts,'color',s.categorisation);
+g(1,1).stat_summary('geom',{'line' 'errorbar'},'type','sem','dodge',0.3,'width',0.3)
+g(1,1).axe_property('YLim',[650 950]);
+g(1,1).set_names('x','Coherence','y','Mean RTs (ms) with SEM','column','','row','','color','Categorisation','lightness','');
+g(1,1).set_title('Mean RTs by Condition');
+g(1,1).set_color_options('map',colormap_matrix);
+figure('Position',[100 100 2000 1000]);
+g(1,2) = gramm('x',s.coherence,'y',s.correct,'color',s.categorisation);
+g(1,2).stat_summary('geom',{'line' 'errorbar'},'type','sem','dodge',0.3,'width',0.3)
+g(1,2).axe_property('YLim',[60 90]);
+g(1,2).set_names('x','Coherence','y','Mean Accuracy (%) with SEM','column','','row','','color','Categorisation','lightness','');
+g(1,2).set_title('Mean Accuracy by Condition');
+g(1,2).set_color_options('map',colormap_matrix);
 % figure('Position',[100 100 2000 1000]);
 g.draw();
 
-[a b c d] = ttest(s.megrts(strcmp(s.conditions,'EcEr') | strcmp(s.conditions,'EcHr')),s.megrts(strcmp(s.conditions,'HcEr') | strcmp(s.conditions,'HcHr')))
+[a b c d] = ttest(s.megrts(strcmp(s.coherence,'Easy Coh') & strcmp(s.categorisation,'Easy Cat')),...
+    s.megrts(strcmp(s.coherence,'Hard Coh') & strcmp(s.categorisation,'Easy Cat')),'alpha',0.05/4);
 fprintf('%.3f\n',b)
-
-[a b c d] = ttest(s.megrts(strcmp(s.conditions,'EcEr') | strcmp(s.conditions,'HcEr')),s.megrts(strcmp(s.conditions,'EcHr') | strcmp(s.conditions,'HcHr')))
+[a b c d] = ttest(s.megrts(strcmp(s.coherence,'Easy Coh') & strcmp(s.categorisation,'Hard Cat')),...
+    s.megrts(strcmp(s.coherence,'Hard Coh') & strcmp(s.categorisation,'Hard Cat')),'alpha',0.05/4);
 fprintf('%.3f\n',b)
-
-
-
+disp(d)
+[a b c d] = ttest(s.megrts(strcmp(s.categorisation,'Easy Cat') & strcmp(s.coherence,'Easy Coh')),...
+    s.megrts(strcmp(s.categorisation,'Hard Cat') & strcmp(s.coherence,'Easy Coh')),'alpha',0.05/4);
+fprintf('%.3f\n',b)
+disp(d)
+[a b c d] = ttest(s.megrts(strcmp(s.categorisation,'Easy Cat') & strcmp(s.coherence,'Hard Coh')),...
+    s.megrts(strcmp(s.categorisation,'Hard Cat') & strcmp(s.coherence,'Hard Coh')),'alpha',0.05/4);
+fprintf('%.3f\n',b)
+disp(d)
 
 
 
