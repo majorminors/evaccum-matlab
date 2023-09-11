@@ -1,4 +1,6 @@
-%% set up
+%%%%%%%%%%%%
+%% set up %%
+%%%%%%%%%%%%
 
 clear all
 
@@ -26,8 +28,12 @@ inputFileName = ['Preprocess' filesep 'timelocked_averages.mat'];
 teal = [0.2, 0.6, 0.7];
 coral = [0.9, 0.4, 0.3];
 lilac = [0.7, 0.5, 0.8];
+peach = [0.9, 0.7, 0.4];
 
-%% load
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+%% load and prep data %%
+%%%%%%%%%%%%%%%%%%%%%%%%
 
 % since our folders are all e.g. S01, S12 etc, let's load information about
 % the directories that have that pattern
@@ -51,14 +57,33 @@ for subjectNum = 1:numel(subjectFolders)
     
     % so here, load what you care about and play with them!
     disp('loading')
-    whichVars = {'ec_responseLockedAverage' 'hc_responseLockedAverage' 'er_responseLockedAverage' 'hr_responseLockedAverage' 'ec_coherenceLockedAverage' 'hc_coherenceLockedAverage' 'er_coherenceLockedAverage' 'hr_coherenceLockedAverage'};
+    
+    whichVars = {...
+        'ec_responseLockedAverage' 'hc_responseLockedAverage'...
+        'er_responseLockedAverage' 'hr_responseLockedAverage'...
+        'ec_coherenceLockedAverage' 'hc_coherenceLockedAverage'...
+        'er_coherenceLockedAverage' 'hr_coherenceLockedAverage'...
+        };
+
+%     whichVars = {...
+%         'ecer_responseLockedAverage' 'ecer_coherenceLockedAverage'...
+%         'echr_responseLockedAverage' 'echr_coherenceLockedAverage'...
+%         'hcer_responseLockedAverage' 'hcer_coherenceLockedAverage'...
+%         'hchr_responseLockedAverage' 'hchr_coherenceLockedAverage'...
+%         };
+
     
     data{subjectNum} = load(thisFile,whichVars{:});
     
+    disp('loaded')
+    
 end; clear theseFiles thisFile subjectFolders subjectNum
 
-%% get some layouts and calculate neighbours
-%
+disp('loading complete')
+
+% get some layouts and calculate neighbours
+
+disp('prep layouts and neighbours')
 
 % meg is standard---can just use FTs version
 % megNeighbours = load(fullfile(ftDir,'template','neighbours','neuromag306mag_neighb.mat'));
@@ -87,10 +112,12 @@ megNeighbours = ft_prepare_neighbours(cfg);
 
 CPP = {'EEG040' 'EEG041' 'EEG042'};
 
-%% grab the data and average it
-%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% pull coherence data and average it %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% coherence
+disp('averaging coherence data')
+
 cfg = [];
 ecRespAll = returnStructs(data, 'ec_responseLockedAverage');
 ecRespAve = ft_timelockgrandaverage(cfg, ecRespAll{:});
@@ -104,8 +131,14 @@ cfg = [];
 hcOnsAll = returnStructs(data, 'hc_coherenceLockedAverage');
 hcOnsAve = ft_timelockgrandaverage(cfg, hcOnsAll{:});
 
-%
-% categorisation
+disp('done')
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% pull categorisation data and average it %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+disp('averaging categorisation data')
+
 cfg = [];
 erRespAll = returnStructs(data, 'er_responseLockedAverage');
 erRespAve = ft_timelockgrandaverage(cfg, erRespAll{:});
@@ -119,7 +152,44 @@ cfg = [];
 hrOnsAll = returnStructs(data, 'hr_coherenceLockedAverage');
 hrOnsAve = ft_timelockgrandaverage(cfg, hrOnsAll{:});
 
-%% now get the differences
+disp('done')
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% pull conditionwise data and average it %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+disp('averaging conditionwise data')
+
+cfg = [];
+ecerRespAll = returnStructs(data, 'ecer_responseLockedAverage');
+ecerRespAve = ft_timelockgrandaverage(cfg, ecerRespAll{:});
+cfg = [];
+ecerOnsAll = returnStructs(data, 'ecer_coherenceLockedAverage');
+ecerOnsAve = ft_timelockgrandaverage(cfg, ecerOnsAll{:});
+cfg = [];
+echrRespAll = returnStructs(data, 'echr_responseLockedAverage');
+echrRespAve = ft_timelockgrandaverage(cfg, echrRespAll{:});
+cfg = [];
+echrOnsAll = returnStructs(data, 'echr_coherenceLockedAverage');
+echrOnsAve = ft_timelockgrandaverage(cfg, echrOnsAll{:});
+cfg = [];
+hcerRespAll = returnStructs(data, 'hcer_responseLockedAverage');
+hcerRespAve = ft_timelockgrandaverage(cfg, hcerRespAll{:});
+cfg = [];
+hcerOnsAll = returnStructs(data, 'hcer_coherenceLockedAverage');
+hcerOnsAve = ft_timelockgrandaverage(cfg, hcerOnsAll{:});
+cfg = [];
+hchrRespAll = returnStructs(data, 'hchr_responseLockedAverage');
+hchrRespAve = ft_timelockgrandaverage(cfg, hchrRespAll{:});
+cfg = [];
+hchrOnsAll = returnStructs(data, 'hchr_coherenceLockedAverage');
+hchrOnsAve = ft_timelockgrandaverage(cfg, hchrOnsAll{:});
+
+disp('done')
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% get the subjectwise differences between manipulations %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for subject = 1:numel(ecRespAll)
     fprintf('\nthis is subject %.0f of %.0f\n\n',subject,numel(ecRespAll))
@@ -137,359 +207,185 @@ cRespDiffAve = ft_timelockgrandaverage(cfg, cRespDiffAll{:});
 rOnsDiffAve = ft_timelockgrandaverage(cfg, rOnsDiffAll{:});
 rRespDiffAve = ft_timelockgrandaverage(cfg, rRespDiffAll{:});
 
-%% and bayes test the differences
+% and bayes test the differences
 
 [cOnsDiffAve.bfs cOnsDiffAve.reports cOnsDiffAve.code] = testDiffsAcrossTime(cOnsDiffAll,CPP);
 [cRespDiffAve.bfs cRespDiffAve.reports cRespDiffAve.code] = testDiffsAcrossTime(cRespDiffAll,CPP);
 [rOnsDiffAve.bfs rOnsDiffAve.reports rOnsDiffAve.code] = testDiffsAcrossTime(rOnsDiffAll,CPP);
 [rRespDiffAve.bfs rRespDiffAve.reports rRespDiffAve.code] = testDiffsAcrossTime(rRespDiffAll,CPP);
 
-
-%% the timecourse of univariate activity
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% the timecourse of univariate activity %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
+% plotTimecourse(layout,dataAv1,dataAv2,dataDiff,dataAll1,dataAll2,xlims,ylims,channels,leg,legendloc,theTitle)
 
-% coh onset in eeg
+%% coh onset in eeg
 plotTimecourse(eegLayout,ecOnsAve,hcOnsAve,cOnsDiffAve,...
+    ecOnsAll,hcOnsAll,...
+    [-0.2 1.5],[],CPP,...
     {'easy coh';'hard coh'},'northwest','Coherence Onset')
+%% coh response in eeg
+plotTimecourse(eegLayout,ecRespAve,hcRespAve,cRespDiffAve,...
+    ecRespAll,hcRespAll,...
+    [],[],CPP,...
+    {'easy coh';'hard coh'},'northwest','Coherence Response')
+%% rule onset in eeg
+plotTimecourse(eegLayout,erOnsAve,hrOnsAve,rOnsDiffAve,...
+    erOnsAll,hrOnsAll,...
+    [-0.2 1.5],[-3.5e-06 7.5e-06],CPP,...
+    {'easy cat';'hard cat'},'southeast','Categorisation Onset')
+%% rule response in eeg
+plotTimecourse(eegLayout,erRespAve,hrRespAve,rRespDiffAve,...
+    erRespAll,hrRespAll,...
+    [],[-3.5e-06 7.5e-06],CPP,...
+    {'easy cat';'hard cat'},'northwest','Categorisation Response')
+
+%% onset of all conditions in eeg
 
 cfg            = [];
 cfg.showlabels = 'yes';
 cfg.fontsize   = 6;
 cfg.layout     = eegLayout;
-% cfg.xlim       = [-0.2 0.6];
-% cfg.ylim       = [-1.6e-04 -1.46e-04];
+% cfg.xlim = [];
+% cfg.ylim = [];
 cfg.channel    = CPP;
-% cfg.channel    = 'EEG';
-cfg.linecolor = [teal; coral];
-figure;
-ft_singleplotER(cfg, ecOnsAve, hcOnsAve);
+cfg.linecolor = [teal; lilac; coral; peach];
+
+h = figure;
+theseVars = {ecerOnsAve, echrOnsAve, hcerOnsAve, hchrOnsAve};
+theseErrs{1} = getErrorFromStructs(ecerOnsAll,'error'); % or 'deviation';
+theseErrs{2} = getErrorFromStructs(echrOnsAll,'error'); % or 'deviation';
+theseErrs{3} = getErrorFromStructs(hcerOnsAll,'error'); % or 'deviation';
+theseErrs{4} = getErrorFromStructs(hchrOnsAll,'error'); % or 'deviation';
+
+ft_singleplotER(cfg, theseVars{:});
+hold on
+plotErrorFromStructs(h,theseVars,[teal; lilac; coral; peach-peach*0.2],CPP,theseErrs)
 line([0 0], get(gca,'YLim'), 'Color', 'k', 'LineStyle', '--')
+hold off;
+
 ylabel('Mean EEG Amplitude (uV)')
 xlabel('Time (s)')
-% figure;
-% ft_singleplotER(cfg, cOnsDiffAve);
-yyaxis right;
-plot(cOnsDiffAve.time,cOnsDiffAve.code,...
-    'LineStyle', 'none', 'Marker', '.', 'Color', lilac)
-ylabel('Bayes Evidence for Difference')
-ylim([0 10])
-yticks([0 1 2])
-yticklabels({'weak (<3)' 'moderate (3-10)' 'strong (10+)'})
-ax = gca;
-ax.YColor = lilac;
-clear ax
-legend({'easy coh';'hard coh'}, 'Location', 'northwest');
-title('CPP (CP1 CPz CP2) in EEG: Coherence Onset', 'FontSize', 14)
+legend({'EasyCoh EasyCat';'EasyCoh HardCat';'HardCoh EasyCat';'HardCoh HardCat';},...
+    'Location', 'southeast');
+title('CPP (CP1 CPz CP2) in EEG: Onset in all Conditions', 'FontSize', 14)
 
-% coh response in eeg
+%% response of all conditions in eeg
+
 cfg            = [];
 cfg.showlabels = 'yes';
 cfg.fontsize   = 6;
 cfg.layout     = eegLayout;
-% cfg.xlim       = [-0.2 0.6];
-% cfg.ylim       = [-1.6e-04 -1.46e-04];
+% cfg.xlim = [];
+% cfg.ylim = [];
 cfg.channel    = CPP;
-cfg.linecolor = [teal; coral];
-figure;
-ft_singleplotER(cfg, ecRespAve, hcRespAve);
+cfg.linecolor = [teal; lilac; coral; peach];
+
+h = figure;
+theseVars = {ecerRespAve, echrRespAve, hcerRespAve, hchrRespAve};
+theseErrs{1} = getErrorFromStructs(ecerRespAll,'error'); % or 'deviation';
+theseErrs{2} = getErrorFromStructs(echrRespAll,'error'); % or 'deviation';
+theseErrs{3} = getErrorFromStructs(hcerRespAll,'error'); % or 'deviation';
+theseErrs{4} = getErrorFromStructs(hchrRespAll,'error'); % or 'deviation';
+
+ft_singleplotER(cfg, theseVars{:});
+hold on
+plotErrorFromStructs(h,theseVars,[teal; lilac; coral; peach-peach*0.2],CPP,theseErrs)
 line([0 0], get(gca,'YLim'), 'Color', 'k', 'LineStyle', '--')
+hold off;
+
 ylabel('Mean EEG Amplitude (uV)')
 xlabel('Time (s)')
-% figure;
-% ft_singleplotER(cfg, cRespDiffAve);
-yyaxis right;
-plot(cRespDiffAve.time,cRespDiffAve.code,...
-    'LineStyle', 'none', 'Marker', '.', 'Color', lilac)
-ylabel('Bayes Evidence for Difference')
-ylim([0 10])
-yticks([0 1 2])
-yticklabels({'weak (<3)' 'moderate (3-10)' 'strong (10+)'})
-ax = gca;
-ax.YColor = lilac;
-clear ax
-legend({'easy coh';'hard coh'}, 'Location', 'northwest');
-title('CPP (CP1 CPz CP2) in EEG: Coherence Response', 'FontSize', 14)
+legend({'EasyCoh EasyCat';'EasyCoh HardCat';'HardCoh EasyCat';'HardCoh HardCat';},...
+    'Location', 'southeast');
+title('CPP (CP1 CPz CP2) in EEG: Response in all Conditions', 'FontSize', 14)
 
-% rule onset in eeg
-cfg            = [];
-cfg.showlabels = 'yes';
-cfg.fontsize   = 6;
-cfg.layout     = eegLayout;
-% cfg.xlim       = [-0.2 0.6];
-% cfg.ylim       = [-1.6e-04 -1.46e-04];
-cfg.channel    = CPP;
-cfg.linecolor = [teal; coral];
-figure;
-ft_singleplotER(cfg, erOnsAve, hrOnsAve);
-line([0 0], get(gca,'YLim'), 'Color', 'k', 'LineStyle', '--')
-ylabel('Mean EEG Amplitude (uV)')
-xlabel('Time (s)')
-% figure;
-% ft_singleplotER(cfg, rOnsDiffAve);
-yyaxis right;
-plot(rOnsDiffAve.time,rOnsDiffAve.code,...
-    'LineStyle', 'none', 'Marker', '.', 'Color', lilac)
-ylabel('Bayes Evidence for Difference')
-ylim([0 10])
-yticks([0 1 2])
-yticklabels({'weak (<3)' 'moderate (3-10)' 'strong (10+)'})
-ax = gca;
-ax.YColor = lilac;
-clear ax
-legend({'easy rule';'hard rule'}, 'Location', 'southeast');
-title('CPP (CP1 CPz CP2) in EEG: Categorisation Onset', 'FontSize', 14)
-
-% rule response in eeg
-cfg            = [];
-cfg.showlabels = 'yes';
-cfg.fontsize   = 6;
-cfg.layout     = eegLayout;
-% cfg.xlim       = [-0.2 0.6];
-% cfg.ylim       = [-1.6e-04 -1.46e-04];
-cfg.channel    = CPP;
-cfg.linecolor = [teal; coral];
-figure;
-ft_singleplotER(cfg, erRespAve, hrRespAve);
-line([0 0], get(gca,'YLim'), 'Color', 'k', 'LineStyle', '--')
-ylabel('Mean EEG Amplitude (uV)')
-xlabel('Time (s)')
-% figure;
-% ft_singleplotER(cfg, rRespDiffAve);
-yyaxis right;
-plot(rOnsDiffAve.time,rOnsDiffAve.code,...
-    'LineStyle', 'none', 'Marker', '.', 'Color', lilac)
-ylabel('Bayes Evidence for Difference')
-ylim([0 10])
-yticks([0 1 2])
-yticklabels({'weak (<3)' 'moderate (3-10)' 'strong (10+)'})
-ax = gca;
-ax.YColor = lilac;
-clear ax
-legend({'easy rule';'hard rule'}, 'Location', 'northwest');
-title('CPP (CP1 CPz CP2) in EEG: Categorisation Response', 'FontSize', 14)
-
-
-
-%% the topology of univariate activity
-%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% the topology of univariate activity %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % where is easy coh different from hard coh
 
-cfg = [];
-ecAll = returnStructs(data, 'ec_responseLockedAverage');
-ecAve = ft_timelockgrandaverage(cfg, ecAll{:});
-cfg = [];
-hcAll = returnStructs(data, 'hc_responseLockedAverage');
-hcAve = ft_timelockgrandaverage(cfg, hcAll{:});
-% and prep this for a plot of our clusters
-cfg = [];
-cfg.parameter = 'avg';
-cfg.operation = 'subtract';
-diffEcHc = ft_math(cfg, ecAve, hcAve);
+% % we could get the difference between the grand average to plot our clusters
+% % on top of
+% cfg = [];
+% cfg.parameter = 'avg';
+% cfg.operation = 'subtract';
+% diffEcHc = ft_math(cfg, ecRespAve, hcRespAve);
+% but we already have the subjectwise differences, so we can also use them
 
+% first set up the cluster test settings
 cfg = [];
 cfg.channel = {'EEG'};
 cfg.latency = 'all';
 cfg.method = 'montecarlo';
-cfg.statistic = 'depsamplesT';
+cfg.statistic = 'depsamplesT'; % dependent samples t test (also independent: indepsamplesT)
 cfg.correctm = 'cluster';
-cfg.clusteralpha = 0.05;
+cfg.clusteralpha = 0.05; % alpha level of the sample-specific test statistic that will be used for thresholding
 cfg.clusterstatistic = 'maxsum';
-cfg.minnbchan = 2;
+cfg.minnbchan = 2; % min number of neighbours required to be considered for clustering
 cfg.neighbours = eegNeighbours;
-cfg.tail = 0;
+cfg.tail = 0; % one or two sided test? (one would be -1 or 1)
 cfg.clustertail = 0;
-cfg.alpha = 0.025;
-cfg.numrandomization = 500;
+cfg.alpha = 0.025; % alpha for the permutation
+cfg.numrandomization = 500; % how many draws?
 
-numSubjs  = numel(ecAll);
+% now let's set up the design
+numSubjs  = numel(ecRespAll);
 design = zeros(2, numSubjs*2); % design is 2 x num subjects matrix
 design(1,:) = [1:numSubjs 1:numSubjs]; % first row is which subject the data belongs to in the two datasets we are comparing
 design(2,:) = [ones(1,numSubjs) ones(1,numSubjs)*2]; % second row is which dataset the data belongs to
+% so we're contrasting two things, and so we repeat subjects twice, then do
+% a row of ones and a row of twos
 cfg.design = design;
 cfg.uvar = 1; % uvar is the row that the subject definition is on
-cfg.ivar = 2; % ivar is the row that the dataset definition is on
+cfg.ivar = 2; % ivar is the row that the dataset (independent variables) definition is on
 
-eegStatCoh = ft_timelockstatistics(cfg, ecAll{:}, hcAll{:});
-save(fullfile(datadir,'eegCohErpStat.mat'),'eegStatCoh')
+% get the stats
+eegStatCohResp = ft_timelockstatistics(cfg, ecRespAll{:}, hcRespAll{:});
+save(fullfile(datadir,'eegCohRespErpStat.mat'),'eegStatCohResp')
 
 % define parameters for plotting
 timestep      = 0.05; %(in seconds)
 sampling_rate = 1000;
-sample_count  = length(eegStatCoh.time);
-j = [0:timestep:1];   % Temporal endpoints (in seconds) of the ERP average computed in each subplot
-m = [1:timestep*sampling_rate:sample_count];  % temporal endpoints in M/EEG samples
+sample_count  = length(eegStatCohResp.time);
+j = [0:timestep:0.8];   % in secs, get some timings for each subplot
+m = [1:timestep*sampling_rate:sample_count];  % in secs, what timings according to the M/EEG samples
 % get relevant values
-pos_cluster_pvals = [eegStatCoh.posclusters(:).prob];
+pos_cluster_pvals = [eegStatCohResp.posclusters(:).prob];
 pos_clust = find(pos_cluster_pvals < 0.025);
-pos       = ismember(eegStatCoh.posclusterslabelmat, pos_clust);
-% First ensure the channels to have the same order in the average and in the statistical output.
-% This might not be the case, because ft_math might shuffle the order
-[i1,i2] = match_str(diffEcHc.label, eegStatCoh.label);
+pos       = ismember(eegStatCohResp.posclusterslabelmat, pos_clust);
+neg_cluster_pvals = [eegStatCohResp.negclusters(:).prob];
+neg_clust = find(neg_cluster_pvals < 0.025);
+neg       = ismember(eegStatCohResp.negclusterslabelmat, neg_clust);% ensure the channels to have the same order in the average and in the statistical output
+% which might not be the case, because ft_math might shuffle the order
+[i1,i2] = match_str(cRespDiffAve.label, eegStatCohResp.label);
 % plot
 for k = 1:16
    cfg.figure     = subplot(4,4,k);
-   cfg.xlim       = [j(k) j(k+1)];
-   pos_int        = zeros(numel(diffEcHc.label),1);
+   cfg.xlim       = [j(k) j(k+1)]; % set the xlimits to timepoints
+   % now we create an index to the channels that are in clusters to be plotted,
+   % by timepoint
+   pos_int        = zeros(numel(cRespDiffAve.label),1);
    pos_int(i1)    = all(pos(i2, m(k):m(k+1)), 2);
+   neg_int        = zeros(numel(cRespDiffAve.label),1);
+   neg_int(i1)    = all(neg(i2, m(k):m(k+1)), 2);
    cfg.highlight  = 'on';
-   cfg.highlightchannel = find(pos_int);
+   % now we pull the indices we created earlier
+   cfg.highlightchannel = find(pos_int | neg_int);
    cfg.comment    = 'xlim';
    cfg.commentpos = 'title';
    cfg.layout     = eegLayout;
+   cfg.interactive = 'no';
    cfg.figure     = 'gca';
-   ft_topoplotER(cfg, diffEcHc);
+%    ft_topoplotER(cfg, cRespDiffAve);
 end
 f = gcf; f.Position = [10 10 1600 1600];
-print([erpFigDir filesep 'eeg_coh_sig_ERP_clusters.png'], '-dpng');
-close all
+print([erpFigDir filesep 'eeg_coh_resp_sig_ERP_clusters.png'], '-dpng');
+% close all
 
 
-cfg.channel = {'MEG'};
-cfg.neighbours = megNeighbours;
-megStatCoh = ft_timelockstatistics(cfg, ecAll{:}, hcAll{:});
-save(fullfile(datadir,'megCohErpStat.mat'),'megStatCoh')
-
-% define parameters for plotting
-timestep      = 0.05; %(in seconds)
-sampling_rate = 1000;
-sample_count  = length(megStatCoh.time);
-j = [0:timestep:1];   % Temporal endpoints (in seconds) of the ERP average computed in each subplot
-m = [1:timestep*sampling_rate:sample_count];  % temporal endpoints in M/EEG samples
-% get relevant values
-pos_cluster_pvals = [megStatCoh.posclusters(:).prob];
-pos_clust = find(pos_cluster_pvals < 0.025);
-pos       = ismember(megStatCoh.posclusterslabelmat, pos_clust);
-% First ensure the channels to have the same order in the average and in the statistical output.
-% This might not be the case, because ft_math might shuffle the order
-[i1,i2] = match_str(diffEcHc.label, megStatCoh.label);
-% plot
-for k = 1:16
-   cfg.figure     = subplot(4,5,k);
-   cfg.xlim       = [j(k) j(k+1)];
-   pos_int        = zeros(numel(diffEcHc.label),1);
-   pos_int(i1)    = all(pos(i2, m(k):m(k+1)), 2);
-   cfg.highlight  = 'on';
-   cfg.highlightchannel = find(pos_int);
-   cfg.comment    = 'xlim';
-   cfg.commentpos = 'title';
-   cfg.layout     = megLayout;
-   cfg.figure     = 'gca';
-   ft_topoplotER(cfg, diffEcHc);
-end
-f = gcf; f.Position = [10 10 1600 1600];
-print([erpFigDir filesep 'meg_coh_sig_ERP_clusters.png'], '-dpng');
-close all
-
-
-% where is easy rule different from hard rule?
-
-cfg = [];
-erAll = returnStructs(data, 'er_responseLockedAverage');
-erAve = ft_timelockgrandaverage(cfg, erAll{:});
-cfg = [];
-hrAll = returnStructs(data, 'hr_responseLockedAverage');
-hrAve = ft_timelockgrandaverage(cfg, hrAll{:});
-% and prep this for a plot of our clusters
-cfg = [];
-cfg.parameter = 'avg';
-cfg.operation = 'subtract';
-diffErHr = ft_math(cfg, erAve, hrAve);
-
-cfg = [];
-cfg.channel = {'EEG'};
-cfg.latency = 'all';
-cfg.method = 'montecarlo';
-cfg.statistic = 'depsamplesT';
-cfg.correctm = 'cluster';
-cfg.clusteralpha = 0.05;
-cfg.clusterstatistic = 'maxsum';
-cfg.minnbchan = 2;
-cfg.neighbours = eegNeighbours;
-cfg.tail = 0;
-cfg.clustertail = 0;
-cfg.alpha = 0.025;
-cfg.numrandomization = 500;
-
-numSubjs  = numel(erAll);
-design = zeros(2, numSubjs*2); % design is 2 x num subjects matrix
-design(1,:) = [1:numSubjs 1:numSubjs]; % first row is which subject the data belongs to in the two datasets we are comparing
-design(2,:) = [ones(1,numSubjs) ones(1,numSubjs)*2]; % second row is which dataset the data belongs to
-cfg.design = design;
-cfg.uvar = 1; % uvar is the row that the subject definition is on
-cfg.ivar = 2; % ivar is the row that the dataset definition is on
-
-eegStatRule = ft_timelockstatistics(cfg, erAll{:}, hrAll{:});
-save(fullfile(datadir,'eegRuleErpStat.mat'),'eegStatRule')
-
-% define parameters for plotting
-timestep      = 0.05; %(in seconds)
-sampling_rate = 1000;
-sample_count  = length(eegStatRule.time);
-j = [0:timestep:1];   % Temporal endpoints (in seconds) of the ERP average computed in each subplot
-m = [1:timestep*sampling_rate:sample_count];  % temporal endpoints in M/EEG samples
-% get relevant values
-pos_cluster_pvals = [eegStatRule.posclusters(:).prob];
-pos_clust = find(pos_cluster_pvals < 0.025);
-pos       = ismember(eegStatRule.posclusterslabelmat, pos_clust);
-% First ensure the channels to have the same order in the average and in the statistical output.
-% This might not be the case, because ft_math might shuffle the order
-[i1,i2] = match_str(diffErHr.label, eegStatRule.label);
-% plot
-for k = 1:16
-   cfg.figure     = subplot(4,4,k);
-   cfg.xlim       = [j(k) j(k+1)];
-   pos_int        = zeros(numel(diffErHr.label),1);
-   pos_int(i1)    = all(pos(i2, m(k):m(k+1)), 2);
-   cfg.highlight  = 'on';
-   cfg.highlightchannel = find(pos_int);
-   cfg.comment    = 'xlim';
-   cfg.commentpos = 'title';
-   cfg.layout     = eegLayout;
-   cfg.figure     = 'gca';
-   ft_topoplotER(cfg, diffErHr);
-end
-f = gcf; f.Position = [10 10 1600 1600];
-print([erpFigDir filesep 'eeg_rule_sig_ERP_clusters.png'], '-dpng');
-close all
-
-
-cfg.channel = {'MEG'};
-cfg.neighbours = megNeighbours;
-megStatRule = ft_timelockstatistics(cfg, erAll{:}, hrAll{:});
-save(fullfile(datadir,'megRuleErpStat.mat'),'megStatRule')
-
-
-% define parameters for plotting
-timestep      = 0.05; %(in seconds)
-sampling_rate = 1000;
-sample_count  = length(megStatRule.time);
-j = [0:timestep:1];   % Temporal endpoints (in seconds) of the ERP average computed in each subplot
-m = [1:timestep*sampling_rate:sample_count];  % temporal endpoints in M/EEG samples
-% get relevant values
-pos_cluster_pvals = [megStatRule.posclusters(:).prob];
-pos_clust = find(pos_cluster_pvals < 0.025);
-pos       = ismember(megStatRule.posclusterslabelmat, pos_clust);
-% First ensure the channels to have the same order in the average and in the statistical output.
-% This might not be the case, because ft_math might shuffle the order
-[i1,i2] = match_str(diffErHr.label, megStatRule.label);
-% plot
-for k = 1:16
-   cfg.figure     = subplot(4,4,k);
-   cfg.xlim       = [j(k) j(k+1)];
-   pos_int        = zeros(numel(diffErHr.label),1);
-   pos_int(i1)    = all(pos(i2, m(k):m(k+1)), 2);
-   cfg.highlight  = 'on';
-   cfg.highlightchannel = find(pos_int);
-   cfg.comment    = 'xlim';
-   cfg.commentpos = 'title';
-   cfg.layout     = megLayout;
-   cfg.figure     = 'gca';
-   ft_topoplotER(cfg, diffErHr);
-end
-f = gcf; f.Position = [10 10 1600 1600];
-print([erpFigDir filesep 'meg_rule_sig_ERP_clusters.png'], '-dpng');
-close all
 
 function difference = getDifference(data1,data2)
 
@@ -501,12 +397,12 @@ difference = ft_math(cfg, data1, data2);
 return
 end
 
-function figHandle = plotSensor(structure,channelRow,time)
+function figHandle = plotSensors(structure,channelRow,time)
 % structure should be a fieldtrip data structure
 % channelRow should be the row number of the channel you want
 % time should be the range of timepoints you want
 
-selected_data = structure.avg(channelRow,time); % MLC24 is the 9th channel, -0.2 to 1.0 is sample 241 to 601
+selected_data = structure.avg(channelRow,time);
 selected_time = structure.time(time);
 figure;
 figHandle = plot(selected_time, selected_data)
@@ -539,27 +435,40 @@ return
 end
 
 
-function plotTimecourse(layout,data1,data2,data3,leg,legendloc,theTitle)
+function plotTimecourse(layout,dataAv1,dataAv2,dataDiff,dataAll1,dataAll2,xlims,ylims,channels,leg,legendloc,theTitle)
 
-% coh onset in eeg
+teal = [0.2, 0.6, 0.7];
+coral = [0.9, 0.4, 0.3];
+lilac = [0.7, 0.5, 0.8];
+
 cfg            = [];
 cfg.showlabels = 'yes';
 cfg.fontsize   = 6;
 cfg.layout     = layout;
-% cfg.xlim       = [-0.2 0.6];
-cfg.ylim       = [-1.6e-04 -1.46e-04];
-cfg.channel    = CPP;
+% if ~isempty(xlims); cfg.xlim = xlims; end
+if ~isempty(ylims); cfg.ylim = ylims; end
+cfg.channel    = channels;
 % cfg.channel    = 'EEG';
 cfg.linecolor = [teal; coral];
-figure;
-ft_singleplotER(cfg, data1, data2);
+
+theseVars = {dataAv1, dataAv2};
+theseErrs{1} = getErrorFromStructs(dataAll1,'error'); % or 'deviation';
+theseErrs{2} = getErrorFromStructs(dataAll2,'error'); % or 'deviation';
+
+h = figure;
+ft_singleplotER(cfg, theseVars{:});
+hold on
+plotErrorFromStructs(h,theseVars,[teal; coral],channels,theseErrs)
 line([0 0], get(gca,'YLim'), 'Color', 'k', 'LineStyle', '--')
+if ~isempty(xlims); xlim(xlims); end
+hold off;
+
 ylabel('Mean EEG Amplitude (uV)')
 xlabel('Time (s)')
 % figure;
 % ft_singleplotER(cfg, cOnsDiffAve);
 yyaxis right;
-plot(data3.time,data3.code,...
+plot(dataDiff.time,dataDiff.code,...
     'LineStyle', 'none', 'Marker', '.', 'Color', lilac)
 ylabel('Bayes Evidence for Difference')
 ylim([0 10])
@@ -573,4 +482,6 @@ title(['CPP (CP1 CPz CP2) in EEG: ' theTitle], 'FontSize', 14)
 
 return
 end
+
+
 
