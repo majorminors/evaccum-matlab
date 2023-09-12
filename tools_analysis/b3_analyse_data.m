@@ -16,7 +16,8 @@ addpath(ftDir); ft_defaults;
 addpath(genpath(fullfile(toolsdir,'lib')))
 
 toolbox = fullfile(rootdir,'..','..','Toolboxes','gramm'); addpath(toolbox); clear toolbox
-toolbox = fullfile(rootdir,'..','..','Toolboxes','bayesFactor'); addpath(toolbox); clear toolbox
+% toolbox = fullfile(rootdir,'..','..','Toolboxes','bayesFactor'); addpath(toolbox); clear toolbox
+toolbox = fullfile(rootdir,'..','..','Toolboxes','BFF_repo'); addpath(genpath(toolbox)); clear toolbox
 
 erpFigDir = fullfile(datadir, 'erpFigs');
 if ~exist(erpFigDir); mkdir(erpFigDir); end
@@ -192,7 +193,7 @@ disp('done')
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for subject = 1:numel(ecRespAll)
-    fprintf('\nthis is subject %.0f of %.0f\n\n',subject,numel(ecRespAll))
+    fprintf('\ngetting subjectwise differences for subject %.0f of %.0f\n\n',subject,numel(ecRespAll))
     
     cOnsDiffAll{subject} = getDifference(ecOnsAll{subject}, hcOnsAll{subject});
     cRespDiffAll{subject}= getDifference(ecRespAll{subject}, hcRespAll{subject});
@@ -201,18 +202,24 @@ for subject = 1:numel(ecRespAll)
 
 end; clear subject
 
+disp('getting averages')
+
 cfg = [];
 cOnsDiffAve = ft_timelockgrandaverage(cfg, cOnsDiffAll{:});
 cRespDiffAve = ft_timelockgrandaverage(cfg, cRespDiffAll{:});
 rOnsDiffAve = ft_timelockgrandaverage(cfg, rOnsDiffAll{:});
 rRespDiffAve = ft_timelockgrandaverage(cfg, rRespDiffAll{:});
 
-% and bayes test the differences
+%% and bayes test the differences
 
-[cOnsDiffAve.bfs cOnsDiffAve.reports cOnsDiffAve.code] = testDiffsAcrossTime(cOnsDiffAll,CPP);
-[cRespDiffAve.bfs cRespDiffAve.reports cRespDiffAve.code] = testDiffsAcrossTime(cRespDiffAll,CPP);
-[rOnsDiffAve.bfs rOnsDiffAve.reports rOnsDiffAve.code] = testDiffsAcrossTime(rOnsDiffAll,CPP);
-[rRespDiffAve.bfs rRespDiffAve.reports rRespDiffAve.code] = testDiffsAcrossTime(rRespDiffAll,CPP);
+disp('bayes testing differences')
+
+cOnsDiffAve.bfs = testDiffsAcrossTime(cOnsDiffAll,CPP);
+cRespDiffAve.bfs = testDiffsAcrossTime(cRespDiffAll,CPP);
+rOnsDiffAve.bfs = testDiffsAcrossTime(rOnsDiffAll,CPP);
+rRespDiffAve.bfs = testDiffsAcrossTime(rRespDiffAll,CPP);
+
+disp('done bayes testing differences')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% the timecourse of univariate activity %%
@@ -253,15 +260,15 @@ cfg.channel    = CPP;
 cfg.linecolor = [teal; lilac; coral; peach];
 
 h = figure;
-theseVars = {ecerOnsAve, echrOnsAve, hcerOnsAve, hchrOnsAve};
-theseErrs{1} = getErrorFromStructs(ecerOnsAll,'error'); % or 'deviation';
-theseErrs{2} = getErrorFromStructs(echrOnsAll,'error'); % or 'deviation';
-theseErrs{3} = getErrorFromStructs(hcerOnsAll,'error'); % or 'deviation';
-theseErrs{4} = getErrorFromStructs(hchrOnsAll,'error'); % or 'deviation';
+theseStructs = {ecerOnsAve, echrOnsAve, hcerOnsAve, hchrOnsAve};
+theseErrs{1} = getErrorFromStructs(ecerOnsAll);
+theseErrs{2} = getErrorFromStructs(echrOnsAll);
+theseErrs{3} = getErrorFromStructs(hcerOnsAll);
+theseErrs{4} = getErrorFromStructs(hchrOnsAll);
 
-ft_singleplotER(cfg, theseVars{:});
+ft_singleplotER(cfg, theseStructs{:});
 hold on
-plotErrorFromStructs(h,theseVars,[teal; lilac; coral; peach-peach*0.2],CPP,theseErrs)
+plotErrorFromStructs(theseStructs,[teal; lilac; coral; peach-peach*0.2],CPP,theseErrs)
 line([0 0], get(gca,'YLim'), 'Color', 'k', 'LineStyle', '--')
 hold off;
 
@@ -283,15 +290,15 @@ cfg.channel    = CPP;
 cfg.linecolor = [teal; lilac; coral; peach];
 
 h = figure;
-theseVars = {ecerRespAve, echrRespAve, hcerRespAve, hchrRespAve};
-theseErrs{1} = getErrorFromStructs(ecerRespAll,'error'); % or 'deviation';
-theseErrs{2} = getErrorFromStructs(echrRespAll,'error'); % or 'deviation';
-theseErrs{3} = getErrorFromStructs(hcerRespAll,'error'); % or 'deviation';
-theseErrs{4} = getErrorFromStructs(hchrRespAll,'error'); % or 'deviation';
+theseStructs = {ecerRespAve, echrRespAve, hcerRespAve, hchrRespAve};
+theseErrs{1} = getErrorFromStructs(ecerRespAll);
+theseErrs{2} = getErrorFromStructs(echrRespAll);
+theseErrs{3} = getErrorFromStructs(hcerRespAll);
+theseErrs{4} = getErrorFromStructs(hchrRespAll);
 
-ft_singleplotER(cfg, theseVars{:});
+ft_singleplotER(cfg, theseStructs{:});
 hold on
-plotErrorFromStructs(h,theseVars,[teal; lilac; coral; peach-peach*0.2],CPP,theseErrs)
+plotErrorFromStructs(theseStructs,[teal; lilac; coral; peach-peach*0.2],CPP,theseErrs)
 line([0 0], get(gca,'YLim'), 'Color', 'k', 'LineStyle', '--')
 hold off;
 
@@ -410,26 +417,37 @@ figHandle = plot(selected_time, selected_data)
 return
 end
 
-function [bfs report code] = testDiffsAcrossTime(dataStruct,channels)
+function bfs = testDiffsAcrossTime(dataStruct,channels,complementary)
 
 for i = 1:numel(dataStruct)
-    diffs(i,:) = mean(dataStruct{i}.avg(find(ismember(dataStruct{i}.label,channels)),:));
+    diffs(:,i) = mean(dataStruct{i}.avg(find(ismember(dataStruct{i}.label,channels)),:));
 end; clear i
 
-for i = 1:numel(dataStruct{1}.time)
-    bfs(i) = bf.ttest(diffs(:,i));
-    if bfs(i) <= 3
-        report{i} = 'weak';
-        code(i) = 0;
-    elseif (bfs(i)>3) && (bfs(i)<=10)
-        report{i} = 'moderate';
-        code(i) = 1;
-    elseif bfs(i)>10
-        report{i} = 'strong';
-        code(i) = 2;
-    end
-end; clear i
+% add the R module
+[status, ~] = system('module add R');
+if status == 0
+    disp('R module added successfully');
+else
+    error('Failed to add R module');
+end
+% now grab the path to Rscript
+% Execute 'which Rscript' command
+[status, result] = system('which Rscript');
+if status == 0
+    RscriptPath = strtrim(result);
+    disp(['Rscript path: ' RscriptPath]);
+else
+    error('Failed to find Rscript');
+end
+% now run the rscript version of the bayes analysis
+%   we can also get the bf for the complementary interval
+%   by specifying complementary = 2. Let's set a default:
+if ~exist('complementary','var'); complementary = 1; end
+bfs = bayesfactor_R_wrapper(diffs,'Rpath',RscriptPath,'returnindex',complementary,...
+    'args','mu=0,rscale="medium",nullInterval=c(-Inf,Inf)');
 
+% alternatively they hav implemented it in matlab
+% [bfs, bfs_complementary_interval] = bayesfactor(diffs, 'interval',[-Inf Inf]);
 
 return
 end
@@ -440,6 +458,7 @@ function plotTimecourse(layout,dataAv1,dataAv2,dataDiff,dataAll1,dataAll2,xlims,
 teal = [0.2, 0.6, 0.7];
 coral = [0.9, 0.4, 0.3];
 lilac = [0.7, 0.5, 0.8];
+colours = [teal;coral;lilac];
 
 cfg            = [];
 cfg.showlabels = 'yes';
@@ -451,34 +470,56 @@ cfg.channel    = channels;
 % cfg.channel    = 'EEG';
 cfg.linecolor = [teal; coral];
 
-theseVars = {dataAv1, dataAv2};
-theseErrs{1} = getErrorFromStructs(dataAll1,'error'); % or 'deviation';
-theseErrs{2} = getErrorFromStructs(dataAll2,'error'); % or 'deviation';
+theseStructs = {dataAv1, dataAv2};
+theseErrs{1} = getErrorFromStructs(dataAll1);
+theseErrs{2} = getErrorFromStructs(dataAll2);
 
-h = figure;
-ft_singleplotER(cfg, theseVars{:});
+subplot(2, 1, 1);
+
+set(gca, 'Position', [0.13 0.57 0.775 0.37]); % set position of the first subplot to make it taller
+% ft_singleplotER(cfg, theseStructs{:});
+for i = 1:numel(theseStructs)
+        plot(theseStructs{i}.time, mean(theseStructs{i}.avg(find(ismember(theseStructs{i}.label,channels)),:)),...
+            'Color',colours(i,:))
+    hold on
+end; clear i
+
 hold on
-plotErrorFromStructs(h,theseVars,[teal; coral],channels,theseErrs)
+plotErrorFromStructs(theseStructs,colours,channels,theseErrs)
 line([0 0], get(gca,'YLim'), 'Color', 'k', 'LineStyle', '--')
-if ~isempty(xlims); xlim(xlims); end
+% if ~isempty(xlims); xlim(xlims); end
 hold off;
-
 ylabel('Mean EEG Amplitude (uV)')
 xlabel('Time (s)')
-% figure;
-% ft_singleplotER(cfg, cOnsDiffAve);
-yyaxis right;
-plot(dataDiff.time,dataDiff.code,...
-    'LineStyle', 'none', 'Marker', '.', 'Color', lilac)
-ylabel('Bayes Evidence for Difference')
-ylim([0 10])
-yticks([0 1 2])
-yticklabels({'weak (<3)' 'moderate (3-10)' 'strong (10+)'})
-ax = gca;
-ax.YColor = lilac;
-clear ax
 legend(leg, 'Location', legendloc);
 title(['CPP (CP1 CPz CP2) in EEG: ' theTitle], 'FontSize', 14)
+
+subplot(2, 1, 2);
+bf = dataDiff.bfs;
+load('color_bwr.mat'); % in BFF repo
+exponential_minmax=5;
+val_col_map = logspace(-exponential_minmax,exponential_minmax,size(co_bwr,1));
+for t = 1:length(dataDiff.time)
+    [~,idx] = min(abs(val_col_map-bf(t)));  
+    st = stem(dataDiff.time(t),bf(t),'Clipping','off','basevalue',1,'Color','k','MarkerFaceColor',co_bwr(idx,1:3),'MarkerEdgeColor','k','LineWidth',1,'MarkerSize',6);
+    hold on;
+
+end
+ax = gca;
+set(ax,'YScale','log','XLim',[dataDiff.time(1),dataDiff.time(end)], ...
+        'YLim',[1e-5 1e5],'YTick',10.^(-5:2:5))
+xlabel('Time (s)')
+ylabel('BF (log scale)')
+colormap(co_bwr)
+cbh = colorbar;
+caxis([-exponential_minmax,exponential_minmax])
+cbh.Units = 'normalized';
+cbh.Limits = [-exponential_minmax,exponential_minmax];
+cbh.Position(1) = 0.92;cbh.Position(3) = 0.01;cbh.Position(4) = ax.Position(4);cbh.Position(2) = ax.Position(2);
+cbh.Label.String = 'Bayes Factor';
+cbh.TickLabels=arrayfun(@(x) ['10^{' num2str(x) '}'], cbh.Ticks, 'UniformOutput', false);
+
+
 
 return
 end
