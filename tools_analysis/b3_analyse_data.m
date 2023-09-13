@@ -506,22 +506,16 @@ for i = 1:numel(dataStruct)
     diffs(:,i) = mean(dataStruct{i}.avg(find(ismember(dataStruct{i}.label,channels)),:));
 end; clear i
 
-% add the R module
-[status, ~] = system('module add R');
+% add the R module and get the path to Rscript
+[status, result] = system('module add R && which Rscript');
 if status == 0
     disp('R module added successfully');
-else
-    error('Failed to add R module');
-end
-% now grab the path to Rscript
-% Execute 'which Rscript' command
-[status, result] = system('which Rscript');
-if status == 0
     RscriptPath = strtrim(result);
     disp(['Rscript path: ' RscriptPath]);
 else
-    error('Failed to find Rscript');
+    error('Failed to add R and/or locate Rscript');
 end
+
 % now run the rscript version of the bayes analysis
 %   we can also get the bf for the complementary interval
 %   by specifying complementary = 2. Let's set a default:
