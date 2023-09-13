@@ -132,6 +132,9 @@ cfg = [];
 hcOnsAll = returnStructs(data, 'hc_coherenceLockedAverage');
 hcOnsAve = ft_timelockgrandaverage(cfg, hcOnsAll{:});
 
+cOnsDiffAve = getDifference(ecOnsAve,hcOnsAve);
+cRespDiffAve = getDifference(ecRespAve,hcRespAve);
+
 disp('done')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -152,6 +155,9 @@ hrRespAve = ft_timelockgrandaverage(cfg, hrRespAll{:});
 cfg = [];
 hrOnsAll = returnStructs(data, 'hr_coherenceLockedAverage');
 hrOnsAve = ft_timelockgrandaverage(cfg, hrOnsAll{:});
+
+rOnsDiffAve = getDifference(erOnsAve,hrOnsAve);
+rRespDiffAve = getDifference(ecRespAve,hcRespAve);
 
 disp('done')
 
@@ -204,11 +210,12 @@ end; clear subject
 
 disp('getting averages')
 
-cfg = [];
-cOnsDiffAve = ft_timelockgrandaverage(cfg, cOnsDiffAll{:});
-cRespDiffAve = ft_timelockgrandaverage(cfg, cRespDiffAll{:});
-rOnsDiffAve = ft_timelockgrandaverage(cfg, rOnsDiffAll{:});
-rRespDiffAve = ft_timelockgrandaverage(cfg, rRespDiffAll{:});
+% cfg = [];
+% cOnsDiffAve = ft_timelockgrandaverage(cfg, cOnsDiffAll{:});
+% cRespDiffAve = ft_timelockgrandaverage(cfg, cRespDiffAll{:});
+% rOnsDiffAve = ft_timelockgrandaverage(cfg, rOnsDiffAll{:});
+% rRespDiffAve = ft_timelockgrandaverage(cfg, rRespDiffAll{:});
+
 
 %% and bayes test the differences
 
@@ -231,23 +238,26 @@ disp('done bayes testing differences')
 plotTimecourse(eegLayout,ecOnsAve,hcOnsAve,cOnsDiffAve,...
     ecOnsAll,hcOnsAll,...
     [-0.2 1.5],[],CPP,...
-    {'easy coh';'hard coh'},'northwest','Coherence Onset')
+    {'easy coh';'hard coh'},'northwest','Coherence Onset',...
+    [erpFigDir filesep 'eeg_coh_ons_ERP.png'])
 %% coh response in eeg
 plotTimecourse(eegLayout,ecRespAve,hcRespAve,cRespDiffAve,...
     ecRespAll,hcRespAll,...
     [],[],CPP,...
-    {'easy coh';'hard coh'},'northwest','Coherence Response')
+    {'easy coh';'hard coh'},'northwest','Coherence Response',...
+    [erpFigDir filesep 'eeg_coh_resp_ERP.png'])
 %% rule onset in eeg
 plotTimecourse(eegLayout,erOnsAve,hrOnsAve,rOnsDiffAve,...
     erOnsAll,hrOnsAll,...
     [-0.2 1.5],[-3.5e-06 7.5e-06],CPP,...
-    {'easy cat';'hard cat'},'southeast','Categorisation Onset')
+    {'easy cat';'hard cat'},'southeast','Categorisation Onset',...
+    [erpFigDir filesep 'eeg_cat_ons_ERP.png'])
 %% rule response in eeg
 plotTimecourse(eegLayout,erRespAve,hrRespAve,rRespDiffAve,...
     erRespAll,hrRespAll,...
     [],[-3.5e-06 7.5e-06],CPP,...
-    {'easy cat';'hard cat'},'northwest','Categorisation Response')
-
+    {'easy cat';'hard cat'},'northwest','Categorisation Response',...
+    [erpFigDir filesep 'eeg_cat_resp_ERP.png'])
 %% onset of all conditions in eeg
 
 cfg            = [];
@@ -277,7 +287,8 @@ xlabel('Time (s)')
 legend({'EasyCoh EasyCat';'EasyCoh HardCat';'HardCoh EasyCat';'HardCoh HardCat';},...
     'Location', 'southeast');
 title('CPP (CP1 CPz CP2) in EEG: Onset in all Conditions', 'FontSize', 14)
-
+f = gcf; f.Position = [10 10 1600 1600];
+print([erpFigDir filesep 'eeg_allConds_ons_ERP.png'], '-dpng');
 %% response of all conditions in eeg
 
 cfg            = [];
@@ -307,6 +318,8 @@ xlabel('Time (s)')
 legend({'EasyCoh EasyCat';'EasyCoh HardCat';'HardCoh EasyCat';'HardCoh HardCat';},...
     'Location', 'southeast');
 title('CPP (CP1 CPz CP2) in EEG: Response in all Conditions', 'FontSize', 14)
+f = gcf; f.Position = [10 10 1600 1600];
+print([erpFigDir filesep 'eeg_allConds_resp_ERP.png'], '-dpng');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% the topology of univariate activity %%
@@ -314,17 +327,72 @@ title('CPP (CP1 CPz CP2) in EEG: Response in all Conditions', 'FontSize', 14)
 
 % where is easy coh different from hard coh
 
-% % we could get the difference between the grand average to plot our clusters
-% % on top of
-% cfg = [];
-% cfg.parameter = 'avg';
-% cfg.operation = 'subtract';
-% diffEcHc = ft_math(cfg, ecRespAve, hcRespAve);
-% but we already have the subjectwise differences, so we can also use them
+% let's get some zlimits
+        
+minValue = @(x, pref) min(min(x.avg(startsWith(x.label, pref), :)));
+maxValue = @(x, pref) max(max(x.avg(startsWith(x.label, pref), :)));
 
+zlimEegOns = [...
+    min(minValue(cOnsDiffAve,'EEG'),minValue(rOnsDiffAve,'EEG')),...
+    max(maxValue(cOnsDiffAve,'EEG'),maxValue(rOnsDiffAve,'EEG'))...
+    ];
+zlimEegResp = [...
+    min(minValue(cRespDiffAve,'EEG'),minValue(rRespDiffAve,'EEG')),...
+    max(maxValue(cRespDiffAve,'EEG'),maxValue(rRespDiffAve,'EEG'))...
+    ];
+zlimMegOns = [...
+    min(minValue(cOnsDiffAve,'MEG'),minValue(rOnsDiffAve,'MEG')),...
+    max(maxValue(cOnsDiffAve,'MEG'),maxValue(rOnsDiffAve,'MEG'))...
+    ];
+zlimMegResp = [...
+    min(minValue(cRespDiffAve,'MEG'),minValue(rRespDiffAve,'MEG')),...
+    max(maxValue(cRespDiffAve,'MEG'),maxValue(rRespDiffAve,'MEG'))...
+    ];
+
+
+%% EEG topo of onset across coherence
+doTopos({'EEG'},eegNeighbours,ecOnsAll,hcOnsAll,...
+    zlimEegOns,0.05,[-0.3,1.5],[6,6],36,...
+    cOnsDiffAve,eegLayout,[erpFigDir filesep 'eeg_coh_ons_sig_ERP_clusters.png'])
+%% EEG topo of response across coherence
+doTopos({'EEG'},eegNeighbours,ecRespAll,hcRespAll,...
+    zlimEegResp,0.05,[-0.6,0.2],[4,4],16,...
+    cRespDiffAve,eegLayout,[erpFigDir filesep 'eeg_coh_resp_sig_ERP_clusters.png'])
+%% EEG topo of onset across categorisation
+doTopos({'EEG'},eegNeighbours,erOnsAll,hrOnsAll,...
+    zlimEegOns,0.05,[-0.3,1.5],[6,6],36,...
+    rOnsDiffAve,eegLayout,[erpFigDir filesep 'eeg_cat_ons_sig_ERP_clusters.png'])
+%% EEG topo of response across categorisation
+doTopos({'EEG'},eegNeighbours,erRespAll,hrRespAll,...
+    zlimEegResp,0.05,[-0.6,0.2],[4,4],16,...
+    rRespDiffAve,eegLayout,[erpFigDir filesep 'eeg_cat_resp_sig_ERP_clusters.png'])
+
+
+%% MEG topo of onset across coherence
+doTopos({'MEG'},megNeighbours,ecOnsAll,hcOnsAll,...
+    zlimMegOns,0.05,[-0.3,1.5],[6,6],36,...
+    cOnsDiffAve,megLayout,[erpFigDir filesep 'meg_coh_ons_sig_ERP_clusters.png'])
+%% MEG topo of response across coherence
+doTopos({'MEG'},megNeighbours,ecRespAll,hcRespAll,...
+    zlimMegResp,0.05,[-0.6,0.2],[4,4],16,...
+    cRespDiffAve,megLayout,[erpFigDir filesep 'meg_coh_resp_sig_ERP_clusters.png'])
+%% MEG topo of onset across categorisation
+doTopos({'MEG'},megNeighbours,erOnsAll,hrOnsAll,...
+    zlimMegOns,0.05,[-0.3,1.5],[6,6],36,...
+    rOnsDiffAve,megLayout,[erpFigDir filesep 'meg_cat_ons_sig_ERP_clusters.png'])
+%% MEG topo of response across categorisation
+doTopos({'MEG'},megNeighbours,erRespAll,hrRespAll,...
+    zlimMegResp,0.05,[-0.6,0.2],[4,4],16,...
+    rRespDiffAve,megLayout,[erpFigDir filesep 'meg_cat_resp_sig_ERP_clusters.png'])
+
+
+%% subplots
+
+function doTopos(channels,neighbours,dataAll1,dataAll2,zlims,timestep,timebounds,subplots,totalplots,dataDiff,layout,savename)
+if subplots(1)*subplots(2) ~= totalplots; error('right now we need a square of subplots'); end
 % first set up the cluster test settings
 cfg = [];
-cfg.channel = {'EEG'};
+cfg.channel = channels;
 cfg.latency = 'all';
 cfg.method = 'montecarlo';
 cfg.statistic = 'depsamplesT'; % dependent samples t test (also independent: indepsamplesT)
@@ -332,67 +400,82 @@ cfg.correctm = 'cluster';
 cfg.clusteralpha = 0.05; % alpha level of the sample-specific test statistic that will be used for thresholding
 cfg.clusterstatistic = 'maxsum';
 cfg.minnbchan = 2; % min number of neighbours required to be considered for clustering
-cfg.neighbours = eegNeighbours;
+cfg.neighbours = neighbours;
 cfg.tail = 0; % one or two sided test? (one would be -1 or 1)
 cfg.clustertail = 0;
 cfg.alpha = 0.025; % alpha for the permutation
 cfg.numrandomization = 500; % how many draws?
 
 % now let's set up the design
-numSubjs  = numel(ecRespAll);
+numSubjs  = numel(dataAll1);
 design = zeros(2, numSubjs*2); % design is 2 x num subjects matrix
 design(1,:) = [1:numSubjs 1:numSubjs]; % first row is which subject the data belongs to in the two datasets we are comparing
 design(2,:) = [ones(1,numSubjs) ones(1,numSubjs)*2]; % second row is which dataset the data belongs to
-% so we're contrasting two things, and so we repeat subjects twice, then do
-% a row of ones and a row of twos
+% so we're contrasting two things, and so we repeat subjects twice in the first row, then do
+% a corresponding set of ones and twos for the things
 cfg.design = design;
 cfg.uvar = 1; % uvar is the row that the subject definition is on
 cfg.ivar = 2; % ivar is the row that the dataset (independent variables) definition is on
 
 % get the stats
-eegStatCohResp = ft_timelockstatistics(cfg, ecRespAll{:}, hcRespAll{:});
-save(fullfile(datadir,'eegCohRespErpStat.mat'),'eegStatCohResp')
+stats = ft_timelockstatistics(cfg, dataAll1{:}, dataAll2{:});
+
+% save(fullfile(datadir,'eegCohRespErpStat.mat'),'stats')
 
 % define parameters for plotting
-timestep      = 0.05; %(in seconds)
+% timestep      = 0.05; %(in seconds)
 sampling_rate = 1000;
-sample_count  = length(eegStatCohResp.time);
-j = [0:timestep:0.8];   % in secs, get some timings for each subplot
-m = [1:timestep*sampling_rate:sample_count];  % in secs, what timings according to the M/EEG samples
+sample_count  = length(stats.time);
+j = [timebounds(1):timestep:timebounds(2)];   % in secs, get some timings for each subplot for the xlims
+m = [1:timestep*sampling_rate:sample_count];  % get the timings according to the M/EEG samples to index into the clusters
 % get relevant values
-pos_cluster_pvals = [eegStatCohResp.posclusters(:).prob];
+pos_cluster_pvals = [stats.posclusters(:).prob];
 pos_clust = find(pos_cluster_pvals < 0.025);
-pos       = ismember(eegStatCohResp.posclusterslabelmat, pos_clust);
-neg_cluster_pvals = [eegStatCohResp.negclusters(:).prob];
+pos       = ismember(stats.posclusterslabelmat, pos_clust);
+neg_cluster_pvals = [stats.negclusters(:).prob];
 neg_clust = find(neg_cluster_pvals < 0.025);
-neg       = ismember(eegStatCohResp.negclusterslabelmat, neg_clust);% ensure the channels to have the same order in the average and in the statistical output
+neg       = ismember(stats.negclusterslabelmat, neg_clust);% ensure the channels to have the same order in the average and in the statistical output
 % which might not be the case, because ft_math might shuffle the order
-[i1,i2] = match_str(cRespDiffAve.label, eegStatCohResp.label);
+[i1,i2] = match_str(dataDiff.label, stats.label);
 % plot
-for k = 1:16
-   cfg.figure     = subplot(4,4,k);
+for k = 1:totalplots
+   cfg.figure     = subplot(subplots(1),subplots(2),k);
    cfg.xlim       = [j(k) j(k+1)]; % set the xlimits to timepoints
+   cfg.zlim = zlims;
    % now we create an index to the channels that are in clusters to be plotted,
    % by timepoint
-   pos_int        = zeros(numel(cRespDiffAve.label),1);
+   % so ff a channel is in a to-be-plotted cluster, then
+   % the element of pos/neg_int with an index equal to that channel
+   % number will be set to 1 (otherwise 0).
+   % so let's check which channels are in the clusters over the
+   % time interval of interest
+   pos_int        = zeros(numel(dataDiff.label),1);
    pos_int(i1)    = all(pos(i2, m(k):m(k+1)), 2);
-   neg_int        = zeros(numel(cRespDiffAve.label),1);
+   neg_int        = zeros(numel(dataDiff.label),1);
    neg_int(i1)    = all(neg(i2, m(k):m(k+1)), 2);
    cfg.highlight  = 'on';
-   % now we pull the indices we created earlier
+   % now we pull the indices we created earlier for the channels to
+   % highlight
    cfg.highlightchannel = find(pos_int | neg_int);
    cfg.comment    = 'xlim';
    cfg.commentpos = 'title';
-   cfg.layout     = eegLayout;
+   cfg.layout     = layout;
    cfg.interactive = 'no';
    cfg.figure     = 'gca';
-%    ft_topoplotER(cfg, cRespDiffAve);
+%    if k == totalplots; cfg.colorbar = 'EastOutside'; end
+   ft_topoplotER(cfg, dataDiff);
 end
+
+cbh = colorbar('Location', 'eastoutside', 'Position', [0.93 0.1 0.01 0.8]);
+caxis([zlims(1),zlims(2)])
+cbh.Units = 'normalized';
+cbh.Limits = [zlims(1),zlims(2)];
+% cbh.Label.String = 'Bayes Factor';
 f = gcf; f.Position = [10 10 1600 1600];
-print([erpFigDir filesep 'eeg_coh_resp_sig_ERP_clusters.png'], '-dpng');
+print(savename, '-dpng');
 % close all
 
-
+end
 
 function difference = getDifference(data1,data2)
 
@@ -444,7 +527,7 @@ end
 %   by specifying complementary = 2. Let's set a default:
 if ~exist('complementary','var'); complementary = 1; end
 bfs = bayesfactor_R_wrapper(diffs,'Rpath',RscriptPath,'returnindex',complementary,...
-    'args','mu=0,rscale="medium",nullInterval=c(-Inf,Inf)');
+    'args','mu=0,rscale="medium",nullInterval=c(0.5,Inf)');
 
 % alternatively they hav implemented it in matlab
 % [bfs, bfs_complementary_interval] = bayesfactor(diffs, 'interval',[-Inf Inf]);
@@ -453,7 +536,7 @@ return
 end
 
 
-function plotTimecourse(layout,dataAv1,dataAv2,dataDiff,dataAll1,dataAll2,xlims,ylims,channels,leg,legendloc,theTitle)
+function plotTimecourse(layout,dataAv1,dataAv2,dataDiff,dataAll1,dataAll2,xlims,ylims,channels,leg,legendloc,theTitle,savename)
 
 teal = [0.2, 0.6, 0.7];
 coral = [0.9, 0.4, 0.3];
@@ -518,7 +601,8 @@ cbh.Limits = [-exponential_minmax,exponential_minmax];
 cbh.Position(1) = 0.92;cbh.Position(3) = 0.01;cbh.Position(4) = ax.Position(4);cbh.Position(2) = ax.Position(2);
 cbh.Label.String = 'Bayes Factor';
 cbh.TickLabels=arrayfun(@(x) ['10^{' num2str(x) '}'], cbh.Ticks, 'UniformOutput', false);
-
+f = gcf; f.Position = [10 10 1600 1600];
+print(savename, '-dpng');
 
 
 return
