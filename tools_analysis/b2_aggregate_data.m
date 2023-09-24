@@ -71,13 +71,18 @@ for fileNum = 1:numel(theseFiles)
         rawData = ft_preprocessing(cfg,loadFtData(thisFile)); % load it
     end
     
+    % you probably want to add subject number to the thing, so you can try
+    % I think
+    % rawData.subj = thisSubject.num
+    % see: https://www.fieldtriptoolbox.org/development/datastructure/
+    
     % let's do any additional filtering
 %     cfg = [];
 %     cfg.continuous = 'yes'; % this data is not epoched, it's continuous
 %     cfg.hpfilter        = 'yes';
 %     cfg.hpfreq          = 0.5;
 %     cfg.lpfilter        = 'yes';
-%     cfg.lpfreq          = 100;
+%     cfg.lpfreq          = 200;
 %     rawData = ft_preprocessing(cfg,rawData);
     
     % let's make a layout using the data
