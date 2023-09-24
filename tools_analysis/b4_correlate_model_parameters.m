@@ -16,6 +16,7 @@ addpath(ftDir); ft_defaults;
 toolbox = fullfile(rootdir,'..','..','Toolboxes','gramm'); addpath(toolbox); clear toolbox
 toolbox = fullfile(rootdir,'..','..','Toolboxes','BFF_repo'); addpath(genpath(toolbox)); clear toolbox
 
+slopeTimeWindow = 10;
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 %% load and prep data %%
@@ -111,10 +112,10 @@ for subjectidx = 1:size(validSubjectParams,1)
         slopeData = zeros(1, timepoints);
 
         for t = 1:timepoints
-            if t<11
+            if t<slopeTimeWindow+1
                 slopeData(t) = amplitudeData(1,t) - mean(amplitudeData(1,:)); % get something in a sensible range for visualisation
             else
-                slopeData(t) = amplitudeData(1,t) - amplitudeData(1,t-10); % get local change in slope as time - time-10
+                slopeData(t) = amplitudeData(1,t) - amplitudeData(1,t-slopeTimeWindow); % get local change in slope as time - time-10
             end
         end; clear t
 
@@ -312,16 +313,18 @@ for paramCond = unique(correlations.ParameterCondition)'
 
             
 % %             thesebfs = correlations.SlopeBf1(dataidx);
-%             thesebfs = correlations.SlopeBf2(dataidx);
-%             theseRs = correlations.R_Slope(dataidx);
-%             allRs = correlations.R_Slope;
-%             tipo = 'Slope';
+            thesebfs = correlations.SlopeBf2(dataidx);
+            theseRs = correlations.R_Slope(dataidx);
+            allRs = correlations.R_Slope;
+            tipo = 'Slope';
             
 % %             thesebfs = correlations.AmplitudeBf1(dataidx);
-            thesebfs = correlations.AmplitudeBf2(dataidx);
-            theseRs = correlations.R_Amplitude(dataidx);
-            allRs = correlations.R_Amplitude;
-            tipo = 'Amplitude';
+%             thesebfs = correlations.AmplitudeBf2(dataidx);
+%             theseRs = correlations.R_Amplitude(dataidx);
+%             allRs = correlations.R_Amplitude;
+%             tipo = 'Amplitude';
+
+            slopeInvalidColour = [1, 0.6, 0.6];
             
             timepoints = correlations.Timepoint(dataidx);
             
@@ -347,6 +350,15 @@ for paramCond = unique(correlations.ParameterCondition)'
             ylim([min(allRs)-0.1 max(allRs)+0.1])
             line(get(gca,'XLim'), [0 0], 'Color', [0.5 0.5 0.5], 'LineStyle', '-')
             line([0 0], get(gca,'YLim'), 'Color', [0.1 0.1 0.1], 'LineStyle', '--')
+            if strcmp(tipo,'Slope')
+                % plot a red bar over invalid timepoints
+                y = get(gca,'YLim');
+                x = get(gca,'XLim');
+                patch([x(1) x(1) x(1)+slopeTimeWindow x(1)+slopeTimeWindow],...
+                    [y(1) y(2) y(2) y(1)],...
+                    slopeInvalidColour,'FaceAlpha',0.5);
+                clear y x
+            end
             xlabel('Timepoints');
             ylabel('Correlations (r)');
             title(['Correlation: ' thisParam{:} ' (' paramCond{:} ') and ' tipo ' of '  thisCond{:} ' ' thisLockedTo{:}])
@@ -366,6 +378,15 @@ for paramCond = unique(correlations.ParameterCondition)'
             ax = gca;
             set(ax,'YScale','log','XLim',[timepoints(1),timepoints(end)], ...
                 'YLim',[1e-2 1e2],'YTick',10.^(-3:1:3))
+            if strcmp(tipo,'Slope')
+                % plot a red bar over invalid timepoints
+                y = get(gca,'YLim');
+                x = get(gca,'XLim');
+                patch([x(1) x(1) x(1)+slopeTimeWindow x(1)+slopeTimeWindow],...
+                    [y(1) y(2) y(2) y(1)],...
+                    slopeInvalidColour,'FaceAlpha',0.5);
+                clear y x
+            end
             xlabel('Time (s)')
             ylabel('BF (log scale)')
             colormap(ax,colours)
