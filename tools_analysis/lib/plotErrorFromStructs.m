@@ -16,7 +16,9 @@ for i = 1:numel(errorMat)
     
     % grab the data to centre the error on
     centre_data = dataStructs{i}.avg(find(ismember(dataStructs{i}.label,channels)),:);
-    centre_data = mean(centre_data);
+    if size(centre_data,1) > 1 % average it if there is more than one channel
+        centre_data = mean(centre_data);
+    end
     
     % define the lower and upper bounds of the area
     lowerBound = centre_data - selected_data/2;
