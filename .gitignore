@@ -12,3 +12,4 @@ job_logging/*
 *.m~
 spmeeg*
 .Rproj.user
+matlab_metadata.mat
