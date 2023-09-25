@@ -92,11 +92,12 @@ parfor subjectNum = 1:numel(subjectFolders)
         'hcer_responseLockedTFRhann' 'hcer_coherenceLockedTFRhann'...
         'hchr_responseLockedTFRhann' 'hchr_coherenceLockedTFRhann'...
     };
-    
-    whichVars = {...
-        erpManips erpConds tfrManips tfrConds
-        };
 
+    % erpManips{:} erpConds{:} tfrManips{:} tfrConds{:}
+
+    whichVars = {...
+            erpManips{:} erpConds{:} tfrManips{:} tfrConds{:}...
+        };
     
     data{subjectNum} = load(thisFile,whichVars{:});
     
@@ -152,106 +153,189 @@ ft_plot_layout(layout);
 
 CPP = {'EEG040' 'EEG041' 'EEG042'};
 frontal = {'EEG004' 'EEG002' 'EEG008'};
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% pull coherence data and average it %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-disp('averaging coherence data')
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% let's compile some averages and differences %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-cfg = [];
-ecRespAll = returnStructs(data, 'ec_responseLockedAverage');
-ecRespAve = ft_timelockgrandaverage(cfg, ecRespAll{:});
-cfg = [];
-ecOnsAll = returnStructs(data, 'ec_coherenceLockedAverage');
-ecOnsAve = ft_timelockgrandaverage(cfg, ecOnsAll{:});
-cfg = [];
-hcRespAll = returnStructs(data, 'hc_responseLockedAverage');
-hcRespAve = ft_timelockgrandaverage(cfg, hcRespAll{:});
-cfg = [];
-hcOnsAll = returnStructs(data, 'hc_coherenceLockedAverage');
-hcOnsAve = ft_timelockgrandaverage(cfg, hcOnsAll{:});
+%numSections = 3;
+%poolobj = gcp('nocreate'); % If no pool, do not create new one.
+%if isempty(poolobj)
+%    disp('no parallel pool is currently initialised---initialising');
+%    workers = numSections;
+%    P=cbupool(workers);
+%    parpool(P,workers);
+%else
+%    disp('parallel pool has already been initialized---skipping');
+%end
+%
+%parfor section = 1:numSections
+%
+%    switch section
+%
+%        case 1
+        %----------------------------%
+        %-- average coherence data --%
+        %----------------------------%
+     
+        disp('averaging coherence data')
 
-% get an overall average
-cfg = [];
-cOnsAve = ft_timelockgrandaverage(cfg, ecOnsAll{:}, hcOnsAll{:});
-cfg = [];
-cRespAve = ft_timelockgrandaverage(cfg, ecRespAll{:}, hcRespAll{:});
+        cfg = [];
+        ecRespAll = returnStructs(data, 'ec_responseLockedAverage');
+        ecRespAve = ft_timelockgrandaverage(cfg, ecRespAll{:});
+        ecRespTfrAll = returnStructs(data, 'ec_responseLockedTFRhann');
+        ecRespTfrAve = ft_freqgrandaverage(cfg, ecRespTfrAll{:});
+        cfg = [];
+        ecOnsAll = returnStructs(data, 'ec_coherenceLockedAverage');
+        ecOnsAve = ft_timelockgrandaverage(cfg, ecOnsAll{:});
+        ecOnsTfrAll = returnStructs(data, 'ec_coherenceLockedTFRhann');
+        ecOnsTfrAve = ft_freqgrandaverage(cfg, ecOnsTfrAll{:});
+        cfg = [];
+        hcRespAll = returnStructs(data, 'hc_responseLockedAverage');
+        hcRespAve = ft_timelockgrandaverage(cfg, hcRespAll{:});
+        hcRespTfrAll = returnStructs(data, 'hc_responseLockedTFRhann');
+        hcRespTfrAve = ft_freqgrandaverage(cfg, hcRespTfrAll{:});
+        cfg = [];
+        hcOnsAll = returnStructs(data, 'hc_coherenceLockedAverage');
+        hcOnsAve = ft_timelockgrandaverage(cfg, hcOnsAll{:});
+        hcOnsTfrAll = returnStructs(data, 'hc_coherenceLockedTFRhann');
+        hcOnsTfrAve = ft_freqgrandaverage(cfg, hcOnsTfrAll{:});
 
-% get diffs
-cOnsDiffAve = getDifference(ecOnsAve,hcOnsAve);
-cRespDiffAve = getDifference(ecRespAve,hcRespAve);
+        % get an overall average
+        cfg = [];
+        cOnsAve = ft_timelockgrandaverage(cfg, ecOnsAll{:}, hcOnsAll{:});
+        cOnsTfrAve = ft_freqgrandaverage(cfg, ecOnsTfrAll{:}, hcOnsTfrAll{:});
+        cfg = [];
+        cRespAve = ft_timelockgrandaverage(cfg, ecRespAll{:}, hcRespAll{:});
+        cRespTfrAve = ft_freqgrandaverage(cfg, ecRespTfrAll{:}, hcRespTfrAll{:});
 
-disp('done')
+        % get diffs
+        cOnsDiffAve = getDifference(ecOnsAve,hcOnsAve);
+        cRespDiffAve = getDifference(ecRespAve,hcRespAve);
+        % make a dummy structure with the difference of the timefrequencies
+        cOnsTfrDiff = cOnsDiffAve;
+        cOnsTfrDiff.powspctrm = ecOnsTfrAve.powspctrm - hcOnsTfrAve.powspctrm
+        cRespTfrDiff = cRespDiffAve;
+        cRespTfrDiff.powspctrm = ecRespTfrAve.powspctrm - hcRespTfrAve.powspctrm
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% pull categorisation data and average it %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        disp('done')
 
-disp('averaging categorisation data')
+%       case 2
+        %---------------------------------%
+        %-- average categorisation data --%
+        %---------------------------------%
 
-cfg = [];
-erRespAll = returnStructs(data, 'er_responseLockedAverage');
-erRespAve = ft_timelockgrandaverage(cfg, erRespAll{:});
-cfg = [];
-erOnsAll = returnStructs(data, 'er_coherenceLockedAverage');
-erOnsAve = ft_timelockgrandaverage(cfg, erOnsAll{:});
-cfg = [];
-hrRespAll = returnStructs(data, 'hr_responseLockedAverage');
-hrRespAve = ft_timelockgrandaverage(cfg, hrRespAll{:});
-cfg = [];
-hrOnsAll = returnStructs(data, 'hr_coherenceLockedAverage');
-hrOnsAve = ft_timelockgrandaverage(cfg, hrOnsAll{:});
+        disp('averaging categorisation data')
 
-% get an overall average
-cfg = [];
-rOnsAve = ft_timelockgrandaverage(cfg, erOnsAll{:}, hrOnsAll{:});
-cfg = [];
-rRespAve = ft_timelockgrandaverage(cfg, erRespAll{:}, hrRespAll{:});
+        cfg = [];
+        erRespAll = returnStructs(data, 'er_responseLockedAverage');
+        erRespAve = ft_timelockgrandaverage(cfg, erRespAll{:});
+        erRespTfrAll = returnStructs(data, 'er_responseLockedTFRhann');
+        erRespTfrAve = ft_freqgrandaverage(cfg, erRespTfrAll{:});
+        cfg = [];
+        erOnsAll = returnStructs(data, 'er_coherenceLockedAverage');
+        erOnsAve = ft_timelockgrandaverage(cfg, erOnsAll{:});
+        erOnsTfrAll = returnStructs(data, 'er_coherenceLockedTFRhann');
+        erOnsTfrAve = ft_freqgrandaverage(cfg, erOnsTfrAll{:});
+        cfg = [];
+        hrRespAll = returnStructs(data, 'hr_responseLockedAverage');
+        hrRespAve = ft_timelockgrandaverage(cfg, hrRespAll{:});
+        hrRespTfrAll = returnStructs(data, 'hr_responseLockedTFRhann');
+        hrRespTfrAve = ft_freqgrandaverage(cfg, hrRespTfrAll{:});
+        cfg = [];
+        hrOnsAll = returnStructs(data, 'hr_coherenceLockedAverage');
+        hrOnsAve = ft_timelockgrandaverage(cfg, hrOnsAll{:});
+        hrOnsTfrAll = returnStructs(data, 'hr_coherenceLockedTFRhann');
+        hrOnsTfrAve = ft_freqgrandaverage(cfg, hrOnsTfrAll{:});
 
-% get diffs
-rOnsDiffAve = getDifference(erOnsAve,hrOnsAve);
-rRespDiffAve = getDifference(ecRespAve,hcRespAve);
+        % get an overall average
+        cfg = [];
+        rOnsAve = ft_timelockgrandaverage(cfg, erOnsAll{:}, hrOnsAll{:});
+        rOnsTfrAve = ft_freqgrandaverage(cfg, erOnsTfrAll{:}, hrOnsTfrAll{:});
+        cfg = [];
+        rRespAve = ft_timelockgrandaverage(cfg, erRespAll{:}, hrRespAll{:});
+        rRespTfrAve = ft_freqgrandaverage(cfg, erRespTfrAll{:}, hrRespTfrAll{:});
 
-disp('done')
+        % get diffs
+        rOnsDiffAve = getDifference(erOnsAve,hrOnsAve);
+        rRespDiffAve = getDifference(ecRespAve,hcRespAve);
+        % make a dummy structure with the difference of the timefrequencies
+        rOnsTfrDiff = rOnsDiffAve;
+        rOnsTfrDiff.powspctrm = erOnsTfrAve.powspctrm - hrOnsTfrAve.powspctrm
+        rRespTfrDiff = rRespDiffAve;
+        rRespTfrDiff.powspctrm = erRespTfrAve.powspctrm - hrRespTfrAve.powspctrm
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% pull conditionwise data and average it %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        disp('done')
 
-disp('averaging conditionwise data')
+%       case 3
+        %--------------------------------%
+        %-- average conditionwise data --%
+        %--------------------------------%
 
-cfg = [];
-ecerRespAll = returnStructs(data, 'ecer_responseLockedAverage');
-ecerRespAve = ft_timelockgrandaverage(cfg, ecerRespAll{:});
-cfg = [];
-ecerOnsAll = returnStructs(data, 'ecer_coherenceLockedAverage');
-ecerOnsAve = ft_timelockgrandaverage(cfg, ecerOnsAll{:});
-cfg = [];
-echrRespAll = returnStructs(data, 'echr_responseLockedAverage');
-echrRespAve = ft_timelockgrandaverage(cfg, echrRespAll{:});
-cfg = [];
-echrOnsAll = returnStructs(data, 'echr_coherenceLockedAverage');
-echrOnsAve = ft_timelockgrandaverage(cfg, echrOnsAll{:});
-cfg = [];
-hcerRespAll = returnStructs(data, 'hcer_responseLockedAverage');
-hcerRespAve = ft_timelockgrandaverage(cfg, hcerRespAll{:});
-cfg = [];
-hcerOnsAll = returnStructs(data, 'hcer_coherenceLockedAverage');
-hcerOnsAve = ft_timelockgrandaverage(cfg, hcerOnsAll{:});
-cfg = [];
-hchrRespAll = returnStructs(data, 'hchr_responseLockedAverage');
-hchrRespAve = ft_timelockgrandaverage(cfg, hchrRespAll{:});
-cfg = [];
-hchrOnsAll = returnStructs(data, 'hchr_coherenceLockedAverage');
-hchrOnsAve = ft_timelockgrandaverage(cfg, hchrOnsAll{:});
+        disp('averaging conditionwise data')
 
-disp('done')
+        cfg = [];
+        ecerRespAll = returnStructs(data, 'ecer_responseLockedAverage');
+        ecerRespAve = ft_timelockgrandaverage(cfg, ecerRespAll{:});
+        ecerRespTfrAll = returnStructs(data, 'ecer_responseLockedTFRhann');
+        ecerRespTfrAve = ft_freqgrandaverage(cfg, ecerRespTfrAll{:});
+        cfg = [];
+        ecerOnsAll = returnStructs(data, 'ecer_coherenceLockedAverage');
+        ecerOnsAve = ft_timelockgrandaverage(cfg, ecerOnsAll{:});
+        ecerOnsTfrAll = returnStructs(data, 'ecer_coherenceLockedTFRhann');
+        ecerOnsTfrAve = ft_freqgrandaverage(cfg, ecerOnsTfrAll{:});
+        cfg = [];
+        echrRespAll = returnStructs(data, 'echr_responseLockedAverage');
+        echrRespAve = ft_timelockgrandaverage(cfg, echrRespAll{:});
+        echrRespTfrAll = returnStructs(data, 'echr_responseLockedTFRhann');
+        echrRespTfrAve = ft_freqgrandaverage(cfg, echrRespTfrAll{:});
+        cfg = [];
+        echrOnsAll = returnStructs(data, 'echr_coherenceLockedAverage');
+        echrOnsAve = ft_timelockgrandaverage(cfg, echrOnsAll{:});
+        echrOnsTfrAll = returnStructs(data, 'echr_coherenceLockedTFRhann');
+        echrOnsTfrAve = ft_freqgrandaverage(cfg, echrOnsTfrAll{:});
+        cfg = [];
+        hcerRespAll = returnStructs(data, 'hcer_responseLockedAverage');
+        hcerRespAve = ft_timelockgrandaverage(cfg, hcerRespAll{:});
+        hcerRespTfrAll = returnStructs(data, 'hcer_responseLockedTFRhann');
+        hcerRespTfrAve = ft_freqgrandaverage(cfg, hcerRespTfrAll{:});
+        cfg = [];
+        hcerOnsAll = returnStructs(data, 'hcer_coherenceLockedAverage');
+        hcerOnsAve = ft_timelockgrandaverage(cfg, hcerOnsAll{:});
+        hcerOnsTfrAll = returnStructs(data, 'hcer_coherenceLockedTFRhann');
+        hcerOnsTfrAve = ft_freqgrandaverage(cfg, hcerOnsTfrAll{:});
+        cfg = [];
+        hchrRespAll = returnStructs(data, 'hchr_responseLockedAverage');
+        hchrRespAve = ft_timelockgrandaverage(cfg, hchrRespAll{:});
+        hchrRespTfrAll = returnStructs(data, 'hchr_responseLockedTFRhann');
+        hchrRespTfrAve = ft_freqgrandaverage(cfg, hchrRespTfrAll{:});
+        cfg = [];
+        hchrOnsAll = returnStructs(data, 'hchr_coherenceLockedAverage');
+        hchrOnsAve = ft_timelockgrandaverage(cfg, hchrOnsAll{:});
+        hchrOnsTfrAll = returnStructs(data, 'hchr_coherenceLockedTFRhann');
+        hchrOnsTfrAve = ft_freqgrandaverage(cfg, hchrOnsTfrAll{:});
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% get the subjectwise differences between manipulations %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        disp('done')
 
-for subject = 1:numel(ecRespAll)
+%    end
+%end
+%delete(gcp('nocreate')); clear workers
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% get subjectwise differences %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+poolobj = gcp('nocreate'); % If no pool, do not create new one.
+if isempty(poolobj)
+    disp('no parallel pool is currently initialised---initialising');
+    workers = numel(ecRespAll);
+    P=cbupool(workers);
+    parpool(P,workers);
+else
+    disp('parallel pool has already been initialized---skipping');
+end
+
+parfor subject = 1:numel(ecRespAll)
     fprintf('\ngetting subjectwise differences for subject %.0f of %.0f\n\n',subject,numel(ecRespAll))
     
     cOnsDiffAll{subject} = getDifference(ecOnsAll{subject}, hcOnsAll{subject});
@@ -259,7 +343,18 @@ for subject = 1:numel(ecRespAll)
     rOnsDiffAll{subject} = getDifference(erOnsAll{subject}, hrOnsAll{subject});
     rRespDiffAll{subject}= getDifference(erRespAll{subject}, hrRespAll{subject});
 
+    % make a dummy structure with the difference of the timefrequencies
+    cOnsTfrDiffAll{subject} = cOnsDiffAll{subject};
+    cOnsTfrDiffAll{subject}.powspctrm = ecOnsTfrAll{subject}.powspctrm - hcOnsTfrAll{subject}.powspctrm
+    cRespTfrDiffAll{subject} = cRespDiffAll{subject};
+    cRespTfrDiffAll{subject}.powspctrm = ecRespTfrAll{subject}.powspctrm - hcRespTfrAll{subject}.powspctrm
+    rOnsTfrDiffAll{subject} = rOnsDiffAll{subject};
+    rOnsTfrDiffAll{subject}.powspctrm = erOnsTfrAll{subject}.powspctrm - hrOnsTfrAll{subject}.powspctrm
+    rRespTfrDiffAll{subject} = rRespDiffAll{subject};
+    rRespTfrDiffAll{subject}.powspctrm = erRespTfrAll{subject}.powspctrm - hrRespTfrAll{subject}.powspctrm
+
 end; clear subject
+delete(gcp('nocreate')); clear workers
 
 % disp('getting averages')
 % 
@@ -271,7 +366,10 @@ end; clear subject
 
 %% save those differences, if we want
 
-save(fullfile(datadir,'differences.mat'),'cOnsDiffAll', 'cRespDiffAll', 'rOnsDiffAll', 'rRespDiffAll', 'cOnsDiffAve', 'cRespDiffAve', 'rOnsDiffAve', 'rRespDiffAve')
+save(fullfile(datadir,'differences.mat'),...
+    'cOnsDiffAll', 'cRespDiffAll', 'rOnsDiffAll', 'rRespDiffAll', 'cOnsDiffAve', 'cRespDiffAve', 'rOnsDiffAve', 'rRespDiffAve',...
+    'cOnsTfrDiffAll', 'cRespTfrDiffAll', 'rOnsTfrDiffAll', 'rRespTfrDiffAll', 'cOnsTfrDiffAve', 'cRespTfrDiffAve', 'rOnsTfrDiffAve', 'rRespTfrDiffAve'...
+    )
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% the timecourse of univariate activity %%
