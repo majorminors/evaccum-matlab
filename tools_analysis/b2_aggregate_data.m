@@ -2,6 +2,7 @@ function b2_aggregate_data(thisSubject,datadir,toolsdir,overwrite)
 % here we will:
 % 1. produce a file for each subject with the timelocked averages we care
 % about for analysis
+% 2. produce a file for each subject with the TFRs
 
 if ~exist('overwrite','var'); overwrite = 0; end
 
@@ -18,22 +19,23 @@ addpath(rootDir);
 % file definition
 % sprintf to enter missing data ('%s')
 inputFilePattern = fullfile(preProcDir,'run*_if_transmid.fif');
-outputFileName = fullfile(preProcDir,'timelocked_averages.mat');
+erpOutputFilename = fullfile(preProcDir,'timelocked_averages.mat');
+tfrOutputFilename = fullfile(preProcDir,'tfr_hanning.mat');
 trlfilePattern = fullfile(preProcDir, '%s_trl.mat'); % this contains our trial related info for epoching - should exist (generated with megTriggers script)
 behavfile = fullfile(datadir,'behavioural',[thisSubject.id '_MEGRTs.mat']); % grab our behavioural data + output from a3_megtriggers
 
 
 %% print subject for logging
 
-disp('this is subject:')
+disp('>>> this is subject:')
 disp(thisSubject.id);
 
-if exist(outputFileName,'file') && ~overwrite
+if exist(erpOutputFilename,'file') && ~overwrite
     warning('save file exists---skipping')
     return
-elseif exist(outputFileName,'file') && overwrite
+elseif exist(erpOutputFilename,'file') && overwrite
     warning('file exists and overwrite: ill delete is so it wont get loaded into your next analysis')
-    system(['rm -f ' outputFileName])
+    system(['rm -f ' erpOutputFilename])
 end
 
 theseFiles = dir(inputFilePattern);
@@ -71,22 +73,22 @@ for fileNum = 1:numel(theseFiles)
         rawData = ft_preprocessing(cfg,loadFtData(thisFile)); % load it
     end
     
-    % you probably want to add subject number to the thing, so you can try
-    % I think
-    % rawData.subj = thisSubject.num
+    % add subject number to the thing
+    rawData.subj = thisSubject.num;
     % see: https://www.fieldtriptoolbox.org/development/datastructure/
+    % but unfortunately this does not carry through to future stuff!
     
     % let's do any additional filtering
-%     cfg = [];
-%     cfg.continuous = 'yes'; % this data is not epoched, it's continuous
+    cfg = [];
+    cfg.continuous = 'yes'; % this data is not epoched, it's continuous
 %     cfg.hpfilter        = 'yes';
 %     cfg.hpfreq          = 0.5;
-%     cfg.lpfilter        = 'yes';
-%     cfg.lpfreq          = 200;
-%     rawData = ft_preprocessing(cfg,rawData);
+    cfg.lpfilter        = 'yes';
+    cfg.lpfreq          = 200;
+    rawData = ft_preprocessing(cfg,rawData);
     
     % let's make a layout using the data
-    disp('prepping layouts')
+    disp('>>> prepping layouts')
     % make an eeg layout
     cfg = [];
     cfg.elec = rawData.elec;
@@ -103,7 +105,7 @@ for fileNum = 1:numel(theseFiles)
     % won't bother saving this one
 
     %% now onset of coherent dots
-    disp('compiling dataset based on onset')
+    disp('>>> compiling dataset based on onset')
     cfg = [];
     cfg.trlfile = thisTrlFile;
     cfg.behavfile = behavfile;
@@ -120,7 +122,7 @@ for fileNum = 1:numel(theseFiles)
     cohOnsetsData{fileNum} = rejectArtefacts(cohOnsetsData{fileNum}, combinedLayout,ftDir);
     
     %% get response locked data
-    disp('compiling dataset based on responses')
+    disp('>>> compiling dataset based on responses')
     cfg = [];
     cfg.trlfile = thisTrlFile;
     cfg.behavfile = behavfile;
@@ -144,7 +146,7 @@ clear rawData
 
 %% append these now
 
-disp('appending datasets')
+disp('>>> appending datasets')
 
 % append them all
 cfg = [];
@@ -152,69 +154,159 @@ cfg.keepsampleinfo  = 'yes';
 coherenceOnsetData = ft_appenddata(cfg,cohOnsetsData{:}); clear cohOnsetsData
 responseLockedData = ft_appenddata(cfg,respLockedData{:}); clear respLockedData
 
-disp('compiling overall averages')
+% disp('>>> compiling overall averages')
+% 
+% cfg = [];
+% cfg.trials = find(coherenceOnsetData.trialinfo(:,2) == 1); % grab just the good trials
+% coherenceLockedAverage = ft_timelockanalysis(cfg, coherenceOnsetData);
+% 
+% cfg = [];
+% cfg.trials = find(responseLockedData.trialinfo(:,2) == 1); % grab just the good trials
+% responseLockedAverage = ft_timelockanalysis(cfg, responseLockedData);
+
+disp('>>> compiling condition-wise averages')
+
+% first let's create a config that will work for response locked data
+tfrRespCfg              = [];
+tfrRespCfg.output       = 'pow';
+tfrRespCfg.channel      = 'MEG';
+tfrRespCfg.method       = 'mtmconvol';
+tfrRespCfg.taper        = 'hanning';
+tfrRespCfg.pad          = 'nextpow2'; % ft recommends this over their default 'maxperlen' as more efficient for FFT computation
+tfrRespCfg.foi          = 2:2:100; % do 2 to 100 Hz in steps of 2 Hz
+tfrRespCfg.t_ftimwin    = ones(length(tfrRespCfg.foi),1).*0.5; % length of time window = 0.5 sec
+% this needs to match your timeframe for the 'trial' you defined above
+tfrRespCfg.toi          = -0.6:0.05:0.2;   
+% and the same for onset locked data
+tfrOnsCfg              = tfrRespCfg;
+% this needs to match your timeframe for the 'trial' you defined above
+tfrOnsCfg.toi          = -0.5:0.05:1.5;   
+
+%% now the same thing but broken into our conditions - first response-locked
 
 cfg = [];
-cfg.trials = find(coherenceOnsetData.trialinfo(:,2) == 1); % grab just the good trials
-coherenceLockedAverage = ft_timelockanalysis(cfg, coherenceOnsetData);
-
-cfg = [];
-cfg.trials = find(responseLockedData.trialinfo(:,2) == 1); % grab just the good trials
-responseLockedAverage = ft_timelockanalysis(cfg, responseLockedData);
-
-disp('compiling condition-wise averages')
-
-% now the same thing but broken into our conditions
-cfg = [];
-cfg.trials = find(responseLockedData.trialinfo(:,2) == 1 & responseLockedData.trialinfo(:,1) == 1); % good trials, 1st condition
+theseTrials = find(responseLockedData.trialinfo(:,2) == 1 & responseLockedData.trialinfo(:,1) == 1); % good trials, 1st condition;
+cfg.trials = theseTrials;
+tfrRespCfg.trials = theseTrials;
 ecer_responseLockedAverage = ft_timelockanalysis(cfg, responseLockedData);
-cfg.trials = find(responseLockedData.trialinfo(:,2) == 1 & responseLockedData.trialinfo(:,1) == 2); % good trials, 1st condition
+ecer_responseLockedTFRhann = ft_freqanalysis(tfrRespCfg, responseLockedData);
+
+theseTrials = find(responseLockedData.trialinfo(:,2) == 1 & responseLockedData.trialinfo(:,1) == 2); % good trials, 1st condition
+cfg.trials = theseTrials;
+tfrRespCfg.trials = theseTrials;
 echr_responseLockedAverage = ft_timelockanalysis(cfg, responseLockedData);
-cfg.trials = find(responseLockedData.trialinfo(:,2) == 1 & responseLockedData.trialinfo(:,1) == 3); % good trials, 1st condition
+echr_responseLockedTFRhann = ft_freqanalysis(tfrRespCfg, responseLockedData);
+
+theseTrials = find(responseLockedData.trialinfo(:,2) == 1 & responseLockedData.trialinfo(:,1) == 3); % good trials, 1st condition
+cfg.trials = theseTrials;
+tfrRespCfg.trials = theseTrials;
 hcer_responseLockedAverage = ft_timelockanalysis(cfg, responseLockedData);
-cfg.trials = find(responseLockedData.trialinfo(:,2) == 1 & responseLockedData.trialinfo(:,1) == 4); % good trials, 1st condition
+hcer_responseLockedTFRhann = ft_freqanalysis(tfrRespCfg, responseLockedData);
+
+theseTrials = find(responseLockedData.trialinfo(:,2) == 1 & responseLockedData.trialinfo(:,1) == 4); % good trials, 1st condition
+cfg.trials = theseTrials;
+tfrRespCfg.trials = theseTrials;
 hchr_responseLockedAverage = ft_timelockanalysis(cfg, responseLockedData);
+hchr_responseLockedTFRhann = ft_freqanalysis(tfrRespCfg, responseLockedData);
 
-cfg.trials = find(responseLockedData.trialinfo(:,2) == 1 & (responseLockedData.trialinfo(:,1) == 1 | responseLockedData.trialinfo(:,1) == 2)); % good trials, easy coherence
+%% and averaged across manipulations - response-locked
+
+theseTrials = find(responseLockedData.trialinfo(:,2) == 1 & (responseLockedData.trialinfo(:,1) == 1 | responseLockedData.trialinfo(:,1) == 2)); % good trials, easy coherence
+cfg.trials = theseTrials;
+tfrRespCfg.trials = theseTrials;
 ec_responseLockedAverage = ft_timelockanalysis(cfg, responseLockedData);
-cfg.trials = find(responseLockedData.trialinfo(:,2) == 1 & (responseLockedData.trialinfo(:,1) == 3 | responseLockedData.trialinfo(:,1) == 4)); % good trials, hard coherence
-hc_responseLockedAverage = ft_timelockanalysis(cfg, responseLockedData);
+ec_responseLockedTFRhann = ft_freqanalysis(tfrRespCfg, responseLockedData);
 
-cfg.trials = find(responseLockedData.trialinfo(:,2) == 1 & (responseLockedData.trialinfo(:,1) == 1 | responseLockedData.trialinfo(:,1) == 3)); % good trials, easy rule
+theseTrials = find(responseLockedData.trialinfo(:,2) == 1 & (responseLockedData.trialinfo(:,1) == 3 | responseLockedData.trialinfo(:,1) == 4)); % good trials, hard coherence
+cfg.trials = theseTrials;
+tfrRespCfg.trials = theseTrials;
+hc_responseLockedAverage = ft_timelockanalysis(cfg, responseLockedData);
+hc_responseLockedTFRhann = ft_freqanalysis(tfrRespCfg, responseLockedData);
+
+theseTrials = find(responseLockedData.trialinfo(:,2) == 1 & (responseLockedData.trialinfo(:,1) == 1 | responseLockedData.trialinfo(:,1) == 3)); % good trials, easy rule
+cfg.trials = theseTrials;
+tfrRespCfg.trials = theseTrials;
 er_responseLockedAverage = ft_timelockanalysis(cfg, responseLockedData);
-cfg.trials = find(responseLockedData.trialinfo(:,2) == 1 & (responseLockedData.trialinfo(:,1) == 2 | responseLockedData.trialinfo(:,1) == 4)); % good trials, hard rule
+er_responseLockedTFRhann = ft_freqanalysis(tfrRespCfg, responseLockedData);
+
+theseTrials = find(responseLockedData.trialinfo(:,2) == 1 & (responseLockedData.trialinfo(:,1) == 2 | responseLockedData.trialinfo(:,1) == 4)); % good trials, hard rule
+cfg.trials = theseTrials;
+tfrRespCfg.trials = theseTrials;
 hr_responseLockedAverage = ft_timelockanalysis(cfg, responseLockedData);
+hr_responseLockedTFRhann = ft_freqanalysis(tfrRespCfg, responseLockedData);
+
+%% same again for conditions but onset-locked
 
 cfg = [];
-cfg.trials = find(coherenceOnsetData.trialinfo(:,2) == 1 & coherenceOnsetData.trialinfo(:,1) == 1); % good trials, 1st condition
+theseTrials = find(coherenceOnsetData.trialinfo(:,2) == 1 & coherenceOnsetData.trialinfo(:,1) == 1); % good trials, 1st condition
+cfg.trials = theseTrials;
+tfrOnsCfg.trials = theseTrials;
 ecer_coherenceLockedAverage = ft_timelockanalysis(cfg, coherenceOnsetData);
-cfg.trials = find(coherenceOnsetData.trialinfo(:,2) == 1 & coherenceOnsetData.trialinfo(:,1) == 2); % good trials, 1st condition
+ecer_coherenceLockedTFRhann = ft_freqanalysis(tfrRespCfg, coherenceOnsetData);
+
+theseTrials = find(coherenceOnsetData.trialinfo(:,2) == 1 & coherenceOnsetData.trialinfo(:,1) == 2); % good trials, 1st condition
+cfg.trials = theseTrials;
+tfrOnsCfg.trials = theseTrials;
 echr_coherenceLockedAverage = ft_timelockanalysis(cfg, coherenceOnsetData);
-cfg.trials = find(coherenceOnsetData.trialinfo(:,2) == 1 & coherenceOnsetData.trialinfo(:,1) == 3); % good trials, 1st condition
+echr_coherenceLockedTFRhann = ft_freqanalysis(tfrRespCfg, coherenceOnsetData);
+
+theseTrials = find(coherenceOnsetData.trialinfo(:,2) == 1 & coherenceOnsetData.trialinfo(:,1) == 3); % good trials, 1st condition
+cfg.trials = theseTrials;
+tfrOnsCfg.trials = theseTrials;
 hcer_coherenceLockedAverage = ft_timelockanalysis(cfg, coherenceOnsetData);
-cfg.trials = find(coherenceOnsetData.trialinfo(:,2) == 1 & coherenceOnsetData.trialinfo(:,1) == 4); % good trials, 1st condition
+hcer_coherenceLockedTFRhann = ft_freqanalysis(tfrRespCfg, coherenceOnsetData);
+
+theseTrials = find(coherenceOnsetData.trialinfo(:,2) == 1 & coherenceOnsetData.trialinfo(:,1) == 4); % good trials, 1st condition
+cfg.trials = theseTrials;
+tfrOnsCfg.trials = theseTrials;
 hchr_coherenceLockedAverage = ft_timelockanalysis(cfg, coherenceOnsetData);
+hchr_coherenceLockedTFRhann = ft_freqanalysis(tfrRespCfg, coherenceOnsetData);
 
-cfg.trials = find(coherenceOnsetData.trialinfo(:,2) == 1 & (coherenceOnsetData.trialinfo(:,1) == 1 | coherenceOnsetData.trialinfo(:,1) == 2)); % good trials, easy coherence
+%% and again averaged across manipulations - onset-locked
+
+theseTrials = find(coherenceOnsetData.trialinfo(:,2) == 1 & (coherenceOnsetData.trialinfo(:,1) == 1 | coherenceOnsetData.trialinfo(:,1) == 2)); % good trials, easy coherence
+cfg.trials = theseTrials;
+tfrOnsCfg.trials = theseTrials;
 ec_coherenceLockedAverage = ft_timelockanalysis(cfg, coherenceOnsetData);
-cfg.trials = find(coherenceOnsetData.trialinfo(:,2) == 1 & (coherenceOnsetData.trialinfo(:,1) == 3 | coherenceOnsetData.trialinfo(:,1) == 4)); % good trials, hard coherence
+ec_coherenceLockedTFRhann = ft_freqanalysis(tfrRespCfg, coherenceOnsetData);
+
+theseTrials = find(coherenceOnsetData.trialinfo(:,2) == 1 & (coherenceOnsetData.trialinfo(:,1) == 3 | coherenceOnsetData.trialinfo(:,1) == 4)); % good trials, hard coherence
+cfg.trials = theseTrials;
+tfrOnsCfg.trials = theseTrials;
 hc_coherenceLockedAverage = ft_timelockanalysis(cfg, coherenceOnsetData);
+hc_coherenceLockedTFRhann = ft_freqanalysis(tfrRespCfg, coherenceOnsetData);
 
-cfg.trials = find(coherenceOnsetData.trialinfo(:,2) == 1 & (coherenceOnsetData.trialinfo(:,1) == 1 | coherenceOnsetData.trialinfo(:,1) == 3)); % good trials, easy rule
+theseTrials = find(coherenceOnsetData.trialinfo(:,2) == 1 & (coherenceOnsetData.trialinfo(:,1) == 1 | coherenceOnsetData.trialinfo(:,1) == 3)); % good trials, easy rule
+cfg.trials = theseTrials;
+tfrOnsCfg.trials = theseTrials;
 er_coherenceLockedAverage = ft_timelockanalysis(cfg, coherenceOnsetData);
-cfg.trials = find(coherenceOnsetData.trialinfo(:,2) == 1 & (coherenceOnsetData.trialinfo(:,1) == 2 | coherenceOnsetData.trialinfo(:,1) == 4)); % good trials, hard rule
-hr_coherenceLockedAverage = ft_timelockanalysis(cfg, coherenceOnsetData);
+er_coherenceLockedTFRhann = ft_freqanalysis(tfrRespCfg, coherenceOnsetData);
 
-disp('saving')
-save(outputFileName,'coherenceLockedAverage','responseLockedAverage',...
+theseTrials = find(coherenceOnsetData.trialinfo(:,2) == 1 & (coherenceOnsetData.trialinfo(:,1) == 2 | coherenceOnsetData.trialinfo(:,1) == 4)); % good trials, hard rule
+cfg.trials = theseTrials;
+tfrOnsCfg.trials = theseTrials;
+hr_coherenceLockedAverage = ft_timelockanalysis(cfg, coherenceOnsetData);
+hr_coherenceLockedTFRhann = ft_freqanalysis(tfrRespCfg, coherenceOnsetData);
+
+%% save!
+
+disp('>>> saving')
+% save(erpOutputFilename,'coherenceLockedAverage','responseLockedAverage',...
+save(erpOutputFilename,...
     'ecer_responseLockedAverage','echr_responseLockedAverage','hcer_responseLockedAverage','hchr_responseLockedAverage',...
     'ec_responseLockedAverage','hc_responseLockedAverage','er_responseLockedAverage','hr_responseLockedAverage',...
     'ecer_coherenceLockedAverage','echr_coherenceLockedAverage','hcer_coherenceLockedAverage','hchr_coherenceLockedAverage',...
     'ec_coherenceLockedAverage','hc_coherenceLockedAverage','er_coherenceLockedAverage','hr_coherenceLockedAverage',...
     '-v7.3');
-disp('saved')
+save(tfrOutputFilename,...
+    'ecer_responseLockedTFRhann','echr_responseLockedTFRhann','hcer_responseLockedTFRhann','hchr_responseLockedTFRhann',...
+    'ec_responseLockedTFRhann','hc_responseLockedTFRhann','er_responseLockedTFRhann','hr_responseLockedTFRhann',...
+    'ecer_coherenceLockedTFRhann','echr_coherenceLockedTFRhann','hcer_coherenceLockedTFRhann','hchr_coherenceLockedTFRhann',...
+    'ec_coherenceLockedTFRhann','hc_coherenceLockedTFRhann','er_coherenceLockedTFRhann','hr_coherenceLockedTFRhann',...
+    '-v7.3');
+disp('>>> saved')
 
-disp('done')
+disp('>>> done')
     
 
 
@@ -223,6 +315,8 @@ end
 
 function cleanedData = rejectArtefacts(inputData, layout,ftDir)
 addpath(ftDir); ft_defaults;
+
+disp('>>> doing auto-artefact rejection')
 
 cfg = [];
 % here's an example of badchannels (NO CHANNELS SPECIFIED!)
