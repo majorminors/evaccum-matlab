@@ -51,8 +51,8 @@ subjectParams.v1_hr = mean([subjectParams.v1_echr, subjectParams.v1_hchr],2);
 averages = {'cOnsDiffAve', 'cRespDiffAve', 'rOnsDiffAve', 'rRespDiffAve'};
 subjectwise = {'cOnsDiffAll', 'cRespDiffAll', 'rOnsDiffAll', 'rRespDiffAll'};
 
-load(fullfile(datadir,'differences.mat'), subjectwise{:})
-%load(fullfile(datadir,'differences.mat'), averages{:})
+load(fullfile(datadir,'erp_differences.mat'), subjectwise{:})
+%load(fullfile(datadir,'erp_differences.mat'), averages{:})
 
 clear averages subjectwise
 
@@ -253,7 +253,7 @@ disp('done')
 
 disp('getting bayes factors')
 
-nullInterval = '-0.3,0.3';
+nullInterval = '0.2,1';
 bfSlopeSavename = [saveDir filesep 'model_correlations_slope_bfs_null_%s.mat'];
 bfAmplitudeSavename = [saveDir filesep 'model_correlations_amplitude_bfs_null_%s.mat'];
 if exist(sprintf(bfSlopeSavename,nullInterval),'file')
@@ -273,7 +273,7 @@ end
 
 if runSlope || runAmp
     
-    disp('not all bf files exist (amplitude:' runAmp ', slope: ' runSlope '): calculating')
+    disp(['not all bf files exist (amplitude: ' num2str(runAmp) ', slope: ' num2str(runSlope) '): calculating'])
     
     poolobj = gcp('nocreate'); % If no pool, do not create new one.
     if isempty(poolobj)
@@ -354,17 +354,17 @@ for paramCond = unique(correlations.ParameterCondition)'
                     & strcmp(correlations.LockedTo,thisLockedTo);
                 
                 
-                % %             thesebfs = correlations.SlopeBf1(dataidx);
-                thesebfs = correlations.SlopeBf2(dataidx);
-                theseRs = correlations.R_Slope(dataidx);
-                allRs = correlations.R_Slope;
-                tipo = 'Slope';
+%                 thesebfs = correlations.SlopeBf1(dataidx);
+% %                 thesebfs = correlations.SlopeBf2(dataidx);
+%                 theseRs = correlations.R_Slope(dataidx);
+%                 allRs = correlations.R_Slope;
+%                 tipo = 'Slope';
                 
-                % %             thesebfs = correlations.AmplitudeBf1(dataidx);
-                %             thesebfs = correlations.AmplitudeBf2(dataidx);
-                %             theseRs = correlations.R_Amplitude(dataidx);
-                %             allRs = correlations.R_Amplitude;
-                %             tipo = 'Amplitude';
+                thesebfs = correlations.AmplitudeBf1(dataidx);
+%                 thesebfs = correlations.AmplitudeBf2(dataidx);
+                theseRs = correlations.R_Amplitude(dataidx);
+                allRs = correlations.R_Amplitude;
+                tipo = 'Amplitude';
                 
                 slopeInvalidColour = [1, 0.6, 0.6];
                 
