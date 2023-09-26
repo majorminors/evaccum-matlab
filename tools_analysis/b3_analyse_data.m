@@ -2,7 +2,7 @@
 %% set up %%
 %%%%%%%%%%%%
 
-clear all
+clear all %#ok
 
 % set up paths
 addpath /hpc-software/matlab/cbu/
@@ -21,7 +21,7 @@ toolbox = fullfile(rootdir,'..','..','Toolboxes','gramm'); addpath(toolbox); cle
 toolbox = fullfile(rootdir,'..','..','Toolboxes','BFF_repo'); addpath(genpath(toolbox)); clear toolbox
 
 erpFigDir = fullfile(datadir, 'erpFigs');
-if ~exist(erpFigDir); mkdir(erpFigDir); end
+if ~exist(erpFigDir,'dir'); mkdir(erpFigDir); end
 
 % we'll loop through subject data dirs, so just get the path from there
 inputFileName = ['Preprocess' filesep 'timelocked_averages.mat'];
@@ -69,7 +69,7 @@ parfor subjectNum = 1:numel(subjectFolders)
     % subject number
     pathParts = strsplit(thisFile, '/');
     index = find(contains(pathParts, 'S'));
-    subjectCode = pathParts{index};
+    subjectCode = pathParts{index}; %#ok
     if ~strcmp(subjectCode,subjectFolders(subjectNum).name); error('file doesnt match subject'); end
     
     disp('this is subject:')
@@ -110,7 +110,7 @@ parfor subjectNum = 1:numel(subjectFolders)
     % erpManips{:} erpConds{:} tfrManips{:} tfrConds{:}
 
     whichVars = {...
-            erpManips{:} erpConds{:} tfrManips{:} tfrConds{:}...
+            [erpManips erpConds tfrManips tfrConds]...
         };
     
     data{subjectNum} = load(thisFile,whichVars{:});
@@ -212,9 +212,9 @@ cRespTfrAve = ft_freqgrandaverage(cfg, ecRespTfrAll{:}, hcRespTfrAll{:});
 cOnsDiffAve = getDifference(ecOnsAve,hcOnsAve);
 cRespDiffAve = getDifference(ecRespAve,hcRespAve);
 % make a dummy structure with the difference of the timefrequencies
-cOnsTfrDiffAve = cOnsDiffAve;
+cOnsTfrDiffAve = ecOnsTfrAve;
 cOnsTfrDiffAve.powspctrm = ecOnsTfrAve.powspctrm - hcOnsTfrAve.powspctrm;
-cRespTfrDiffAve = cRespDiffAve;
+cRespTfrDiffAve = ecRespTfrAve;
 cRespTfrDiffAve.powspctrm = ecRespTfrAve.powspctrm - hcRespTfrAve.powspctrm;
 
 disp('done')
@@ -258,9 +258,9 @@ rRespTfrAve = ft_freqgrandaverage(cfg, erRespTfrAll{:}, hrRespTfrAll{:});
 rOnsDiffAve = getDifference(erOnsAve,hrOnsAve);
 rRespDiffAve = getDifference(ecRespAve,hcRespAve);
 % make a dummy structure with the difference of the timefrequencies
-rOnsTfrDiffAve = rOnsDiffAve;
+rOnsTfrDiffAve = erOnsTfrAve;
 rOnsTfrDiffAve.powspctrm = erOnsTfrAve.powspctrm - hrOnsTfrAve.powspctrm;
-rRespTfrDiffAve = rRespDiffAve;
+rRespTfrDiffAve = erRespTfrAve;
 rRespTfrDiffAve.powspctrm = erRespTfrAve.powspctrm - hrRespTfrAve.powspctrm;
 
 disp('done')
@@ -318,6 +318,7 @@ disp('done')
 %% get subjectwise differences %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+disp('getting differences')
 
 for subject = 1:numel(ecRespAll)
     fprintf('\ngetting subjectwise differences for subject %.0f of %.0f\n\n',subject,numel(ecRespAll))
@@ -328,13 +329,13 @@ for subject = 1:numel(ecRespAll)
     rRespDiffAll{subject}= getDifference(erRespAll{subject}, hrRespAll{subject});
 
     % make a dummy structure with the difference of the timefrequencies
-    cOnsTfrDiffAll{subject} = cOnsDiffAll{subject};
+    cOnsTfrDiffAll{subject} = ecOnsTfrAll{subject};
     cOnsTfrDiffAll{subject}.powspctrm = ecOnsTfrAll{subject}.powspctrm - hcOnsTfrAll{subject}.powspctrm;
-    cRespTfrDiffAll{subject} = cRespDiffAll{subject};
+    cRespTfrDiffAll{subject} = ecRespTfrAll{subject};
     cRespTfrDiffAll{subject}.powspctrm = ecRespTfrAll{subject}.powspctrm - hcRespTfrAll{subject}.powspctrm;
-    rOnsTfrDiffAll{subject} = rOnsDiffAll{subject};
+    rOnsTfrDiffAll{subject} = erOnsTfrAll{subject};
     rOnsTfrDiffAll{subject}.powspctrm = erOnsTfrAll{subject}.powspctrm - hrOnsTfrAll{subject}.powspctrm;
-    rRespTfrDiffAll{subject} = rRespDiffAll{subject};
+    rRespTfrDiffAll{subject} = erRespTfrAll{subject};
     rRespTfrDiffAll{subject}.powspctrm = erRespTfrAll{subject}.powspctrm - hrRespTfrAll{subject}.powspctrm;
 
 end; clear subject
@@ -347,12 +348,18 @@ end; clear subject
 % ronsdiffave = ft_timelockgrandaverage(cfg, ronsdiffall{:});
 % rrespdiffave = ft_timelockgrandaverage(cfg, rrespdiffall{:});
 
+disp('done')
+
 %% save those differences, if we want
+
+disp('saving')
 
 save(fullfile(datadir,'differences.mat'),...
     'cOnsDiffAll', 'cRespDiffAll', 'rOnsDiffAll', 'rRespDiffAll', 'cOnsDiffAve', 'cRespDiffAve', 'rOnsDiffAve', 'rRespDiffAve',...
     'cOnsTfrDiffAll', 'cRespTfrDiffAll', 'rOnsTfrDiffAll', 'rRespTfrDiffAll', 'cOnsTfrDiffAve', 'cRespTfrDiffAve', 'rOnsTfrDiffAve', 'rRespTfrDiffAve'...
     )
+
+disp('done')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% the timecourse of univariate activity %%
@@ -411,6 +418,21 @@ plotTimecourse(eegLayout,[lilac;teal;coral;maroon],... % layout and colours
     {'EEG','uV'},... % sensor type and units for ylablel
     {'EasyCoh EasyCat';'EasyCoh HardCat';'HardCoh EasyCat';'HardCoh HardCat'},'southeast','CPP (CP1 CPz CP2) in EEG: Response in all Conditions',... % legend, legend location, plot title
     [erpFigDir filesep 'eeg_allConds_resp_ERP.png']) % save loc
+
+%%
+
+cfg = [];
+% cfg.baseline     = [-.5 0];
+% cfg.baselinetype = 'absolute';
+% cfg.zlim         = [-2.5e-24 2.5e-24];
+cfg.showlabels   = 'yes';
+cfg.layout       = megLayout;
+cfg.xlim=[-0.5 1.5];
+cfg.channel = getMegLabels('parietal');
+ft_multiplotTFR(cfg, rRespTfrAve);
+ft_singleplotTFR(cfg, rOnsTfrAve);
+ft_topoplotTFR(cfg, rRespTfrDiffAve);
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% the topology of univariate activity %%
