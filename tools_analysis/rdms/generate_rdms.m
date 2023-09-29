@@ -6,7 +6,10 @@ clc;
 
 fprintf('setting up %s\n', mfilename);
 
-rootdir = pwd; %'\\cbsu\data\Group\Woolgar-Lab\projects\Dorian\EvAccum'; % root directory
+rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab';
+toolsdir = fullfile(rootdir,'tools_analysis');
+modeldir = fullfile(toolsdir,'rdms');
+savefigs = 0;
 
 %% do stimulus matrix
 
@@ -92,8 +95,7 @@ rdm_stim = min(360-mat3,mat3); % the smallest of the two differences between ang
 
 clear mat1 mat2 mat3
 
-imagesc(rdm_stim);
-savefig('rdm_stim')
+makeModel(rdm_stim,'rdm_stim',modeldir,savefigs)
 
 %% RDM - coherence
 % coherence level same or different
@@ -106,8 +108,7 @@ rdm_coh = mat1~=mat2; % if not equal, 1 (dissimilar) else 0
 
 clear mat1 mat2
 
-imagesc(rdm_coh);
-savefig('rdm_coh')
+makeModel(rdm_coh,'rdm_coh',modeldir,savefigs)
 
 %% RDM - cue
 % cue as same or different
@@ -118,8 +119,7 @@ mat2 = repmat(p.stim_mat(:,1)',64,1); % repeat cue code for trials as rows
 
 rdm_cue_simple = mat1~=mat2; % if they aren't equal, then 1 (dissimilar) otherwise 0
 
-imagesc(rdm_cue_simple);
-savefig('rdm_cue_simple');
+makeModel(rdm_cue_simple,'rdm_cue_simple',modeldir,savefigs)
 
 %% RDM - cue detail
 % same and opposite cues different, and medial are equal
@@ -134,8 +134,8 @@ rdm_cue_detail(rdm_cue_detail == 3) = 1; % the furthest distant are actually clo
 
 clear mat1 mat2
 
-imagesc(rdm_cue_detail);
-savefig('rdm_cue_detail');
+makeModel(rdm_cue_detail,'rdm_cue_detail',modeldir,savefigs)
+
 %% RDM - decision boundary
 % same and opposite cues same, and medial are equally different
 
@@ -150,8 +150,7 @@ rdm_decbdry(rdm_decbdry == 2) = 0;
 
 clear mat1 mat2
 
-imagesc(rdm_decbdry);
-savefig('rdm_decbdry');
+makeModel(rdm_decbdry,'rdm_decbdry',modeldir,savefigs)
 
 %% RDM - rule difficulty
 % rule difficulty same or different
@@ -163,8 +162,7 @@ rdm_rulediff = mat1~=mat2; % if not equal, 1 (dissimilar) else 0
 
 clear mat1 mat2
 
-imagesc(rdm_rulediff);
-savefig('rdm_rulediff');
+makeModel(rdm_rulediff,'rdm_rulediff',modeldir,savefigs)
 
 %% RDM - response
 % response button same or different
@@ -177,8 +175,7 @@ rdm_resp = mat1~=mat2; % if not equal, 1 (dissimilar) else 0
 
 clear mat1 mat2
 
-imagesc(rdm_resp);
-savefig('rdm_resp');
+makeModel(rdm_resp,'rdm_resp',modeldir,savefigs)
 
 %% RDM - decision
 % same or different side of the decision boundary
@@ -201,8 +198,7 @@ for i1 = 1:length(rdm_dec(:,1))
     end
 end
 
-imagesc(rdm_dec);
-savefig('rdm_dec');
+makeModel(rdm_dec,'rdm_dec',modeldir,savefigs)
 
 rdm_dec_diff = rdm_cue_simple; % pull in the cue information (same or different) so we can use the response as a proxy for all decisions on one half of the dec bndry
 rdm_dec_diff = rdm_dec_diff-1; % make different trials 0 and same trials -1
@@ -214,8 +210,7 @@ for i1 = 1:length(rdm_dec_diff(:,1))
     end
 end
 
-imagesc(rdm_dec_diff);
-savefig('rdm_dec_diff');
+makeModel(rdm_dec_diff,'rdm_dec_diff',modeldir,savefigs)
 
 %% extract specific trials
 
@@ -228,6 +223,79 @@ rdm_dec_hced = rdm_dec(hced,hced);
 rdm_dec_hced_tri = triu(rdm_dec_hced,1); % get upper triangle above the first diagonal
 rdm_dec_hchd = rdm_dec(hchd,hchd);
 rdm_dec_hchd_tri = triu(rdm_dec_hchd,1); % get upper triangle above the first diagonal
+
+rdm_stim_ec = rdm_stim(easy_coh,easy_coh);
+makeModel(rdm_stim_ec,'rdm_stim_ec',modeldir,savefigs);
+rdm_stim_hc = rdm_stim(hard_coh,hard_coh);
+makeModel(rdm_stim_hc,'rdm_stim_hc',modeldir,savefigs);
+rdm_stim_ed = rdm_stim(easy_dec,easy_dec);
+makeModel(rdm_stim_ed,'rdm_stim_ed',modeldir,savefigs);
+rdm_stim_hd = rdm_stim(hard_dec,hard_dec);
+makeModel(rdm_stim_hd,'rdm_stim_hd',modeldir,savefigs);
+rdm_coh_ec = rdm_coh(easy_coh,easy_coh);
+makeModel(rdm_coh_ec,'rdm_coh_ec',modeldir,savefigs);
+rdm_coh_hc = rdm_coh(hard_dec,hard_dec);
+makeModel(rdm_coh_hc,'rdm_coh_hc',modeldir,savefigs);
+rdm_coh_ed = rdm_coh(easy_dec,easy_dec);
+makeModel(rdm_coh_ed,'rdm_coh_ed',modeldir,savefigs);
+rdm_coh_hd = rdm_coh(hard_dec,hard_dec);
+makeModel(rdm_coh_hd,'rdm_coh_hd',modeldir,savefigs);
+rdm_cue_simple_ec = rdm_cue_simple(easy_coh,easy_coh);
+makeModel(rdm_cue_simple_ec,'rdm_cue_simple_ec',modeldir,savefigs);
+rdm_cue_simple_hc = rdm_cue_simple(hard_dec,hard_dec);
+makeModel(rdm_cue_simple_hc,'rdm_cue_simple_hc',modeldir,savefigs);
+rdm_cue_simple_ed = rdm_cue_simple(easy_dec,easy_dec);
+makeModel(rdm_cue_simple_ed,'rdm_cue_simple_ed',modeldir,savefigs);
+rdm_cue_simple_hd = rdm_cue_simple(hard_dec,hard_dec);
+makeModel(rdm_cue_simple_hd,'rdm_cue_simple_hd',modeldir,savefigs);
+rdm_cue_detail_ec = rdm_cue_detail(easy_coh,easy_coh);
+makeModel(rdm_cue_detail_ec,'rdm_cue_detail_ec',modeldir,savefigs);
+rdm_cue_detail_hc = rdm_cue_detail(hard_dec,hard_dec);
+makeModel(rdm_cue_detail_hc,'rdm_cue_detail_hc',modeldir,savefigs);
+rdm_cue_detail_ed = rdm_cue_detail(easy_dec,easy_dec);
+makeModel(rdm_cue_detail_ed,'rdm_cue_detail_ed',modeldir,savefigs);
+rdm_cue_detail_hd = rdm_cue_detail(hard_dec,hard_dec);
+makeModel(rdm_cue_detail_hd,'rdm_cue_detail_hd',modeldir,savefigs);
+rdm_decbdry_ec = rdm_decbdry(easy_coh,easy_coh);
+makeModel(rdm_decbdry_ec,'rdm_decbdry_ec',modeldir,savefigs);
+rdm_decbdry_hc = rdm_decbdry(hard_dec,hard_dec);
+makeModel(rdm_decbdry_hc,'rdm_decbdry_hc',modeldir,savefigs);
+rdm_decbdry_ed = rdm_decbdry(easy_dec,easy_dec);
+makeModel(rdm_decbdry_ed,'rdm_decbdry_ed',modeldir,savefigs);
+rdm_decbdry_hd = rdm_decbdry(hard_dec,hard_dec);
+makeModel(rdm_decbdry_hd,'rdm_decbdry_hd',modeldir,savefigs);
+rdm_rulediff_ec = rdm_rulediff(easy_coh,easy_coh);
+makeModel(rdm_rulediff_ec,'rdm_rulediff_ec',modeldir,savefigs);
+rdm_rulediff_hc = rdm_rulediff(hard_dec,hard_dec);
+makeModel(rdm_rulediff_hc,'rdm_rulediff_hc',modeldir,savefigs);
+rdm_rulediff_ed = rdm_rulediff(easy_dec,easy_dec);
+makeModel(rdm_rulediff_ed,'rdm_rulediff_ed',modeldir,savefigs);
+rdm_rulediff_hd = rdm_rulediff(hard_dec,hard_dec);
+makeModel(rdm_rulediff_hd,'rdm_rulediff_hd',modeldir,savefigs);
+rdm_resp_ec = rdm_resp(easy_coh,easy_coh);
+makeModel(rdm_resp_ec,'rdm_resp_ec',modeldir,savefigs);
+rdm_resp_hc = rdm_resp(hard_dec,hard_dec);
+makeModel(rdm_resp_hc,'rdm_resp_hc',modeldir,savefigs);
+rdm_resp_ed = rdm_resp(easy_dec,easy_dec);
+makeModel(rdm_resp_ed,'rdm_resp_ed',modeldir,savefigs);
+rdm_resp_hd = rdm_resp(hard_dec,hard_dec);
+makeModel(rdm_resp_hd,'rdm_resp_hd',modeldir,savefigs);
+rdm_dec_ec = rdm_dec(easy_coh,easy_coh);
+makeModel(rdm_dec_ec,'rdm_dec_ec',modeldir,savefigs);
+rdm_dec_hc = rdm_dec(hard_dec,hard_dec);
+makeModel(rdm_dec_hc,'rdm_dec_hc',modeldir,savefigs);
+rdm_dec_ed = rdm_dec(easy_dec,easy_dec);
+makeModel(rdm_dec_ed,'rdm_dec_ed',modeldir,savefigs);
+rdm_dec_hd = rdm_dec(hard_dec,hard_dec);
+makeModel(rdm_dec_hd,'rdm_dec_hd',modeldir,savefigs);
+rdm_dec_diff_ec = rdm_dec_diff(easy_coh,easy_coh);
+makeModel(rdm_dec_diff_ec,'rdm_dec_diff_ec',modeldir,savefigs);
+rdm_dec_diff_hc = rdm_dec_diff(hard_dec,hard_dec);
+makeModel(rdm_dec_diff_hc,'rdm_dec_diff_hc',modeldir,savefigs);
+rdm_dec_diff_ed = rdm_dec_diff(easy_dec,easy_dec);
+makeModel(rdm_dec_diff_ed,'rdm_dec_diff_ed',modeldir,savefigs);
+rdm_dec_diff_hd = rdm_dec_diff(hard_dec,hard_dec);
+makeModel(rdm_dec_diff_hd,'rdm_dec_diff_hd',modeldir,savefigs);
 
 figure
 visualise(1)=subplot(2,2,1);
@@ -268,3 +336,17 @@ t(2)=title(visualise(3),'decision boundary');
 t(3)=title(visualise(4),'button press');
 t(4)=title(visualise(5),'motion classification detail');
 t(5)=title(visualise(6),'motion classification simple');
+
+%% subfunctions
+
+function makeModel(model,savename,savefolder,savefigs)
+
+imagesc(model);
+if savefigs
+    print([savefolder filesep savename '.png'], '-dpng');
+    savefig(savename)
+end
+csvwrite([savefolder filesep savename '.csv'], model);
+
+return
+end
