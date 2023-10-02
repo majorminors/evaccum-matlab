@@ -25,6 +25,12 @@ if ~exist(erpFigDir,'dir'); mkdir(erpFigDir); end
 
 % we'll loop through subject data dirs, so just get the path from there
 inputFileName = ['Preprocess' filesep 'tfr_hanning.mat'];
+% inputFileName = ['Preprocess' filesep 'tfr_multi.mat'];
+if contains(inputFileName,'hanning')
+    getVar = @(x) sprintf(x,'hann');
+elseif contains(inputFileName,'multi')
+    getVar = @(x) sprintf(x,'multi');
+end
 
 % some colours
 teal = [0.2, 0.6, 0.7];
@@ -83,16 +89,16 @@ parfor subjectNum = 1:numel(subjectFolders)
     disp('loading')
 
     tfrManips = {...
-        'ec_responseLockedTFRhann' 'hc_responseLockedTFRhann'...
-        'er_responseLockedTFRhann' 'hr_responseLockedTFRhann'...
-        'ec_coherenceLockedTFRhann' 'hc_coherenceLockedTFRhann'...
-        'er_coherenceLockedTFRhann' 'hr_coherenceLockedTFRhann'...
+        getVar('ec_responseLockedTFR%s') getVar('hc_responseLockedTFR%s')...
+        getVar('er_responseLockedTFR%s') getVar('hr_responseLockedTFR%s')...
+        getVar('ec_coherenceLockedTFR%s') getVar('hc_coherenceLockedTFR%s')...
+        getVar('er_coherenceLockedTFR%s') getVar('hr_coherenceLockedTFR%s')...
     };
     tfrConds = {...
-        'ecer_responseLockedTFRhann' 'ecer_coherenceLockedTFRhann'...
-        'echr_responseLockedTFRhann' 'echr_coherenceLockedTFRhann'...
-        'hcer_responseLockedTFRhann' 'hcer_coherenceLockedTFRhann'...
-        'hchr_responseLockedTFRhann' 'hchr_coherenceLockedTFRhann'...
+        getVar('ecer_coherenceLockedTFR%s')...
+        getVar('echr_responseLockedTFR%s') getVar('echr_coherenceLockedTFR%s')...
+        getVar('hcer_responseLockedTFR%s') getVar('hcer_coherenceLockedTFR%s')...
+        getVar('hchr_responseLockedTFR%s') getVar('hchr_coherenceLockedTFR%s')...
     };
 
     whichVars = {...
@@ -167,16 +173,16 @@ frontal = {'EEG004' 'EEG002' 'EEG008'};
 disp('averaging coherence data')
 
 cfg = [];
-ecRespTfrAll = returnStructs(data, 'ec_responseLockedTFRhann');
+ecRespTfrAll = returnStructs(data, getVar('ec_responseLockedTFR%s'));
 ecRespTfrAve = ft_freqgrandaverage(cfg, ecRespTfrAll{:});
 cfg = [];
-ecOnsTfrAll = returnStructs(data, 'ec_coherenceLockedTFRhann');
+ecOnsTfrAll = returnStructs(data, getVar('ec_coherenceLockedTFR%s'));
 ecOnsTfrAve = ft_freqgrandaverage(cfg, ecOnsTfrAll{:});
 cfg = [];
-hcRespTfrAll = returnStructs(data, 'hc_responseLockedTFRhann');
+hcRespTfrAll = returnStructs(data, getVar('hc_responseLockedTFR%s'));
 hcRespTfrAve = ft_freqgrandaverage(cfg, hcRespTfrAll{:});
 cfg = [];
-hcOnsTfrAll = returnStructs(data, 'hc_coherenceLockedTFRhann');
+hcOnsTfrAll = returnStructs(data, getVar('hc_coherenceLockedTFR%s'));
 hcOnsTfrAve = ft_freqgrandaverage(cfg, hcOnsTfrAll{:});
 
 % get an overall average
@@ -201,16 +207,16 @@ disp('done')
 disp('averaging categorisation data')
 
 cfg = [];
-erRespTfrAll = returnStructs(data, 'er_responseLockedTFRhann');
+erRespTfrAll = returnStructs(data, getVar('er_responseLockedTFR%s'));
 erRespTfrAve = ft_freqgrandaverage(cfg, erRespTfrAll{:});
 cfg = [];
-erOnsTfrAll = returnStructs(data, 'er_coherenceLockedTFRhann');
+erOnsTfrAll = returnStructs(data, getVar('er_coherenceLockedTFR%s'));
 erOnsTfrAve = ft_freqgrandaverage(cfg, erOnsTfrAll{:});
 cfg = [];
-hrRespTfrAll = returnStructs(data, 'hr_responseLockedTFRhann');
+hrRespTfrAll = returnStructs(data, getVar('hr_responseLockedTFR%s'));
 hrRespTfrAve = ft_freqgrandaverage(cfg, hrRespTfrAll{:});
 cfg = [];
-hrOnsTfrAll = returnStructs(data, 'hr_coherenceLockedTFRhann');
+hrOnsTfrAll = returnStructs(data, getVar('hr_coherenceLockedTFR%s'));
 hrOnsTfrAve = ft_freqgrandaverage(cfg, hrOnsTfrAll{:});
 
 % get an overall average
@@ -235,28 +241,28 @@ disp('done')
 disp('averaging conditionwise data')
 
 cfg = [];
-ecerRespTfrAll = returnStructs(data, 'ecer_responseLockedTFRhann');
+ecerRespTfrAll = returnStructs(data, getVar('ecer_responseLockedTFR%s'));
 ecerRespTfrAve = ft_freqgrandaverage(cfg, ecerRespTfrAll{:});
 cfg = [];
-ecerOnsTfrAll = returnStructs(data, 'ecer_coherenceLockedTFRhann');
+ecerOnsTfrAll = returnStructs(data, getVar('ecer_coherenceLockedTFR%s'));
 ecerOnsTfrAve = ft_freqgrandaverage(cfg, ecerOnsTfrAll{:});
 cfg = [];
-echrRespTfrAll = returnStructs(data, 'echr_responseLockedTFRhann');
+echrRespTfrAll = returnStructs(data, getVar('echr_responseLockedTFR%s'));
 echrRespTfrAve = ft_freqgrandaverage(cfg, echrRespTfrAll{:});
 cfg = [];
-echrOnsTfrAll = returnStructs(data, 'echr_coherenceLockedTFRhann');
+echrOnsTfrAll = returnStructs(data, getVar('echr_coherenceLockedTFR%s'));
 echrOnsTfrAve = ft_freqgrandaverage(cfg, echrOnsTfrAll{:});
 cfg = [];
-hcerRespTfrAll = returnStructs(data, 'hcer_responseLockedTFRhann');
+hcerRespTfrAll = returnStructs(data, getVar('hcer_responseLockedTFR%s'));
 hcerRespTfrAve = ft_freqgrandaverage(cfg, hcerRespTfrAll{:});
 cfg = [];
-hcerOnsTfrAll = returnStructs(data, 'hcer_coherenceLockedTFRhann');
+hcerOnsTfrAll = returnStructs(data, getVar('hcer_coherenceLockedTFR%s'));
 hcerOnsTfrAve = ft_freqgrandaverage(cfg, hcerOnsTfrAll{:});
 cfg = [];
-hchrRespTfrAll = returnStructs(data, 'hchr_responseLockedTFRhann');
+hchrRespTfrAll = returnStructs(data, getVar('hchr_responseLockedTFR%s'));
 hchrRespTfrAve = ft_freqgrandaverage(cfg, hchrRespTfrAll{:});
 cfg = [];
-hchrOnsTfrAll = returnStructs(data, 'hchr_coherenceLockedTFRhann');
+hchrOnsTfrAll = returnStructs(data, getVar('hchr_coherenceLockedTFR%s'));
 hchrOnsTfrAve = ft_freqgrandaverage(cfg, hchrOnsTfrAll{:});
 
 disp('done')
@@ -285,11 +291,12 @@ end; clear subject
 
 disp('done')
 
+
 %% save those differences, if we want
 
 disp('saving')
 
-save(fullfile(datadir,'tfr_differences.mat'),...
+save(fullfile(datadir,getVar('tfr_differences_%s.mat')),...
     'cOnsTfrDiffAll', 'cRespTfrDiffAll', 'rOnsTfrDiffAll', 'rRespTfrDiffAll', 'cOnsTfrDiffAve', 'cRespTfrDiffAve', 'rOnsTfrDiffAve', 'rRespTfrDiffAve'...
     )
 
@@ -302,15 +309,29 @@ disp('done')
 
 
 cfg = [];
-% cfg.baseline     = [-.5 0];
-% cfg.baselinetype = 'absolute';
+cfg.baseline     = [-0.5 -0.2];
+cfg.baselinetype = 'absolute';
 % cfg.zlim         = [-2.5e-24 2.5e-24];
 cfg.showlabels   = 'yes';
 cfg.layout       = megLayout;
-cfg.xlim=[-0.5 1.5];
-cfg.channel = getMegLabels('parietal');
+cfg.maskstyle = 'saturation';
+% cfg.xlim=[-0.5 1.5];
+% cfg.channel = getMegLabels('parietal');
 ft_multiplotTFR(cfg, rRespTfrAve);
-ft_singleplotTFR(cfg, rOnsTfrAve);
+ft_singleplotTFR(cfg, ecOnsTfrAve);
+ft_topoplotTFR(cfg, rRespTfrDiffAve);
+
+cfg = [];
+cfg.baseline     = [-1.0 -0.5];
+cfg.baselinetype = 'absolute';
+% cfg.zlim         = [-2.5e-24 2.5e-24];
+cfg.showlabels   = 'yes';
+cfg.layout       = megLayout;
+cfg.maskstyle = 'saturation';
+% cfg.xlim=[-1.5 1.5]
+% cfg.channel = getMegLabels('parietal');
+ft_multiplotTFR(cfg, rRespTfrAve);
+ft_singleplotTFR(cfg, ecRespTfrAve);
 ft_topoplotTFR(cfg, rRespTfrDiffAve);
 
 
