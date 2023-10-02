@@ -73,6 +73,11 @@ elseif ~exist(tfrHighOutputFilename,'file') || overwrite
     doTfrHigh = 0;
 end
 
+if ~doEpoch && ~doErp && ~doTfrLow && ~doTfrHigh
+    disp('nothing to do for this participant: skipping')
+    return
+end
+
 theseFiles = dir(inputFilePattern);
 % skip this participant if we don't have any files to work with
 if isempty(theseFiles)
@@ -81,12 +86,6 @@ if isempty(theseFiles)
 else
     fprintf('>>> found %.0f files\n',numel(theseFiles));
 end
-
-if ~doEpoch && ~doErp && ~doTfrLow && ~doTfrHigh
-    disp('nothing to do for this participant: skipping')
-    return
-end
-
 % loop through those files
 for fileNum = 1:numel(theseFiles)
     % let's make the current data file easy to reference
