@@ -236,12 +236,13 @@ responseLockedErpData = ft_appenddata(cfg,respLockedErpData{:}); clear respLocke
 coherenceOnsetTfrData = ft_appenddata(cfg,cohOnsetTfrData{:}); clear cohOnsetTfrData
 responseLockedTfrData = ft_appenddata(cfg,respLockedTfrData{:}); clear respLockedTfrData
 
-if doEpoch
-    disp('>>> saving epoched data')
-    save(epochedOutputFilename,...
-        'coherenceOnsetErpData','responseLockedErpData','coherenceOnsetTfrData','responseLockedTfrData',...
-        '-v7.3');
-end
+% saving this produces huge save files
+% if doEpoch
+%     disp('>>> saving epoched data')
+%     save(epochedOutputFilename,...
+%         'coherenceOnsetErpData','responseLockedErpData','coherenceOnsetTfrData','responseLockedTfrData',...
+%         '-v7.3');
+% end
 
 % % we can compile the overall averages if we want like so:
 % disp('>>> compiling overall averages')
