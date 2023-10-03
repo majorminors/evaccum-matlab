@@ -192,11 +192,14 @@ cfg = [];
 cRespTfrAve = ft_freqgrandaverage(cfg, ecRespTfrAll{:}, hcRespTfrAll{:});
 
 % get diffs
-% make a dummy structure with the difference of the timefrequencies
-cOnsTfrDiffAve = ecOnsTfrAve;
-cOnsTfrDiffAve.powspctrm = ecOnsTfrAve.powspctrm - hcOnsTfrAve.powspctrm;
-cRespTfrDiffAve = ecRespTfrAve;
-cRespTfrDiffAve.powspctrm = ecRespTfrAve.powspctrm - hcRespTfrAve.powspctrm;
+cOnsTfrDiffAve = getTfrDiff(ecOnsTfrAve, hcOnsTfrAve);
+cRespTfrDiffAve = getTfrDiff(ecRespTfrAve, hcRespTfrAve);
+
+% % make a dummy structure with the difference of the timefrequencies
+% cOnsTfrDiffAve = ecOnsTfrAve;
+% cOnsTfrDiffAve.powspctrm = ecOnsTfrAve.powspctrm - hcOnsTfrAve.powspctrm;
+% cRespTfrDiffAve = ecRespTfrAve;
+% cRespTfrDiffAve.powspctrm = ecRespTfrAve.powspctrm - hcRespTfrAve.powspctrm;
 
 disp('done')
 
@@ -226,11 +229,14 @@ cfg = [];
 rRespTfrAve = ft_freqgrandaverage(cfg, erRespTfrAll{:}, hrRespTfrAll{:});
 
 % get diffs
-% make a dummy structure with the difference of the timefrequencies
-rOnsTfrDiffAve = erOnsTfrAve;
-rOnsTfrDiffAve.powspctrm = erOnsTfrAve.powspctrm - hrOnsTfrAve.powspctrm;
-rRespTfrDiffAve = erRespTfrAve;
-rRespTfrDiffAve.powspctrm = erRespTfrAve.powspctrm - hrRespTfrAve.powspctrm;
+rOnsTfrDiffAve = getTfrDiff(erOnsTfrAve, hrOnsTfrAve);
+rRespTfrDiffAve = getTfrDiff(erRespTfrAve, hrRespTfrAve);
+
+% % make a dummy structure with the difference of the timefrequencies
+% rOnsTfrDiffAve = erOnsTfrAve;
+% rOnsTfrDiffAve.powspctrm = erOnsTfrAve.powspctrm - hrOnsTfrAve.powspctrm;
+% rRespTfrDiffAve = erRespTfrAve;
+% rRespTfrDiffAve.powspctrm = erRespTfrAve.powspctrm - hrRespTfrAve.powspctrm;
 
 disp('done')
 
@@ -276,15 +282,20 @@ disp('getting differences')
 for subject = 1:numel(ecOnsTfrAll)
     fprintf('\ngetting subjectwise differences for subject %.0f of %.0f\n\n',subject,numel(ecOnsTfrAll))
     
-    % make a dummy structure with the difference of the timefrequencies
-    cOnsTfrDiffAll{subject} = ecOnsTfrAll{subject};
-    cOnsTfrDiffAll{subject}.powspctrm = ecOnsTfrAll{subject}.powspctrm - hcOnsTfrAll{subject}.powspctrm;
-    cRespTfrDiffAll{subject} = ecRespTfrAll{subject};
-    cRespTfrDiffAll{subject}.powspctrm = ecRespTfrAll{subject}.powspctrm - hcRespTfrAll{subject}.powspctrm;
-    rOnsTfrDiffAll{subject} = erOnsTfrAll{subject};
-    rOnsTfrDiffAll{subject}.powspctrm = erOnsTfrAll{subject}.powspctrm - hrOnsTfrAll{subject}.powspctrm;
-    rRespTfrDiffAll{subject} = erRespTfrAll{subject};
-    rRespTfrDiffAll{subject}.powspctrm = erRespTfrAll{subject}.powspctrm - hrRespTfrAll{subject}.powspctrm;
+    cOnsTfrDiffAll{subject} = getTfrDiff(ecOnsTfrAll{subject}, hcOnsTfrAll{subject});
+    cRespTfrDiffAll{subject} = getTfrDiff(ecRespTfrAll{subject}, hcRespTfrAll{subject});
+    rOnsTfrDiffAll{subject} = getTfrDiff(erOnsTfrAll{subject}, hrOnsTfrAll{subject});
+    rRespTfrDiffAll{subject} = getTfrDiff(erRespTfrAll{subject}, hrRespTfrAll{subject});
+
+%     % make a dummy structure with the difference of the timefrequencies
+%     cOnsTfrDiffAll{subject} = ecOnsTfrAll{subject};
+%     cOnsTfrDiffAll{subject}.powspctrm = ecOnsTfrAll{subject}.powspctrm - hcOnsTfrAll{subject}.powspctrm;
+%     cRespTfrDiffAll{subject} = ecRespTfrAll{subject};
+%     cRespTfrDiffAll{subject}.powspctrm = ecRespTfrAll{subject}.powspctrm - hcRespTfrAll{subject}.powspctrm;
+%     rOnsTfrDiffAll{subject} = erOnsTfrAll{subject};
+%     rOnsTfrDiffAll{subject}.powspctrm = erOnsTfrAll{subject}.powspctrm - hrOnsTfrAll{subject}.powspctrm;
+%     rRespTfrDiffAll{subject} = erRespTfrAll{subject};
+%     rRespTfrDiffAll{subject}.powspctrm = erRespTfrAll{subject}.powspctrm - hrRespTfrAll{subject}.powspctrm;
 
 end; clear subject
 
@@ -306,33 +317,59 @@ disp('done')
 %% the timecourse of univariate activity %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-
-
+%% coh onset
 cfg = [];
-cfg.baseline     = [-0.5 -0.2];
-cfg.baselinetype = 'absolute';
+% cfg.baseline     = [-0.5 -0.2]; % if we haven't normalised by difference
+% cfg.baselinetype = 'absolute';
+% cfg.zlim         = [-2.5e-24 2.5e-24];
+cfg.showlabels   = 'yes';
+cfg.layout       = megLayout;
+cfg.maskstyle = 'saturation';
+% cfg.ylim         = [15 25]; % freqs ftodoor topo
+% cfg.xlim=[-0.5 1.5];
+% cfg.channel = getMegLabels('parietal');
+ft_singleplotTFR(cfg, cOnsTfrDiffAve);
+% ft_multiplotTFR(cfg, cOnsTfrDiffAve);
+% ft_topoplotTFR(cfg, cOnsTfrDiffAve);
+%% coh response
+cfg = [];
+% cfg.baseline     = [-1.0 -0.5];
+% cfg.baselinetype = 'absolute';
 % cfg.zlim         = [-2.5e-24 2.5e-24];
 cfg.showlabels   = 'yes';
 cfg.layout       = megLayout;
 cfg.maskstyle = 'saturation';
 % cfg.xlim=[-0.5 1.5];
 % cfg.channel = getMegLabels('parietal');
-ft_multiplotTFR(cfg, rRespTfrAve);
-ft_singleplotTFR(cfg, ecOnsTfrAve);
-ft_topoplotTFR(cfg, rRespTfrDiffAve);
-
+ft_singleplotTFR(cfg, cRespTfrDiffAve);
+% ft_multiplotTFR(cfg, cRespTfrDiffAve);
+% ft_topoplotTFR(cfg, cRespTfrDiffAve);
+%% cat onset
 cfg = [];
-cfg.baseline     = [-1.0 -0.5];
-cfg.baselinetype = 'absolute';
+% cfg.baseline     = [-0.5 -0.2];
+% cfg.baselinetype = 'absolute';
 % cfg.zlim         = [-2.5e-24 2.5e-24];
 cfg.showlabels   = 'yes';
 cfg.layout       = megLayout;
 cfg.maskstyle = 'saturation';
-% cfg.xlim=[-1.5 1.5]
+% cfg.xlim=[-0.5 1.5];
 % cfg.channel = getMegLabels('parietal');
-ft_multiplotTFR(cfg, rRespTfrAve);
-ft_singleplotTFR(cfg, ecRespTfrAve);
-ft_topoplotTFR(cfg, rRespTfrDiffAve);
+ft_singleplotTFR(cfg, rOnsTfrDiffAve);
+% ft_multiplotTFR(cfg, rOnsTfrDiffAve);
+% ft_topoplotTFR(cfg, rOnsTfrDiffAve);
+%% cat response
+cfg = [];
+% cfg.baseline     = [-1.0 -0.5];
+% cfg.baselinetype = 'absolute';
+% cfg.zlim         = [-2.5e-24 2.5e-24];
+cfg.showlabels   = 'yes';
+cfg.layout       = megLayout;
+cfg.maskstyle = 'saturation';
+% cfg.xlim=[-0.5 1.5];
+% cfg.channel = getMegLabels('parietal');
+ft_singleplotTFR(cfg, rRespTfrDiffAve);
+% ft_multiplotTFR(cfg, rRespTfrDiffAve);
+% ft_topoplotTFR(cfg, r RespTfrDiffAve);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -346,3 +383,14 @@ ft_topoplotTFR(cfg, rRespTfrDiffAve);
 
 %% subfunctions
 
+function diffStruct = getTfrDiff(struct1, struct2)
+% with two conditions of similar baseline, we can compare by subtracting 
+% and then dividing the two powerspectra by their sum: normalising common acty
+
+cfg = [];
+cfg.parameter = 'powspctrm';
+cfg.operation = '(x1-x2)/(x1+x2)';
+diffStruct = ft_math(cfg, struct1, struct2);
+
+return
+end
