@@ -146,7 +146,7 @@ disp('done')
 
 disp('getting correlations')
 
-correlationsSaveName = [saveDir filesep 'model_correlations_02.mat'];
+correlationsSaveName = [saveDir filesep 'model_correlations_differences_02.mat'];
 
 if exist(correlationsSaveName,'file')
     disp('file exists: loading')
@@ -254,8 +254,8 @@ disp('done')
 disp('getting bayes factors')
 
 nullInterval = '0.2,1';
-bfSlopeSavename = [saveDir filesep 'model_correlations_slope_bfs_null_%s.mat'];
-bfAmplitudeSavename = [saveDir filesep 'model_correlations_amplitude_bfs_null_%s.mat'];
+bfSlopeSavename = [saveDir filesep 'model_correlations_differences_slope_bfs_null_%s.mat'];
+bfAmplitudeSavename = [saveDir filesep 'model_correlations_differences_amplitude_bfs_null_%s.mat'];
 if exist(sprintf(bfSlopeSavename,nullInterval),'file')
     disp('file exists for slope bfs: loading')
     load(sprintf(bfSlopeSavename,nullInterval));
