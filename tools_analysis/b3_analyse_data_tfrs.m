@@ -24,8 +24,8 @@ erpFigDir = fullfile(datadir, 'erpFigs');
 if ~exist(erpFigDir,'dir'); mkdir(erpFigDir); end
 
 % we'll loop through subject data dirs, so just get the path from there
-inputFileName = ['Preprocess' filesep 'tfr_hanning.mat'];
-% inputFileName = ['Preprocess' filesep 'tfr_multi.mat'];
+% inputFileName = ['Preprocess' filesep 'tfr_hanning.mat'];
+inputFileName = ['Preprocess' filesep 'tfr_multi.mat'];
 if contains(inputFileName,'hanning')
     getVar = @(x) sprintf(x,'hann');
 elseif contains(inputFileName,'multi')
@@ -321,55 +321,59 @@ disp('done')
 cfg = [];
 % cfg.baseline     = [-0.5 -0.2]; % if we haven't normalised by difference
 % cfg.baselinetype = 'absolute';
-% cfg.zlim         = [-2.5e-24 2.5e-24];
+cfg.zlim         = [-0.23 0.21];
 cfg.showlabels   = 'yes';
 cfg.layout       = megLayout;
 cfg.maskstyle = 'saturation';
-% cfg.ylim         = [15 25]; % freqs ftodoor topo
 % cfg.xlim=[-0.5 1.5];
-% cfg.channel = getMegLabels('parietal');
+cfg.channel = getMegLabels('temporal');
 ft_singleplotTFR(cfg, cOnsTfrDiffAve);
 % ft_multiplotTFR(cfg, cOnsTfrDiffAve);
+% cfg.ylim         = [15 25]; % freqs ftodoor topo
 % ft_topoplotTFR(cfg, cOnsTfrDiffAve);
+title('TFR Difference in Onset Locked Coherence Difficulty (1-30Hz)')
 %% coh response
 cfg = [];
 % cfg.baseline     = [-1.0 -0.5];
 % cfg.baselinetype = 'absolute';
-% cfg.zlim         = [-2.5e-24 2.5e-24];
 cfg.showlabels   = 'yes';
 cfg.layout       = megLayout;
 cfg.maskstyle = 'saturation';
+cfg.zlim         = [-0.12 0.22];
 % cfg.xlim=[-0.5 1.5];
 % cfg.channel = getMegLabels('parietal');
-ft_singleplotTFR(cfg, cRespTfrDiffAve);
-% ft_multiplotTFR(cfg, cRespTfrDiffAve);
+% ft_singleplotTFR(cfg, cRespTfrDiffAve);
+ft_multiplotTFR(cfg, cRespTfrDiffAve);
 % ft_topoplotTFR(cfg, cRespTfrDiffAve);
+title('TFR Difference in Response Locked Coherence Difficulty (1-30Hz)')
 %% cat onset
 cfg = [];
 % cfg.baseline     = [-0.5 -0.2];
 % cfg.baselinetype = 'absolute';
-% cfg.zlim         = [-2.5e-24 2.5e-24];
+cfg.zlim         = [-0.23 0.21];
 cfg.showlabels   = 'yes';
 cfg.layout       = megLayout;
 cfg.maskstyle = 'saturation';
 % cfg.xlim=[-0.5 1.5];
 % cfg.channel = getMegLabels('parietal');
-ft_singleplotTFR(cfg, rOnsTfrDiffAve);
-% ft_multiplotTFR(cfg, rOnsTfrDiffAve);
+% ft_singleplotTFR(cfg, rOnsTfrDiffAve);
+ft_multiplotTFR(cfg, rOnsTfrDiffAve);
 % ft_topoplotTFR(cfg, rOnsTfrDiffAve);
+title('TFR Difference in Onset Locked Categorisation Difficulty (1-30Hz)')
 %% cat response
 cfg = [];
 % cfg.baseline     = [-1.0 -0.5];
 % cfg.baselinetype = 'absolute';
-% cfg.zlim         = [-2.5e-24 2.5e-24];
 cfg.showlabels   = 'yes';
 cfg.layout       = megLayout;
 cfg.maskstyle = 'saturation';
+cfg.zlim         = [-0.12 0.22];
 % cfg.xlim=[-0.5 1.5];
 % cfg.channel = getMegLabels('parietal');
-ft_singleplotTFR(cfg, rRespTfrDiffAve);
-% ft_multiplotTFR(cfg, rRespTfrDiffAve);
+% ft_singleplotTFR(cfg, rRespTfrDiffAve);
+ft_multiplotTFR(cfg, rRespTfrDiffAve);
 % ft_topoplotTFR(cfg, r RespTfrDiffAve);
+title('TFR Difference in Response Locked Categorisation Difficulty (1-30Hz)')
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
