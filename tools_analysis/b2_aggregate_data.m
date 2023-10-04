@@ -180,6 +180,7 @@ for fileNum = 1:numel(theseFiles)
     respLockedErpData{fileNum} = rejectArtefacts(respLockedErpData{fileNum}, combinedLayout,ftDir);
 
     %% now let's do the same thing for tfr analysis: onset and response locked epochs
+    % we want more padding for this
     
     % first to onset
     disp('>>> compiling tfr dataset locked to onset')
