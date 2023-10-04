@@ -5,7 +5,7 @@ cfg              = [];
 cfg.output       = 'pow';
 cfg.channel      = 'MEG';
 cfg.pad          = 'nextpow2'; % ft recommends nextpow2 over their default 'maxperlen' as more efficient for FFT computation
-cfg.method       = 'mtmconvol';
+cfg.method       = 'mtmconvol'; % default will run multitaper, but can choose taper
 
 switch freqs
     case 'high'
@@ -18,9 +18,9 @@ switch freqs
         % t_ftimwin of 0.25 s
         % -> Rayleigh frequency of 4 Hz
         % Spectral concentration (tapsmofrq) of plus/minus 12 Hz (up to 20 Hz)
-        cfg.foi          = 30:4:150; % do 1 to 30 Hz in steps of 4 Hz
+        cfg.foi          = 30:4:150; % do 1 to 30 Hz in steps of 4 Hz (rayleigh freq)
         cfg.t_ftimwin    = ones(length(cfg.foi),1).*0.25; % length of time window = 0.25 sec
-        cfg.tapsmofrq    = 12; % width of frequency smoothing in Hz
+        cfg.tapsmofrq    = 12; % width of frequency smoothing in Hz (spectral concentration)
         % 
     case 'low'
         % hanning is good for low freqs, up to gamma (30Hz)
