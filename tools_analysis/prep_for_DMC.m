@@ -6,7 +6,7 @@ clear all
 rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab';
 scriptdir = fullfile(rootdir,'tools_analysis'); cd(scriptdir)
 datadir = fullfile(rootdir,'data','meg_pilot_4','behavioural'); addpath(datadir);
-table_save_file = fullfile(datadir,'DMC_table.csv');
+table_save_file = fullfile(datadir,'DMC_table_%s.csv');
 
 allSubjects = importParticipants();
 
@@ -79,7 +79,19 @@ for subjectidx = 1:numel(allSubjects)
 end
 
 Var1=Var1';s=s';S=S';Coh=Coh';Angle=Angle';R=R';RT=RT';
-outputTable = table(Var1,s,S,Coh,Angle,R,RT);
 
-fprintf('saving table as %s\n', table_save_file);
-writetable(outputTable,table_save_file); % save to csv
+outputTable = table(Var1,s,S,Coh,Angle,R,RT);
+thisSaveFile = sprintf(table_save_file,'all');
+fprintf('saving table as %s\n', thisSaveFile);
+writetable(outputTable,thisSaveFile); % save to csv
+
+outputTable = table(Var1,s,S,Coh,R,RT);
+thisSaveFile = sprintf(table_save_file,'coh');
+fprintf('saving table as %s\n', thisSaveFile);
+writetable(outputTable,thisSaveFile); % save to csv
+
+outputTable = table(Var1,s,S,Angle,R,RT);
+thisSaveFile = sprintf(table_save_file,'ang');
+fprintf('saving table as %s\n', thisSaveFile);
+writetable(outputTable,thisSaveFile); % save to csv
+
