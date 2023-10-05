@@ -346,6 +346,10 @@ for runi = 1:numel(thisSubject.meg_labs)
     % 12)  we later add the fixation dots timings for each trial
     % 13)  we later add a row of unique numbers to tag each trial
     
+    % we could add all this to our trl file, if we wanted
+    % later I use the run numbers (11) and fieldtrips custom trl function to do
+    % this, but it would have been easier to do here, if I'd known
+    
     %% do some trial definition epoching
    
     % set the trial window, possibly including buffer for edge effects during filtering
