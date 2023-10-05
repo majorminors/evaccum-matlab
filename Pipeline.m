@@ -13,7 +13,7 @@ clear all
 rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab';
 scriptdir = fullfile(rootdir,'tools_analysis'); cd(scriptdir)
 datadir = fullfile(rootdir,'data','meg_pilot_4'); addpath(datadir);
-runLocal = 0;
+runLocal = 1;
 runBehav = 0;
 subjectRange = 0;%[34 35 36 37];%0;%[-1 7]; % 0 does all; array like [-1 4] does 4 to end
 jobdir = fullfile(rootdir,'job_logging','aggregate_data_correct_tfr_05');
@@ -24,7 +24,7 @@ jobdir = fullfile(rootdir,'job_logging','aggregate_data_correct_tfr_05');
 % functionToRun = @a4_preProc_ica; additionalParams={datadir,scriptdir,0,{'f' '.fif' 'i'},0}; % run locally if manual
 % functionToRun = @a4_preProc_atypical_artefacts; additionalParams={datadir,scriptdir,1,{'if' '.fif' 'C'},0,0}; % run locally if manual
 % b1_data_inspection is a standalone file for local exploration
-functionToRun = @b2_aggregate_data; additionalParams={datadir,scriptdir,1};
+% functionToRun = @b2_aggregate_data; additionalParams={datadir,scriptdir,1};
 functionToRun = @b2_run_rsa_analysis; additionalParams={datadir,scriptdir,1};
 
 allSubjects = importParticipants();
