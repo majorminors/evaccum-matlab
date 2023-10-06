@@ -19,7 +19,6 @@ addpath(rootDir);
 % file definition
 % sprintf to enter missing data ('%s')
 inputFilePattern = fullfile(preProcDir,'run*_if_transmid.fif');
-epochedOutputFilename = fullfile(preProcDir,'epoched_data.mat');
 erpOutputFilename = fullfile(preProcDir,'timelocked_averages.mat');
 tfrLowOutputFilename = fullfile(preProcDir,'tfr_hanning.mat');
 tfrHighOutputFilename = fullfile(preProcDir,'tfr_multi.mat');
@@ -32,18 +31,8 @@ behavfile = fullfile(datadir,'behavioural',[thisSubject.id '_MEGRTs.mat']); % gr
 disp('>>> this is subject:')
 disp(thisSubject.id);
 
-if exist(epochedOutputFilename,'file') && ~overwrite
-    warning('>>> epoched data save file exists and overwrite off---skipping erp')
-    doEpoch = 0;
-elseif ~exist(epochedOutputFilename,'file') || overwrite
-    if exist(epochedOutputFilename,'file')
-        warning('>>> epoched data exists and overwrite is on: ill delete is so it wont get loaded into your next analysis')
-        system(['rm -f ' epochedOutputFilename])
-    end
-    doEpoch = 1;
-end
 if exist(erpOutputFilename,'file') && ~overwrite
-    warning('>>> erp save file exists and overwrite off---skipping erp')
+    warning('>>> erp save file exists and overwrite off---skipping')
     doErp = 0;
 elseif ~exist(erpOutputFilename,'file') || overwrite
     if exist(erpOutputFilename,'file')
@@ -53,7 +42,7 @@ elseif ~exist(erpOutputFilename,'file') || overwrite
     doErp = 1;
 end
 if exist(tfrLowOutputFilename,'file') && ~overwrite
-    warning('>>> erp save file exists and overwrite off---skipping trf low')
+    warning('>>> trf low save file exists and overwrite off---skipping')
     doTfrLow = 0;
 elseif ~exist(tfrLowOutputFilename,'file') || overwrite
     if exist(tfrLowOutputFilename,'file')
@@ -63,17 +52,17 @@ elseif ~exist(tfrLowOutputFilename,'file') || overwrite
     doTfrLow = 1;
 end
 if exist(tfrHighOutputFilename,'file') && ~overwrite
-    warning('>>> erp save file exists and overwrite off---skipping trf high')
+    warning('>>> trf high save file exists and overwrite off---skipping')
     doTfrHigh = 0;
 elseif ~exist(tfrHighOutputFilename,'file') || overwrite
     if exist(tfrHighOutputFilename,'file')
         warning('>>> tfr high file exists and overwrite is on: ill delete is so it wont get loaded into your next analysis')
         system(['rm -f ' tfrHighOutputFilename])
     end
-    doTfrHigh = 0;
+    doTfrHigh = 1;
 end
 
-if ~doEpoch && ~doErp && ~doTfrLow && ~doTfrHigh
+if ~doErp && ~doTfrLow && ~doTfrHigh
     disp('nothing to do for this participant: skipping')
     return
 end
@@ -237,13 +226,6 @@ responseLockedErpData = ft_appenddata(cfg,respLockedErpData{:}); clear respLocke
 coherenceOnsetTfrData = ft_appenddata(cfg,cohOnsetTfrData{:}); clear cohOnsetTfrData
 responseLockedTfrData = ft_appenddata(cfg,respLockedTfrData{:}); clear respLockedTfrData
 
-% saving this produces huge save files
-% if doEpoch
-%     disp('>>> saving epoched data')
-%     save(epochedOutputFilename,...
-%         'coherenceOnsetErpData','responseLockedErpData','coherenceOnsetTfrData','responseLockedTfrData',...
-%         '-v7.3');
-% end
 
 % % we can compile the overall averages if we want like so:
 % disp('>>> compiling overall averages')
