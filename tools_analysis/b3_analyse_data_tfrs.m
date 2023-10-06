@@ -20,8 +20,8 @@ toolbox = fullfile(rootdir,'..','..','Toolboxes','gramm'); addpath(toolbox); cle
 % toolbox = fullfile(rootdir,'..','..','Toolboxes','bayesFactor'); addpath(toolbox); clear toolbox
 toolbox = fullfile(rootdir,'..','..','Toolboxes','BFF_repo'); addpath(genpath(toolbox)); clear toolbox
 
-erpFigDir = fullfile(datadir, 'erpFigs');
-if ~exist(erpFigDir,'dir'); mkdir(erpFigDir); end
+tfrFigDir = fullfile(datadir, 'tfrFigs');
+if ~exist(tfrFigDir,'dir'); mkdir(tfrFigDir); end
 
 % we'll loop through subject data dirs, so just get the path from there
 % inputFileName = ['Preprocess' filesep 'tfr_hanning.mat'];
@@ -112,7 +112,7 @@ parfor subjectNum = 1:numel(subjectFolders)
 end; clear theseFiles thisFile subjectFolders subjectNum subjectCode index pathParts
 clear tfrManips tfrConds
 delete(gcp('nocreate')); clear workers;
-rmdir(tempPath,'s');
+system(['rm -rf ' tempPath])
 
 disp('loading complete')
 
@@ -159,8 +159,7 @@ layout = ft_prepare_layout(cfg);
 % clear layout
 
 
-CPP = {'EEG040' 'EEG041' 'EEG042'};
-frontal = {'EEG004' 'EEG002' 'EEG008'};
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% let's compile some averages and differences %%
@@ -321,17 +320,66 @@ disp('done')
 cfg = [];
 % cfg.baseline     = [-0.5 -0.2]; % if we haven't normalised by difference
 % cfg.baselinetype = 'absolute';
-cfg.zlim         = [-0.23 0.21];
+% cfg.zlim         = [-0.23 0.21];
 cfg.showlabels   = 'yes';
 cfg.layout       = megLayout;
 cfg.maskstyle = 'saturation';
 % cfg.xlim=[-0.5 1.5];
-cfg.channel = getMegLabels('temporal');
-ft_singleplotTFR(cfg, cOnsTfrDiffAve);
+% whichChannels = 'parietal'; cfg.channel = getMegLabels(whichChannels);
+
+if isfield(cfg,'channel')
+    savename = [tfrFigDir filesep whichChannels '_' getVar('coherence_onsetLockedTFR%s') '_%s.png'];
+else
+    savename = [tfrFigDir filesep getVar('coherence_onsetLockedTFR%s') '_%s.png'];
+end
+cOnsTfrDiffAve.bfs = testDiffsAcrossTime(cOnsTfrDiffAll,cfg);
+plotTfr(cOnsTfrDiffAve, cfg, cOnsTfrDiffAve.bfs, sprintf(savename, 'tfr'))
+if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
+suptitle(['TFR Difference in Onset Locked Coherence Difficulty ' freqs])
+
 % ft_multiplotTFR(cfg, cOnsTfrDiffAve);
-% cfg.ylim         = [15 25]; % freqs ftodoor topo
-% ft_topoplotTFR(cfg, cOnsTfrDiffAve);
-title('TFR Difference in Onset Locked Coherence Difficulty (1-30Hz)')
+
+if contains(savename,'hann')
+    cfg.ylim = [15 30]; % freqs for topo
+    cfg.xlim = [1.0 1.5];
+    ft_topoplotTFR(cfg, cOnsTfrDiffAve);
+    title(['TFR Difference in Onset Locked Coherence Difficulty '...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))])
+    print(sprintf(savename, ['topo_'...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))]), '-dpng');
+    
+    cfg.ylim = [10 30]; % freqs for topo
+    cfg.xlim = [0.25 0.65];
+    ft_topoplotTFR(cfg, cOnsTfrDiffAve);
+    title(['TFR Difference in Onset Locked Coherence Difficulty '...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))])
+    print(sprintf(savename, ['topo_'...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))]), '-dpng');
+elseif contains(savename,'multi')
+    cfg.ylim = [30 38]; % freqs for topo
+    cfg.xlim = [0.3 0.65];
+    ft_topoplotTFR(cfg, cOnsTfrDiffAve);
+    title(['TFR Difference in Onset Locked Coherence Difficulty '...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))])
+    print(sprintf(savename, ['topo_'...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))]), '-dpng');
+    
+    cfg.ylim = [30 41]; % freqs for topo
+    cfg.xlim = [0.9 1.5];
+    ft_topoplotTFR(cfg, cOnsTfrDiffAve);
+    title(['TFR Difference in Onset Locked Coherence Difficulty '...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))])
+    print(sprintf(savename, ['topo_'...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))]), '-dpng');
+end
 %% coh response
 cfg = [];
 % cfg.baseline     = [-1.0 -0.5];
@@ -339,27 +387,78 @@ cfg = [];
 cfg.showlabels   = 'yes';
 cfg.layout       = megLayout;
 cfg.maskstyle = 'saturation';
-cfg.zlim         = [-0.12 0.22];
+% cfg.zlim         = [-0.12 0.22];
 % cfg.xlim=[-0.5 1.5];
-% cfg.channel = getMegLabels('parietal');
-% ft_singleplotTFR(cfg, cRespTfrDiffAve);
-ft_multiplotTFR(cfg, cRespTfrDiffAve);
-% ft_topoplotTFR(cfg, cRespTfrDiffAve);
-title('TFR Difference in Response Locked Coherence Difficulty (1-30Hz)')
+% whichChannels = 'parietal'; cfg.channel = getMegLabels(whichChannels);
+
+if isfield(cfg,'channel')
+    savename = [tfrFigDir filesep whichChannels '_' getVar('coherence_responseLockedTFR%s') '_%s.png'];
+else
+    savename = [tfrFigDir filesep getVar('coherence_responseLockedTFR%s') '_%s.png'];
+end
+cRespTfrDiffAve.bfs = testDiffsAcrossTime(cRespTfrDiffAll,cfg);
+plotTfr(cRespTfrDiffAve, cfg, cRespTfrDiffAve.bfs, sprintf(savename, 'tfr'))
+if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
+suptitle(['TFR Difference in Response Locked Coherence Difficulty ' freqs])
+
+% ft_multiplotTFR(cfg, cRespTfrDiffAve);
+
+if contains(savename,'hann')
+    cfg.ylim = [10 21]; % freqs for topo
+    cfg.xlim = [-0.25 0];
+    ft_topoplotTFR(cfg, cRespTfrDiffAve);
+    title(['TFR Difference in Response Locked Coherence Difficulty '...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))])
+    print(sprintf(savename, ['topo_'...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))]), '-dpng');
+elseif contains(savename,'multi')
+    cfg.ylim = [30 32]; % freqs for topo
+    cfg.xlim = [-0.25 -0.1];
+    ft_topoplotTFR(cfg, cOnsTfrDiffAve);
+    title(['TFR Difference in Onset Locked Coherence Difficulty '...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))])
+    print(sprintf(savename, ['topo_'...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))]), '-dpng');
+end
 %% cat onset
 cfg = [];
 % cfg.baseline     = [-0.5 -0.2];
 % cfg.baselinetype = 'absolute';
-cfg.zlim         = [-0.23 0.21];
+% cfg.zlim         = [-0.23 0.21];
 cfg.showlabels   = 'yes';
 cfg.layout       = megLayout;
 cfg.maskstyle = 'saturation';
 % cfg.xlim=[-0.5 1.5];
-% cfg.channel = getMegLabels('parietal');
-% ft_singleplotTFR(cfg, rOnsTfrDiffAve);
-ft_multiplotTFR(cfg, rOnsTfrDiffAve);
-% ft_topoplotTFR(cfg, rOnsTfrDiffAve);
-title('TFR Difference in Onset Locked Categorisation Difficulty (1-30Hz)')
+% whichChannels = 'parietal'; cfg.channel = getMegLabels(whichChannels);
+
+if isfield(cfg,'channel')
+    savename = [tfrFigDir filesep whichChannels '_' getVar('categorisation_onsetLockedTFR%s') '_%s.png'];
+else
+    savename = [tfrFigDir filesep getVar('categorisation_onsetLockedTFR%s') '_%s.png'];
+end
+rOnsTfrDiffAve.bfs = testDiffsAcrossTime(rOnsTfrDiffAll,cfg);
+plotTfr(rOnsTfrDiffAve, cfg, rOnsTfrDiffAve.bfs, sprintf(savename, 'tfr'))
+if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
+suptitle(['TFR Difference in Onset Locked Categorisation Difficulty ' freqs])
+
+% ft_multiplotTFR(cfg, rOnsTfrDiffAve);
+
+if contains(savename,'hann')
+    cfg.ylim = [15 21]; % freqs for topo
+    cfg.xlim = [0.9 1.25];
+    ft_topoplotTFR(cfg, cRespTfrDiffAve);
+    title(['TFR Difference in Onset Locked Categorisation Difficulty '...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))])
+    print(sprintf(savename, ['topo_'...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))]), '-dpng');
+elseif contains(savename,'multi')
+end
 %% cat response
 cfg = [];
 % cfg.baseline     = [-1.0 -0.5];
@@ -367,14 +466,34 @@ cfg = [];
 cfg.showlabels   = 'yes';
 cfg.layout       = megLayout;
 cfg.maskstyle = 'saturation';
-cfg.zlim         = [-0.12 0.22];
+% cfg.zlim         = [-0.12 0.22];
 % cfg.xlim=[-0.5 1.5];
-% cfg.channel = getMegLabels('parietal');
-% ft_singleplotTFR(cfg, rRespTfrDiffAve);
-ft_multiplotTFR(cfg, rRespTfrDiffAve);
-% ft_topoplotTFR(cfg, r RespTfrDiffAve);
-title('TFR Difference in Response Locked Categorisation Difficulty (1-30Hz)')
+% whichChannels = 'parietal'; cfg.channel = getMegLabels(whichChannels);
 
+if isfield(cfg,'channel')
+    savename = [tfrFigDir filesep whichChannels '_' getVar('categorisation_responseLockedTFR%s') '_%s.png'];
+else
+    savename = [tfrFigDir filesep getVar('categorisation_responseLockedTFR%s') '_%s.png'];
+end
+rRespTfrDiffAve.bfs = testDiffsAcrossTime(rRespTfrDiffAll,cfg);
+plotTfr(rRespTfrDiffAve, cfg, rRespTfrDiffAve.bfs, sprintf(savename, 'tfr'))
+if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
+suptitle(['TFR Difference in Response Locked Categorisation Difficulty ' freqs])
+
+% ft_multiplotTFR(cfg, rRespTfrDiffAve);
+
+if contains(savename,'hann')
+    cfg.ylim = [18 21]; % freqs for topo
+    cfg.xlim = [-0.55 -0.2];
+    ft_topoplotTFR(cfg, cRespTfrDiffAve);
+    title(['TFR Difference in Onset Locked Categorisation Difficulty '...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))])
+    print(sprintf(savename, ['topo_'...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))]), '-dpng');
+elseif contains(savename,'multi')
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% the topology of univariate activity %%
@@ -395,6 +514,57 @@ cfg = [];
 cfg.parameter = 'powspctrm';
 cfg.operation = '(x1-x2)/(x1+x2)';
 diffStruct = ft_math(cfg, struct1, struct2);
+
+return
+end
+
+function bfs = testDiffsAcrossTime(dataStruct,cfg,complementary)
+
+numSubjs = numel(dataStruct);
+numFreqs = numel(dataStruct{1}.freq);
+numTimes = numel(dataStruct{1}.time);
+for subject = 1:numSubjs
+    for frequency = 1:numFreqs
+        for timepoint = 1:numTimes
+
+            if isfield(cfg,'channel')
+                chanIdx = find(ismember(dataStruct{subject}.label,cfg.channel));
+            else
+                chanIdx = (1:numel(dataStruct{subject}.label))';
+            end
+            % rows = tests
+            % cols = observations (subjects)
+            diffs(timepoint,frequency,subject) = mean(dataStruct{subject}.powspctrm(chanIdx,frequency,timepoint));
+            
+        end
+    end; clear frequency
+end; clear subj
+reshapedDiffs = reshape(diffs, numTimes*numFreqs, numSubjs);
+    
+
+% add the R module and get the path to Rscript
+[status, result] = system('module add R && which Rscript');
+if status == 0
+    disp('R module added successfully');
+    RscriptPath = strtrim(result);
+    disp(['Rscript path: ' RscriptPath]);
+else
+    error('Failed to add R and/or locate Rscript');
+end
+
+% now run the rscript version of the bayes analysis
+%   we can also get the bf for the complementary interval
+%   by specifying complementary = 2. Let's set a default:
+if ~exist('complementary','var'); complementary = 1; end
+bfs = bayesfactor_R_wrapper(reshapedDiffs,'Rpath',RscriptPath,'returnindex',complementary,...
+    'args','mu=0,rscale="medium",nullInterval=c(-0.5,0.5)');
+
+bfs = reshape(bfs, numTimes, numFreqs); % comes out rotated
+bfs = flip(bfs.'); % so rotate it back
+
+
+% alternatively they have implemented it in matlab
+% [bfs, bfs_complementary_interval] = bayesfactor(diffs, 'interval',[-Inf Inf]);
 
 return
 end
