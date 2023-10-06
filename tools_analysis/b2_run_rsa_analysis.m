@@ -3,8 +3,6 @@ function b2_run_rsa_analysis(thisSubject,datadir,toolsdir,overwrite)
 %% set up %%
 %%%%%%%%%%%%
 
-clear all %#ok
-
 % set up paths
 addpath /hpc-software/matlab/cbu/
 addpath('/imaging/local/software/spm_cbu_svn/releases/spm12_fil_r7219/');
@@ -16,7 +14,7 @@ toolboxdir = fullfile(toolsdir,'..','..','..','Toolboxes');
 ftDir = fullfile(toolboxdir,'fieldtrip');
 addpath(ftDir); ft_defaults;
 toolbox = fullfile(toolboxdir,'BFF_repo'); addpath(genpath(toolbox)); clear toolbox
-cosmoDir = fullfile(toolboxdir,'Toolboxes','CoSMoMVPA');cd(fullfile(cosmoDir,'mvpa'));cosmo_set_path();cd(rootdir)
+cosmoDir = fullfile(toolboxdir,'CoSMoMVPA');cd(fullfile(cosmoDir,'mvpa'));cosmo_set_path();cd(toolsdir)
 %alternatively, add the mvpa and external directories, and their subdirectories to the path, using addpath
 
 rdm = collectRdms(fullfile(toolsdir,'rdms'));
@@ -238,27 +236,27 @@ for manipulation = {'ec' 'hc' 'ed' 'hd'}
         disp('begin rsm loop')
         thisStruct = data.(thisTimelock);
         
-        % first the conditions of interest
-        % get a template of zeroes for the number of trials
-        ds.sa.condition = zeros(size(thisStruct.trialinfo,1),0);
 
-        % I don't think I want to do this. I think maybe my timelock is already only the trials I care about?
-        % if not, I don't think this would do what I wanted---I'd be *comparing* things, not selecting things
-        % Instead, I can slice the structure to remove the trials I don't need with cosmo_slice
-        switch thisManipulation
-           case 'ec'
-               ds.sa.condition(getTrialIndicesManipulations(thisStruct,[1,2])) = 1;
-           case 'hc'
-               ds.sa.condition(getTrialIndicesManipulations(thisStruct,[3,4])) = 1;
-           case 'ed'
-               ds.sa.condition(getTrialIndicesManipulations(thisStruct,[1,3])) = 1;
-           case 'hd'
-               ds.sa.condition(getTrialIndicesManipulations(thisStruct,[2,4])) = 1;
-        end
+%         % I don't think I want to do this. I think maybe my timelock is already only the trials I care about?
+%         % if not, I don't think this would do what I wanted---I'd be *comparing* things, not selecting things
+%         % Instead, I can slice the structure to remove the trials I don't need with cosmo_slice
+%         switch thisManipulation
+%            case 'ec'
+%                ds.sa.condition(getTrialIndicesManipulations(thisStruct,[1,2])) = 1;
+%            case 'hc'
+%                ds.sa.condition(getTrialIndicesManipulations(thisStruct,[3,4])) = 1;
+%            case 'ed'
+%                ds.sa.condition(getTrialIndicesManipulations(thisStruct,[1,3])) = 1;
+%            case 'hd'
+%                ds.sa.condition(getTrialIndicesManipulations(thisStruct,[2,4])) = 1;
+%         end
         
         ds = cosmo_meeg_dataset(thisStruct);
              
-        % % lina did a pca
+        % % lina did a pca, but only once because it can reduce noise but
+        % she thinks it's not necessary---Tijl apparently has a tutorial
+        % somewhere that shows in LDA that it makes no difference if you
+        % apply PCA or not
         % ds_pca=ds;
         % ds_pca.samples=[];
         % ds_pca.fa.time=[];
@@ -276,19 +274,31 @@ for manipulation = {'ec' 'hc' 'ed' 'hd'}
         % end
         % ds_nopca=ds;
 
-        % ok, now we want to average across samples, to create pseudotrials. this reduces the noise.
+        % ok, now if we were decoding we'd want to average across samples, to create pseudotrials. this reduces the noise.
         % Cat has some simulations that help you work out what kind of averaging is worth doing
-        % so we should do this first
-        ds = cosmo_average_samples(ds, 'repeats',1, 'split_by', {'condition'});
+        % howeverm Catriona and Lina didn't do any trial averaging before
+        % RSA. for Lina, in the RDM were averages of e.g. decoding
+        % accuracies of each pair, but she didn't do any trial averaging
+        % before running any decoding
+%         ds = cosmo_average_samples(ds, 'repeats',1, 'split_by', {'condition'});
 
-        % then we pick our targets
-        ds.sa.targets = ds.sa.condition;
-        % so we could do chunks as runs, if we kept those, but
-        % different number for different participants
-        % we can instead use the cosmo_chunkize to balance chunks
-        % across targets
-        ds.sa.chunks = cosmo_chunkize(ds,2); % 2nd input arg = num chunks
-
+%         % then we pick our targets
+%         ds.sa.targets = ds.sa.condition;
+%         % so we could do chunks as runs, if we kept those, but
+%         % different number for different participants
+%         % we can instead use the cosmo_chunkize to balance chunks
+%         % across targets
+%         ds.sa.chunks = cosmo_chunkize(ds,2); % 2nd input arg = num chunks
+        % or we could do what Lina did and treat each trial independently
+        ds.sa.targets = (1:size(thisStruct.trialinfo,1))'; % each trial is one condition
+        ds.sa.chunks = (1:size(thisStruct.trialinfo,1))'; % each trial is independent
+        % but if we do this, we need to work out how to reformat our model
+        % dsm to correspond to the pairings
+        % i think we need something like a lookup table? use the
+        % trlFromFile function to pull all the relevant info, then on the
+        % models have something that allows us to index into the pairings?
+        % and construct an rsm from that
+        
         % to calculate the correlations it looks at each timepoint separately 
         nbrhood=cosmo_interval_neighborhood(ds,'time','radius',1); 
 
@@ -301,7 +311,7 @@ for manipulation = {'ec' 'hc' 'ed' 'hd'}
         measure_args.center_data=true; %removes the mean pattern before correlating
         % run searchlight between our RDM and our trial data
         for model = fieldnames(rdm)'
-            thisModel = model(:);
+            thisModel = model{:};
             measure_args.target_dsm = rdm.(thisModel).(thisManipulation);
             rsa.(thisTimelock).(thisModel) = cosmo_searchlight(ds,nbrhood,measure,measure_args);
         end % model loop
