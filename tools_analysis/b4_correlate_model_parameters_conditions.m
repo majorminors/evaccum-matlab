@@ -386,7 +386,7 @@ disp('done')
 %%%%%%%%%%
 
 disp(nullInterval)
-plotInside = 0; % plot bf for inside the null interval (1) or outside (0)?
+plotInside = 1; % plot bf for inside the null interval (1) or outside (0)?
 plotSlope = 0; % plot slope (1) or amplitude (0)
 
 disp('plotting')
