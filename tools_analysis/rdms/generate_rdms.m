@@ -61,6 +61,9 @@ p.stim_mat(:,8) = ~((p.stim_mat(:,6)==min(p.stim_mat(:,6)))|(p.stim_mat(:,6)==ma
 p.stim_mat(:,9) = 1:length(p.stim_mat(:,9));
 p.stim_mat(:,10) = p.stim_mat(:,9)+[0:2:127]'+5;
 
+trialId = p.stim_mat(:,9);
+save([modeldir filesep 'trialIds.mat'],'trialId');
+
 easy_coh = (find(p.stim_mat(:,5) == 1));
 hard_coh = (find(p.stim_mat(:,5) == 2));
 easy_dec = (find(p.stim_mat(:,8) == 1));

@@ -70,6 +70,8 @@ for idx = 1:size(trl,1)
     end
 end
 
+trialId = str2double(behavTable(:,5));
+
 %% alter trial 'start'
 % my trl file is already locked to onset, so I don't need to define this
 % here
@@ -88,7 +90,7 @@ trl(:,2) = trl(:,2)+cfg.post;
 trl(:,3) = cfg.pre;
 
 %% recompose trl variable
-trl = [trl conditioncodes' goodTrials];
+trl = [trl conditioncodes' goodTrials, trialId];
 trl = fix(trl); % since matlab does it's absolute best to confuse stuff with e-notation, thus fucking with its own functions which don't, of course, understand e-notation
 
 end
