@@ -16,7 +16,7 @@ datadir = fullfile(rootdir,'data','meg_pilot_4'); addpath(datadir);
 runLocal = 0;
 runBehav = 0;
 subjectRange = 0;%[34 35 36 37];%0;%[-1 7]; % 0 does all; array like [-1 4] does 4 to end
-jobdir = fullfile(rootdir,'job_logging','aggregate_data_correct_tfr_08');
+jobdir = fullfile(rootdir,'job_logging','run_rsas_03');
 % functionToRun = -@a1_importAndOrganiseScans; additionalParams={datadir,0};
 % functionToRun = @a2_megTriggers; additionalParams={datadir,scriptdir,0}; 
 % functionToRun = @a3_maxFilter; additionalParams={datadir,scriptdir,1};
@@ -24,8 +24,8 @@ jobdir = fullfile(rootdir,'job_logging','aggregate_data_correct_tfr_08');
 % functionToRun = @a4_preProc_ica; additionalParams={datadir,scriptdir,0,{'f' '.fif' 'i'},0}; % run locally if manual
 % functionToRun = @a4_preProc_atypical_artefacts; additionalParams={datadir,scriptdir,1,{'if' '.fif' 'C'},0,0}; % run locally if manual
 % b1_data_inspection is a standalone file for local exploration
-functionToRun = @b2_aggregate_data; additionalParams={datadir,scriptdir,0};
-% functionToRun = @b2_run_rsa_analysis; additionalParams={datadir,scriptdir,1};
+% functionToRun = @b2_aggregate_data; additionalParams={datadir,scriptdir,0};
+functionToRun = @b2_run_rsa_analysis; additionalParams={datadir,scriptdir,1};
 
 allSubjects = importParticipants();
 if ~subjectRange; subjectRange = 1:numel(allSubjects); end
