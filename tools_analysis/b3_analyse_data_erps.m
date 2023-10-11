@@ -72,8 +72,7 @@ parfor subjectNum = 1:numel(subjectFolders)
     subjectCode = pathParts{index}; %#ok
     if ~strcmp(subjectCode,subjectFolders(subjectNum).name); error('file doesnt match subject'); end
     
-    disp('this is subject:')
-    disp(subjectFolders(subjectNum).name);
+    fprintf('this is subject: %s\n',subjectFolders(subjectNum).name)
     
      % grab info about all the meeg data files we care about
     theseFiles = dir([subjectFolders(subjectNum).folder filesep subjectFolders(subjectNum).name filesep inputFileName]);
