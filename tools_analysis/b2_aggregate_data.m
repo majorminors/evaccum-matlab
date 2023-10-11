@@ -144,9 +144,13 @@ for fileNum = 1:numel(theseFiles)
     cfg.trl = trlFromFile(cfg); % my trl is by default locked to the trial onset to end, so we're just looking at the trial plus 500ms prior
     cohOnsetErpData{fileNum} = ft_redefinetrial(cfg,rawData);    
     % baseline correction
+    baselineWindow = [-0.2 0];
+    cfg = [];
+    cfg.latency = baselineWindow;
+    baselineData = ft_selectdata(cfg,cohOnsetErpData{fileNum}); % hold onto this data for response locked
     cfg = [];
     cfg.demean          = 'yes';
-    cfg.baselinewindow  = [-0.2 0]; % assumes we're demeaning coherence-locked stimuli
+    cfg.baselinewindow  = baselineWindow; % assumes we're demeaning coherence-locked stimuli
     cohOnsetErpData{fileNum} = ft_preprocessing(cfg,cohOnsetErpData{fileNum});
     % reject artefacts
     cohOnsetErpData{fileNum} = rejectArtefacts(cohOnsetErpData{fileNum}, combinedLayout,ftDir);
@@ -161,10 +165,21 @@ for fileNum = 1:numel(theseFiles)
     cfg.pre = -600; % pre response
     cfg.post = 200; % post response (when locked to response)
     cfg.trl = trlFromFile(cfg);
+    
     % if we want to look at the raw data
-%     respLockedErpData{fileNum} = ft_redefinetrial(cfg,rawData);
-    % if we want to look at the demeaned data
-    respLockedErpData{fileNum} = ft_redefinetrial(cfg,cohOnsetErpData{fileNum});
+    respLockedErpData{fileNum} = ft_redefinetrial(cfg,rawData);
+    % we can calculate our own baseline correction here
+    % so first get the mean of the baseline window data
+    baselineData = cellfun(@(x) mean(x,2), baselineData.trial,'UniformOutput',false);
+    for tidx = 1:length(baselineData)
+        % then subtract each trial baseline mean from the response-locked
+        % epoch data
+        respLockedErpData{fileNum}.trial{tidx} = respLockedErpData{fileNum}.trial{tidx}-baselineData{tidx};
+    end
+    % or we could try to carry over the baseline correction from the onset
+    % locked data, but this produces a bunch of nans for reasons I couldn't
+    % figure out in a cursory investigation
+%     respLockedErpData{fileNum} = ft_redefinetrial(cfg,cohOnsetErpData{fileNum});
     % reject artefacts
     respLockedErpData{fileNum} = rejectArtefacts(respLockedErpData{fileNum}, combinedLayout,ftDir);
 
@@ -220,7 +235,6 @@ disp('>>> appending datasets')
 
 % append them all
 cfg = [];
-cfg.keepsampleinfo  = 'yes';
 coherenceOnsetErpData = ft_appenddata(cfg,cohOnsetErpData{:}); clear cohOnsetErpData
 responseLockedErpData = ft_appenddata(cfg,respLockedErpData{:}); clear respLockedErpData
 coherenceOnsetTfrData = ft_appenddata(cfg,cohOnsetTfrData{:}); clear cohOnsetTfrData

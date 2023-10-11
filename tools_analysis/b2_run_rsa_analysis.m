@@ -159,11 +159,19 @@ for fileNum = 1:numel(theseFiles)
     cfg.trl = trlFromFile(cfg);
     % if we want to look at the raw data
     respLockedErpData{fileNum} = ft_redefinetrial(cfg,rawData);
-%     % if we want to look at the demeaned data
-%     cfg = [];
-%     cfg.operation = 'subtract';
-%     respLockedErpData{fileNum} = ft_math(cfg,respLockedErpData{fileNum},baselineData);
-%     % reject artefacts
+    % we can calculate our own baseline correction here
+    % so first get the mean of the baseline window data
+%     baselineData = cellfun(@(x) mean(x,2), baselineData.trial,'UniformOutput',false);
+%     for tidx = 1:length(baselineData)
+%         % then subtract each trial baseline mean from the response-locked
+%         % epoch data
+%         respLockedErpData{fileNum}.trial{tidx} = respLockedErpData{fileNum}.trial{tidx}-baselineData{tidx};
+%     end
+    % or we could try to carry over the baseline correction from the onset
+    % locked data, but this produces a bunch of nans for reasons I couldn't
+    % figure out in a cursory investigation
+%     respLockedErpData{fileNum} = ft_redefinetrial(cfg,cohOnsetErpData{fileNum});
+    % reject artefacts
     respLockedErpData{fileNum} = rejectArtefacts(respLockedErpData{fileNum}, combinedLayout,ftDir);
 %     any(cellfun(@(x) any(isnan(x(:))), respLockedErpData{1}.trial))
     
@@ -178,7 +186,6 @@ disp('>>> appending datasets')
 
 % append them all
 cfg = [];
-cfg.keepsampleinfo  = 'yes';
 coherenceOnsetErpData = ft_appenddata(cfg,cohOnsetErpData{:}); clear cohOnsetErpData
 responseLockedErpData = ft_appenddata(cfg,respLockedErpData{:}); clear respLockedErpData
 
