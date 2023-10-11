@@ -16,6 +16,10 @@ xticklabels(ftDataStruct.time)
 xtickangle(45);
 yticks(1:numel(ftDataStruct.freq))
 yticklabels(floor(ftDataStruct.freq(end:-1:1)))
+% THIS MIGHT HELP WITH THE Z-AXIS!!
+% ax = gca;
+% set(ax,'YScale','log','XLim',[dataDiff.time(1),dataDiff.time(end)], ...
+%     'YLim',[1e-6 1e6],'YTick',10.^(-6:2:6))
 pbaspect([1 1 1]);  % Makes this subplot square
 % f = gcf; f.Position = [10 10 1600 1600];
 colormap(subplot(1,2,2),colours);
