@@ -99,6 +99,7 @@ if isempty(poolobj)
 else
     disp('parallel pool has already been initialized---skipping');
 end
+fprintf('we have %.0f valid subjects',numel(validSubjectIds));
 parfor subject = 1:numel(validSubjectIds)
     thisSubject = validSubjectIds{subject};
     disp(['loading subject: ' thisSubject])
@@ -107,7 +108,8 @@ parfor subject = 1:numel(validSubjectIds)
 end
 disp('subject fieldtrip data loaded')
 delete(gcp('nocreate')); clear workers;
-rmdir(tempPath,'s');
+system(['rm -rf ' tempPath]);
+if exist(tempPath,'file'); warning('I couldnt delete the job directory :('); end
 
 % ok, let's clear out the invalid subjects so we can just loop through
 validSubjectParams = subjectParams(ismember(subjectParams.Var1,validSubjectNums),:);
@@ -192,8 +194,17 @@ disp('getting correlations')
 correlationsSaveName = [saveDir filesep 'model_correlations_conditions_01.mat'];
 
 if exist(correlationsSaveName,'file')
-    disp('file exists: loading')
-    load(correlationsSaveName)
+    warning('file exists');
+    response = input('Do you want to overwrite? (y/n): ','s');
+    if strcmpi(response,'y') || strcmpi(response,'yes')
+        disp('removing file...');
+        system(['rm -rf ' correlationsSaveName]);
+        if exist(correlationsSaveName,'file'); error('I couldnt delete it :('); end
+        error('ok, good to go, run this section again');
+    else
+        disp('loading')
+        load(correlationsSaveName)
+    end
 else
     disp('file does not exist: running analysis')
     
@@ -283,9 +294,16 @@ else
         end; clear thisLockedTo
     end; clear thisParameter
     clear count
-    %     delete(gcp('nocreate')); clear workers;
-    rmdir(tempPath,'s');
-    
+    response = input('Do you want to delete the parallel pool? (y/n): ','s');
+    if strcmpi(response,'y') || strcmpi(response,'yes')
+        disp('deleting...');
+        delete(gcp('nocreate')); clear workers;
+        system(['rm -rf ' tempPath]);
+        if exist(tempPath,'file'); warning('I couldnt delete the job directory :('); end
+    else
+        disp('not deleting...')
+    end
+
     
     save(correlationsSaveName,'correlations')
     
@@ -299,21 +317,39 @@ disp('done')
 
 disp('getting bayes factors')
 
-% nullInterval = '-0.2,0.2';
-nullInterval = '0.2,1';
+nullInterval = '-0.2,0.2';
+% nullInterval = '0.2,1';
 bfSlopeSavename = [saveDir filesep 'model_correlations_conditionsOnly_slope_bfs_null_%s.mat'];
 bfAmplitudeSavename = [saveDir filesep 'model_correlations_conditionsOnly_amplitude_bfs_null_%s.mat'];
 if exist(sprintf(bfSlopeSavename,nullInterval),'file')
-    disp('file exists for slope bfs: loading')
-    load(sprintf(bfSlopeSavename,nullInterval));
-    runSlope = 0;
+    warning('slope bfs for this null interval exist');
+    response = input('Do you want to overwrite? (y/n): ','s');
+    if strcmpi(response,'y') || strcmpi(response,'yes')
+        disp('removing file...');
+        system(['rm -rf ' sprintf(bfSlopeSavename,nullInterval)]);
+        if exist(sprintf(bfSlopeSavename,nullInterval),'file'); error('I couldnt delete it :('); end
+        error('ok, good to go, run this section again');
+    else
+        disp('loading')
+        load(sprintf(bfSlopeSavename,nullInterval));
+        runSlope = 0;
+    end
 else
     runSlope = 1;
 end
 if exist(sprintf(bfAmplitudeSavename,nullInterval),'file')
-    disp('file exists for amplitude bfs: loading')
-    load(sprintf(bfAmplitudeSavename,nullInterval));
-    runAmp = 0;
+    warning('amplitude bfs for this null interval exist');
+    response = input('Do you want to overwrite? (y/n): ','s');
+    if strcmpi(response,'y') || strcmpi(response,'yes')
+        disp('removing file...');
+        system(['rm -rf ' sprintf(bfAmplitudeSavename,nullInterval)]);
+        if exist(sprintf(bfAmplitudeSavename,nullInterval),'file'); error('I couldnt delete it :('); end
+        error('ok, good to go, run this section again');
+    else
+        disp('loading')
+        load(sprintf(bfAmplitudeSavename,nullInterval));
+        runAmp = 0;
+    end
 else
     runAmp = 1;
 end
@@ -369,8 +405,15 @@ if runSlope || runAmp
     end
     if runSlope; slopeBFs.bf1 = sbf1; slopeBFs.bf2 = sbf2; save(sprintf(bfSlopeSavename,nullInterval),'slopeBFs'); end
     if runAmp; amplitudeBFs.bf1 = abf1; amplitudeBFs.bf2 = abf2; save(sprintf(bfAmplitudeSavename,nullInterval),'amplitudeBFs'); end
-    delete(gcp('nocreate')); clear workers;
-    rmdir(tempPath,'s');
+    response = input('Do you want to delete the parallel pool? (y/n): ','s');
+    if strcmpi(response,'y') || strcmpi(response,'yes')
+        disp('deleting...');
+        delete(gcp('nocreate')); clear workers;
+        system(['rm -rf ' tempPath]);
+        if exist(tempPath,'file'); warning('I couldnt delete the job directory :('); end
+    else
+        disp('not deleting...')
+    end
     clear runSlope runAmp
 end
 
@@ -386,25 +429,27 @@ disp('done')
 %%%%%%%%%%
 
 disp(nullInterval)
-plotInside = 1; % plot bf for inside the null interval (1) or outside (0)?
+plotInside = 0; % plot bf for inside the null interval (1) or outside (0)?
 plotSlope = 0; % plot slope (1) or amplitude (0)
+plotMovie = 0;
 
 disp('plotting')
+
 
 for thisParam = unique(correlations.ParameterName)'
     for thisCond = unique(correlations.Condition)'
         for thisLockedTo = unique(correlations.LockedTo)'
             paramCond = thisCond; % if you want to look cross cond, you can add this back as a for loop
-            
-            figure;
-            
+                        
             dataidx = ...
                 strcmp(correlations.ParameterCondition,paramCond)...
                 & strcmp(correlations.ParameterName,thisParam)...
                 & strcmp(correlations.Condition,thisCond)...
                 & strcmp(correlations.LockedTo,thisLockedTo);
             
+            theseParams = correlations.ParamVals(dataidx);
             if plotSlope
+                theseData = correlations.Slopes(dataidx);
                 if plotInside
                     thesebfs = correlations.SlopeBf1(dataidx);
                 else
@@ -414,6 +459,7 @@ for thisParam = unique(correlations.ParameterName)'
                 allRs = correlations.R_Slope;
                 tipo = 'Slope';
             elseif ~plotSlope
+                theseData = correlations.Amplitudes(dataidx);
                 if plotInside
                     thesebfs = correlations.AmplitudeBf1(dataidx);
                 else
@@ -423,6 +469,7 @@ for thisParam = unique(correlations.ParameterName)'
                 allRs = correlations.R_Amplitude;
                 tipo = 'Amplitude';
             end
+            
             
             slopeInvalidColour = [1, 0.6, 0.6];
             
@@ -436,6 +483,37 @@ for thisParam = unique(correlations.ParameterName)'
                 xlims = [-500 1500];
             end
             timepoints = timepoints-onset;
+            
+            if plotMovie
+                % little movie of the correlation
+                for i = 100+onset:numel(theseParams)
+                    % scatterplot data
+                    scatterHandles(i) = scatter(theseParams{i}, theseData{i});
+                    hold on
+                    % plot the slope line
+                    p = polyfit(theseParams{i}, theseData{i}, 1);
+                    slope = p(1);
+                    yFit = polyval(p, xlim);
+                    plot(xlim, yFit, 'r--');
+                    % add some labels
+                    title([thisCond ' ' thisParam ' ' thisLockedTo])
+                    xlabel('Parameter Values')
+                    ylabel('Amplitude')
+                    annotation('textbox', [0.7, 0.8, 0.1, 0.1], 'String', ['Time: ' num2str(i-onset)], 'FitBoxToText', 'on');
+                    if slope > 0;slope_str = 'Positive';elseif slope < 0;slope_str = 'Negative';else;slope_str = 'Zero';end
+                    annotation('textbox', [0.7, 0.7, 0.1, 0.1], 'String', ['Slope: ' slope_str], 'FitBoxToText', 'on');
+                    % set the axis limits
+                    xlim([min(min([theseParams{:}])), max(max([theseParams{:}]))]);
+                    ylim([min(min([theseData{:}])), max(max([theseData{:}]))]);
+                    % do a quick pause for a short duration
+                    pause(0.001);
+                    % clear the figure
+                    clf;
+                end; clear i
+                close all
+            end
+
+            figure;
             
             % plot correlations
             subplot(2,1,1)
