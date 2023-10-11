@@ -348,7 +348,9 @@ end %manipulation loop
     
 disp('>>> cosmo complete')
 
+disp('saving')
 save(saveFileName,'rsa')
+disp('done saving')
 
 return
 end % end function
