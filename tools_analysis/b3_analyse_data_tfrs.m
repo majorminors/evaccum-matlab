@@ -78,8 +78,7 @@ parfor subjectNum = 1:numel(subjectFolders)
     subjectCode = pathParts{index}; %#ok
     if ~strcmp(subjectCode,subjectFolders(subjectNum).name); error('file doesnt match subject'); end
     
-    disp('this is subject:')
-    disp(subjectFolders(subjectNum).name);
+    fprintf('this is subject: %s\n',subjectFolders(subjectNum).name)
     
      % grab info about all the meeg data files we care about
     theseFiles = dir([subjectFolders(subjectNum).folder filesep subjectFolders(subjectNum).name filesep inputFileName]);
@@ -111,8 +110,15 @@ parfor subjectNum = 1:numel(subjectFolders)
     
 end; clear theseFiles thisFile subjectFolders subjectNum subjectCode index pathParts
 clear tfrManips tfrConds
-delete(gcp('nocreate')); clear workers;
-system(['rm -rf ' tempPath])
+response = input('Do you want to delete the parallel pool? (y/n): ','s');
+if strcmpi(response,'y') || strcmpi(response,'yes')
+    disp('deleting...');
+    delete(gcp('nocreate')); clear workers;
+    system(['rm -rf ' tempPath]);
+    if exist(tempPath,'file'); warning('I couldnt delete the job directory :('); end
+else
+    disp('not deleting...')
+end
 
 disp('loading complete')
 
@@ -316,6 +322,7 @@ disp('done')
 %% the timecourse of univariate activity %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
+
 %% coh onset
 cfg = [];
 % cfg.baseline     = [-0.5 -0.2]; % if we haven't normalised by difference
@@ -340,6 +347,19 @@ suptitle(['TFR Difference in Onset Locked Coherence Difficulty ' freqs])
 % ft_multiplotTFR(cfg, cOnsTfrDiffAve);
 
 if contains(savename,'hann')
+    
+    % delta positivity
+    cfg.ylim = [1 5]; % freqs for topo
+    cfg.xlim = [0.25 1.05];
+    ft_topoplotTFR(cfg, cOnsTfrDiffAve);
+    title(['TFR Difference in Onset Locked Coherence Difficulty '...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))])
+    print(sprintf(savename, ['topo_'...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))]), '-dpng');
+    
+    % beta positivity
     cfg.ylim = [15 30]; % freqs for topo
     cfg.xlim = [1.0 1.5];
     ft_topoplotTFR(cfg, cOnsTfrDiffAve);
@@ -350,6 +370,7 @@ if contains(savename,'hann')
         num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
         num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))]), '-dpng');
     
+    % beta negativity
     cfg.ylim = [10 30]; % freqs for topo
     cfg.xlim = [0.25 0.65];
     ft_topoplotTFR(cfg, cOnsTfrDiffAve);
@@ -359,7 +380,10 @@ if contains(savename,'hann')
     print(sprintf(savename, ['topo_'...
         num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
         num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))]), '-dpng');
+    
 elseif contains(savename,'multi')
+    
+    % low gamma negativity
     cfg.ylim = [30 38]; % freqs for topo
     cfg.xlim = [0.3 0.65];
     ft_topoplotTFR(cfg, cOnsTfrDiffAve);
@@ -370,6 +394,7 @@ elseif contains(savename,'multi')
         num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
         num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))]), '-dpng');
     
+    % low gamma positivity
     cfg.ylim = [30 41]; % freqs for topo
     cfg.xlim = [0.9 1.5];
     ft_topoplotTFR(cfg, cOnsTfrDiffAve);
@@ -380,6 +405,7 @@ elseif contains(savename,'multi')
         num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
         num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))]), '-dpng');
 end
+
 %% coh response
 cfg = [];
 % cfg.baseline     = [-1.0 -0.5];
@@ -404,6 +430,8 @@ suptitle(['TFR Difference in Response Locked Coherence Difficulty ' freqs])
 % ft_multiplotTFR(cfg, cRespTfrDiffAve);
 
 if contains(savename,'hann')
+    
+    % beta negativity to zero
     cfg.ylim = [10 21]; % freqs for topo
     cfg.xlim = [-0.25 0];
     ft_topoplotTFR(cfg, cRespTfrDiffAve);
@@ -413,9 +441,34 @@ if contains(savename,'hann')
     print(sprintf(savename, ['topo_'...
         num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
         num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))]), '-dpng');
+    
+    % delta positivity
+    cfg.ylim = [1 5]; % freqs for topo
+    cfg.xlim = [-0.6 0.2];
+    ft_topoplotTFR(cfg, cRespTfrDiffAve);
+    title(['TFR Difference in Response Locked Coherence Difficulty '...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))])
+    print(sprintf(savename, ['topo_'...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))]), '-dpng');
+    
 elseif contains(savename,'multi')
-    cfg.ylim = [30 32]; % freqs for topo
-    cfg.xlim = [-0.25 -0.1];
+    
+    % low gamma negativity
+    cfg.ylim = [30 38]; % freqs for topo
+    cfg.xlim = [-0.3 -0.05];
+    ft_topoplotTFR(cfg, cOnsTfrDiffAve);
+    title(['TFR Difference in Onset Locked Coherence Difficulty '...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))])
+    print(sprintf(savename, ['topo_'...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))]), '-dpng');
+    
+    % low gamma positivity
+    cfg.ylim = [30 38]; % freqs for topo
+    cfg.xlim = [0.15 0.2];
     ft_topoplotTFR(cfg, cOnsTfrDiffAve);
     title(['TFR Difference in Onset Locked Coherence Difficulty '...
         num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
@@ -424,6 +477,7 @@ elseif contains(savename,'multi')
         num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
         num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))]), '-dpng');
 end
+
 %% cat onset
 cfg = [];
 % cfg.baseline     = [-0.5 -0.2];
@@ -448,8 +502,10 @@ suptitle(['TFR Difference in Onset Locked Categorisation Difficulty ' freqs])
 % ft_multiplotTFR(cfg, rOnsTfrDiffAve);
 
 if contains(savename,'hann')
+    
+    % beta positivity
     cfg.ylim = [15 21]; % freqs for topo
-    cfg.xlim = [0.9 1.25];
+    cfg.xlim = [0.55 1.15];
     ft_topoplotTFR(cfg, cRespTfrDiffAve);
     title(['TFR Difference in Onset Locked Categorisation Difficulty '...
         num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
@@ -457,8 +513,10 @@ if contains(savename,'hann')
     print(sprintf(savename, ['topo_'...
         num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
         num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))]), '-dpng');
+    
 elseif contains(savename,'multi')
 end
+
 %% cat response
 cfg = [];
 % cfg.baseline     = [-1.0 -0.5];
@@ -483,8 +541,9 @@ suptitle(['TFR Difference in Response Locked Categorisation Difficulty ' freqs])
 % ft_multiplotTFR(cfg, rRespTfrDiffAve);
 
 if contains(savename,'hann')
-    cfg.ylim = [18 21]; % freqs for topo
-    cfg.xlim = [-0.55 -0.2];
+    
+    cfg.ylim = [18 22]; % freqs for topo
+    cfg.xlim = [-0.6 -0.25];
     ft_topoplotTFR(cfg, cRespTfrDiffAve);
     title(['TFR Difference in Onset Locked Categorisation Difficulty '...
         num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
@@ -492,7 +551,18 @@ if contains(savename,'hann')
     print(sprintf(savename, ['topo_'...
         num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
         num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))]), '-dpng');
+    
 elseif contains(savename,'multi')
+    
+        cfg.ylim = [30 32]; % freqs for topo
+    cfg.xlim = [-0.6 -0.20];
+    ft_topoplotTFR(cfg, cRespTfrDiffAve);
+    title(['TFR Difference in Onset Locked Categorisation Difficulty '...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))])
+    print(sprintf(savename, ['topo_'...
+        num2str(cfg.ylim(1)) '-' num2str(cfg.ylim(2)) '@'...
+        num2str(cfg.xlim(1)) '-' num2str(cfg.xlim(2))]), '-dpng');
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

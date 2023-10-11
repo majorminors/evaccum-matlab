@@ -3,7 +3,7 @@ figure('Position', [100 100 1600 1600]);
 
 cfg.figure = subplot(1,2,1);
 ft_singleplotTFR(cfg, ftDataStruct);
-title('TFR')
+title('TFR', 'FontSize', 12)
 pbaspect([1 1 1]);  % Makes this subplot square
 
 subplot(1,2,2);
@@ -26,7 +26,7 @@ cbh.TickLabels = arrayfun(@(x) ['10^{' num2str(x) '}'], cbh.Ticks, 'UniformOutpu
 cbh.TickLabels(strcmp(cbh.TickLabels, '10^{0}')) = {'Inconclusive'};
 cbh.TickLabels(strcmp(cbh.TickLabels, '10^{0.5}') | strcmp(cbh.TickLabels, '10^{-0.5}')) = {'Moderate'};
 cbh.TickLabels(strcmp(cbh.TickLabels, '10^{1}') | strcmp(cbh.TickLabels, '10^{-1}')) = {'Strong'};
-title('Bayes Factors')
+title('Bayes Factors', 'FontSize', 12)
 
 if exist('savename', 'var') && ~isempty(savename)
     print(savename, '-dpng');
