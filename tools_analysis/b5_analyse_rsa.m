@@ -2,6 +2,8 @@
 %% set up %%
 %%%%%%%%%%%%
 
+disp('setting up')
+
 clear all
 
 rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab';
@@ -15,9 +17,13 @@ addpath(ftDir); ft_defaults;
 toolbox = fullfile(rootdir,'..','..','Toolboxes','gramm'); addpath(toolbox); clear toolbox
 toolbox = fullfile(rootdir,'..','..','Toolboxes','BFF_repo'); addpath(genpath(toolbox)); clear toolbox
 
+disp('done setting up')
+
 %%%%%%%%%%%%%%%
 %% load data %%
 %%%%%%%%%%%%%%%
+
+disp('loading data')
 
 % since our folders are all e.g. S01, S12 etc, let's load information about
 % the directories that have that pattern
@@ -85,11 +91,16 @@ end; clear subject conditions thisSubj subjects
 
 clear data % don't need this anymore
 
+disp('done loading data')
+
 %%%%%%%%%%%%%%%%%%%
 %% calculate bfs %%
 %%%%%%%%%%%%%%%%%%%
 
+disp('collecting bayes factors')
+
 nullInterval = '0.5,Inf';
+insideNull = 1;
 bfSaveName = [datadir filesep sprintf('rsa_%s.mat',nullInterval)];
 
 if exist(bfSaveName,'file')
@@ -111,39 +122,80 @@ end
 
 if doBfs
     conditions = fieldnames(rsa);
-    for condition = 1:numel(conditions)
+    numConditions = numel(conditions);
+    conditionsBfs = cell(1,numConditions);
+    
+    poolobj = gcp('nocreate'); % If no pool, do not create new one.
+    if isempty(poolobj)
+        disp('no parallel pool is currently initialised---initialising');
+        workers = numConditions;
+        P = cbupool(workers);
+        P.JobStorageLocation = jobdir;
+        tempPath = fullfile(jobdir,'tmp');
+        if ~exist(tempPath,'dir');mkdir(tempPath);end
+        P.JobStorageLocation = tempPath;
+        parpool(P,workers);
+    else
+        disp('parallel pool has already been initialized---skipping');
+    end
+    parfor condition = 1:numConditions
         thisCond = conditions{condition};
-        
         models = fieldnames(rsa.(thisCond));
-        for model = 1:numel(models)
+        numModels = numel(models);
+        modelBfs = cell(1,numModels);
+        
+        % add the R module and get the path to Rscript
+        [status, result] = system('module add R && which Rscript');
+        if status == 0
+            disp('R module added successfully');
+            RscriptPath = strtrim(result);
+            disp(['Rscript path: ' RscriptPath]);
+        else
+            error('Failed to add R and/or locate Rscript');
+        end
+        
+        for model = 1:numModels
             thisModel = models{model};
-            
-            % add the R module and get the path to Rscript
-            [status, result] = system('module add R && which Rscript');
-            if status == 0
-                disp('R module added successfully');
-                RscriptPath = strtrim(result);
-                disp(['Rscript path: ' RscriptPath]);
-            else
-                error('Failed to add R and/or locate Rscript');
-            end
             
             % now run the rscript version of the bayes analysis
             %   we can also get the bf for the complementary interval
-            %   by specifying complementary = 2. Let's set a default:
-            if ~exist('complementary','var'); complementary = 1; end
-            rsa.(thisCond).(thisModel).bfs = bayesfactor_R_wrapper(rsa.(thisCond).(thisModel).vals','Rpath',RscriptPath,'returnindex',complementary,...
+            %   by specifying insideNull = 2 (default is 1)
+            modelBfs{model} = bayesfactor_R_wrapper(rsa.(thisCond).(thisModel).vals','Rpath',RscriptPath,'returnindex',insideNull,...
                 'args',['mu=0,rscale="medium",nullInterval=c(' nullInterval ')']);
-            
+        end
+        conditionsBfs{condition} = modelBfs;
+    end
+    
+    % put the results back into the rsa struct
+    for condition = 1:numConditions
+        thisCond = conditions{condition};
+        models = fieldnames(rsa.(thisCond));
+        for model = 1:numel(models)
+            thisModel = models{model};
+            rsa.(thisCond).(thisModel).bfs = conditionsBfs{condition}{model};
         end; clear models model thisModel
     end; clear conditions condition thisCond
-    
     save(bfSaveName,'rsa')
+    
+    response = input('Do you want to delete the parallel pool? (y/n): ','s');
+    if strcmpi(response,'y') || strcmpi(response,'yes')
+        disp('deleting...');
+        delete(gcp('nocreate')); clear workers;
+        system(['rm -rf ' tempPath]);
+        if exist(tempPath,'file'); warning('I couldnt delete the job directory :('); end
+    else
+        disp('not deleting...')
+    end
+
 end; clear doBfs
+
+disp('done collecting bayes factors')
 
 %%%%%%%%%%%%%%%%
 %% plot them! %%
 %%%%%%%%%%%%%%%%
+
+disp('doing plots')
 
 errTerm = 'error'; % std 'error' or std 'deviation'
 
@@ -259,3 +311,6 @@ for lock = {'coherence' 'response'}
         end; clear models model thisModel
     end; clear conditions condition thisCond
 end; clear lock
+
+disp('done doing plots')
+
