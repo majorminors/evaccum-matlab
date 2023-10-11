@@ -339,6 +339,9 @@ for manipulation = {'ec' 'hc' 'er' 'hr'}
         for thisModel = templateRdms
             measure_args.target_dsm = makeRdm(thisModel{:},theseTrialIds);
             rsa.(thisTimelock).(thisModel{:}) = cosmo_searchlight(ds,nbrhood,measure,measure_args);
+            % fisher transform the correlation values so they are more
+            % normally distributed for group analysis
+            rsa.(thisTimelock).(thisModel{:}).fisher_transformed_samples=atanh(rsa.(thisTimelock).(thisModel{:}).samples);
         end % model loop
     end %timelock loop
 end %manipulation loop
