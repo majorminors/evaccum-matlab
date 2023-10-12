@@ -247,7 +247,6 @@ ymin = min(ymin)-min(ymin)/5;
 for lock = {'coherence' 'response'}
     
     figure;
-    subplotCounter = 0;
     conditions = fieldnames(rsa);
     conditions = conditions(contains(conditions,lock));
     for condition = 1:numel(conditions)
@@ -256,7 +255,6 @@ for lock = {'coherence' 'response'}
         models = fieldnames(rsa.(thisCond));
         for model = 1:numel(models)
             thisModel = models{model};
-            subplotCounter = subplotCounter+1;
             
             timepoints = 1:numel(rsa.(thisCond).(thisModel).bfs);
             bfs = rsa.(thisCond).(thisModel).bfs;
