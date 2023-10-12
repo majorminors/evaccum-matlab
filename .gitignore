@@ -13,3 +13,4 @@ job_logging/*
 spmeeg*
 .Rproj.user
 matlab_metadata.mat
+tools_analysis/rdms/*.csv
