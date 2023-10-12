@@ -46,16 +46,19 @@ for subjectNum = 1:numel(subjectFolders)
     subjectCode = pathParts{index};
     if ~strcmp(subjectCode,subjectFolders(subjectNum).name); error('file doesnt match subject'); end
     
-    fprintf('this is subject: %s\n',subjectFolders(subjectNum).name)
+    fprintf('this is subject: %s...',subjectFolders(subjectNum).name)
     
     % load it
-    disp('loading')
+    fprintf('loading...')
     count = count+1;
     data{count} = load(thisFile);
-    disp('loaded')
-end; clear subjectNum index pathParts subjectCode subjectFolders thisFile count
+    fprintf('loaded\n')
+end; clear subjectNum index pathParts subjectCode subjectFolders thisFile
 
 disp('done loading')
+
+fprintf('you have %.0f subjects\n', count); clear count
+
 
 % let's reorganise things a bit
 subjects = numel(data);
@@ -96,7 +99,7 @@ end; clear subject conditions thisSubj subjects
 
 clear data % don't need this anymore
 
-disp('done loading data')
+disp('done prepping data')
 
 %%%%%%%%%%%%%%%%%%%
 %% calculate bfs %%
@@ -299,7 +302,7 @@ for lock = {'coherence' 'response'}
             % then the bayesfactors
             subplot(2*numel(conditions),numel(models),condition*numel(models)*2 - numel(models) + model);
             load('bayes_colourmap.mat'); % in BFF repo
-            exponential_minmax=5;
+            exponential_minmax=6;
             val_col_map = logspace(-exponential_minmax,exponential_minmax,size(colours,1));
             scatter_colours = zeros(length(timepoints), 3);  % preallocate for efficiency
             for t = 1:length(timepoints)
