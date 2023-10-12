@@ -25,7 +25,7 @@ saveFileName = [rootDir filesep 'rsa.mat'];
 % here we get the filtered (but not ICAed) data
 inputFilePattern = fullfile(preProcDir,'run*_f_transmid.fif');
 
-templateRdms = {'stim' 'decbdry' 'resp'};
+templateRdms = {'stim' 'decbdry' 'dec_simple' 'dec_detail_pred' 'dec_detail_null' 'resp'};
 
 %%%%%%%%%%%%%%%
 %% prep data %%

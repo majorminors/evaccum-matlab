@@ -13,7 +13,7 @@ clear all
 rootdir = '/imaging/woolgar/projects/Dorian/evaccum/evaccum-matlab';
 scriptdir = fullfile(rootdir,'tools_analysis'); cd(scriptdir)
 datadir = fullfile(rootdir,'data','meg_pilot_4'); addpath(datadir);
-runLocal = 1;
+runLocal = 0;
 runBehav = 0;
 subjectRange = 0;%[34 35 36 37];%0;%[-1 7]; % 0 does all; array like [-1 4] does 4 to end
 jobdir = fullfile(rootdir,'job_logging','rsa_01');

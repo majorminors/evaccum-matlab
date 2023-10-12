@@ -16,6 +16,15 @@ switch model
     case 'decbdry'
         % Categorisation (decision boundary) representation fit through time
         templateRdm = csvread(fullfile(modeldir,'rdm_decbdry.csv'));
+    case 'dec_detail_null'
+        % Categorisation (decision boundary) motion moving on same or diff side of decision boundary with no prediction for perpendicular boundary
+        templateRdm = csvread(fullfile(modeldir,'rdm_dec_detail_null.csv'));
+    case 'dec_detail_pred'
+        % Categorisation (decision boundary) motion moving on same or diff side of decision boundary with predicition for perpendicular boundary
+        templateRdm = csvread(fullfile(modeldir,'rdm_dec_detail_pred.csv'));
+    case 'dec_simple'
+        % Categorisation (decision boundary) motion moving on same or diff side of decision boundary but cues are all different to each other
+        templateRdm = csvread(fullfile(modeldir,'rdm_dec_simple.csv'));
     case 'resp'
         % Categorisation (?) (button press) representation fit through time
         templateRdm = csvread(fullfile(modeldir,'rdm_resp.csv'));
