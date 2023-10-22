@@ -24,8 +24,8 @@ tfrFigDir = fullfile(datadir, 'tfrFigs');
 if ~exist(tfrFigDir,'dir'); mkdir(tfrFigDir); end
 
 % we'll loop through subject data dirs, so just get the path from there
-% inputFileName = ['Preprocess' filesep 'tfr_hanning.mat'];
-inputFileName = ['Preprocess' filesep 'tfr_multi.mat'];
+inputFileName = ['Preprocess' filesep 'tfr_hanning.mat'];
+% inputFileName = ['Preprocess' filesep 'tfr_multi.mat'];
 if contains(inputFileName,'hanning')
     getVar = @(x) sprintf(x,'hann');
 elseif contains(inputFileName,'multi')
@@ -78,14 +78,14 @@ parfor subjectNum = 1:numel(subjectFolders)
     subjectCode = pathParts{index}; %#ok
     if ~strcmp(subjectCode,subjectFolders(subjectNum).name); error('file doesnt match subject'); end
     
-    fprintf('this is subject: %s\n',subjectFolders(subjectNum).name)
+    fprintf('this is subject: %s...',subjectFolders(subjectNum).name)
     
      % grab info about all the meeg data files we care about
     theseFiles = dir([subjectFolders(subjectNum).folder filesep subjectFolders(subjectNum).name filesep inputFileName]);
     if isempty(theseFiles); continue; end
     
     % so here, load what you care about and play with them!
-    disp('loading')
+    fprintf('loading...')
 
     tfrManips = {...
         getVar('ec_responseLockedTFR%s') getVar('hc_responseLockedTFR%s')...
@@ -106,7 +106,7 @@ parfor subjectNum = 1:numel(subjectFolders)
     
     data{subjectNum} = load(thisFile,whichVars{:});
     
-    disp('loaded')
+    fprintf('loaded\n')
     
 end; clear theseFiles thisFile subjectFolders subjectNum subjectCode index pathParts
 clear tfrManips tfrConds
@@ -120,7 +120,7 @@ else
     disp('not deleting...')
 end
 
-disp('loading complete')
+fprintf('loading complete with %.0f subjects\n',sum(~cellfun(@isempty,data)))
 
 % get some layouts and calculate neighbours
 
@@ -162,7 +162,7 @@ cfg.layout = eegLayout;
 % % cfg.layout = megLayout;
 layout = ft_prepare_layout(cfg);
 % ft_plot_layout(layout);
-% clear layout
+clear layout
 
 
 
@@ -335,6 +335,37 @@ cfg.maskstyle = 'saturation';
 % whichChannels = 'parietal'; cfg.channel = getMegLabels(whichChannels);
 
 if isfield(cfg,'channel')
+    savename = [tfrFigDir filesep whichChannels '_' getVar('easy_coherence_onsetLockedTFR%s') '_%s.png'];
+else
+    savename = [tfrFigDir filesep getVar('easy_coherence_onsetLockedTFR%s') '_%s.png'];
+end
+ecOnsTfrAve.bfs = testDiffsAcrossTime(ecOnsTfrAll,cfg);
+plotTfr(ecOnsTfrAve, cfg, ecOnsTfrAve.bfs, sprintf(savename, 'tfr'))
+if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
+suptitle(['TFR Difference in Onset Locked Coherence Easy Difficulty ' freqs])
+
+if isfield(cfg,'channel')
+    savename = [tfrFigDir filesep whichChannels '_' getVar('hard_coherence_onsetLockedTFR%s') '_%s.png'];
+else
+    savename = [tfrFigDir filesep getVar('hard_coherence_onsetLockedTFR%s') '_%s.png'];
+end
+hcOnsTfrAve.bfs = testDiffsAcrossTime(hcOnsTfrAll,cfg);
+plotTfr(hcOnsTfrAve, cfg, hcOnsTfrAve.bfs, sprintf(savename, 'tfr'))
+if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
+suptitle(['TFR Difference in Onset Locked Coherence Hard Difficulty ' freqs])
+
+%% coh onset diff
+cfg = [];
+% cfg.baseline     = [-0.5 -0.2]; % if we haven't normalised by difference
+% cfg.baselinetype = 'absolute';
+% cfg.zlim         = [-0.23 0.21];
+cfg.showlabels   = 'yes';
+cfg.layout       = megLayout;
+cfg.maskstyle = 'saturation';
+% cfg.xlim=[-0.5 1.5];
+% whichChannels = 'parietal'; cfg.channel = getMegLabels(whichChannels);
+
+if isfield(cfg,'channel')
     savename = [tfrFigDir filesep whichChannels '_' getVar('coherence_onsetLockedTFR%s') '_%s.png'];
 else
     savename = [tfrFigDir filesep getVar('coherence_onsetLockedTFR%s') '_%s.png'];
@@ -408,6 +439,37 @@ end
 
 %% coh response
 cfg = [];
+% cfg.baseline     = [-0.5 -0.2]; % if we haven't normalised by difference
+% cfg.baselinetype = 'absolute';
+% cfg.zlim         = [-0.23 0.21];
+cfg.showlabels   = 'yes';
+cfg.layout       = megLayout;
+cfg.maskstyle = 'saturation';
+% cfg.xlim=[-0.5 1.5];
+% whichChannels = 'parietal'; cfg.channel = getMegLabels(whichChannels);
+
+if isfield(cfg,'channel')
+    savename = [tfrFigDir filesep whichChannels '_' getVar('easy_coherence_responseLockedTFR%s') '_%s.png'];
+else
+    savename = [tfrFigDir filesep getVar('easy_coherence_responseLockedTFR%s') '_%s.png'];
+end
+ecRespTfrAve.bfs = testDiffsAcrossTime(ecRespTfrAll,cfg);
+plotTfr(ecRespTfrAve, cfg, ecRespTfrAve.bfs, sprintf(savename, 'tfr'))
+if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
+suptitle(['TFR Difference in Response Locked Coherence Easy Difficulty ' freqs])
+
+if isfield(cfg,'channel')
+    savename = [tfrFigDir filesep whichChannels '_' getVar('hard_coherence_responseLockedTFR%s') '_%s.png'];
+else
+    savename = [tfrFigDir filesep getVar('hard_coherence_responseLockedTFR%s') '_%s.png'];
+end
+hcRespTfrAve.bfs = testDiffsAcrossTime(hcRespTfrAll,cfg);
+plotTfr(hcRespTfrAve, cfg, hcRespTfrAve.bfs, sprintf(savename, 'tfr'))
+if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
+suptitle(['TFR Difference in Response Locked Coherence Hard Difficulty ' freqs])
+
+%% coh response diff
+cfg = [];
 % cfg.baseline     = [-1.0 -0.5];
 % cfg.baselinetype = 'absolute';
 cfg.showlabels   = 'yes';
@@ -480,6 +542,37 @@ end
 
 %% cat onset
 cfg = [];
+% cfg.baseline     = [-0.5 -0.2]; % if we haven't normalised by difference
+% cfg.baselinetype = 'absolute';
+% cfg.zlim         = [-0.23 0.21];
+cfg.showlabels   = 'yes';
+cfg.layout       = megLayout;
+cfg.maskstyle = 'saturation';
+% cfg.xlim=[-0.5 1.5];
+% whichChannels = 'parietal'; cfg.channel = getMegLabels(whichChannels);
+
+if isfield(cfg,'channel')
+    savename = [tfrFigDir filesep whichChannels '_' getVar('easy_categorisation_onsetLockedTFR%s') '_%s.png'];
+else
+    savename = [tfrFigDir filesep getVar('easy_categorisation_onsetLockedTFR%s') '_%s.png'];
+end
+% erOnsTfrAve.bfs = testDiffsAcrossTime(erOnsTfrAll,cfg);
+plotTfr(erOnsTfrAve, cfg, erOnsTfrAve.bfs, sprintf(savename, 'tfr'))
+if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
+suptitle(['TFR Difference in Onset Locked Categorisation Easy Difficulty ' freqs])
+
+if isfield(cfg,'channel')
+    savename = [tfrFigDir filesep whichChannels '_' getVar('hard_categorisation_onsetLockedTFR%s') '_%s.png'];
+else
+    savename = [tfrFigDir filesep getVar('hard_categorisation_onsetLockedTFR%s') '_%s.png'];
+end
+hrOnsTfrAve.bfs = testDiffsAcrossTime(hrOnsTfrAll,cfg);
+plotTfr(hrOnsTfrAve, cfg, hrOnsTfrAve.bfs, sprintf(savename, 'tfr'))
+if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
+suptitle(['TFR Difference in Onset Locked Categorisation Hard Difficulty ' freqs])
+
+%% cat onset diff
+cfg = [];
 % cfg.baseline     = [-0.5 -0.2];
 % cfg.baselinetype = 'absolute';
 % cfg.zlim         = [-0.23 0.21];
@@ -518,6 +611,37 @@ elseif contains(savename,'multi')
 end
 
 %% cat response
+cfg = [];
+% cfg.baseline     = [-0.5 -0.2]; % if we haven't normalised by difference
+% cfg.baselinetype = 'absolute';
+% cfg.zlim         = [-0.23 0.21];
+cfg.showlabels   = 'yes';
+cfg.layout       = megLayout;
+cfg.maskstyle = 'saturation';
+% cfg.xlim=[-0.5 1.5];
+% whichChannels = 'parietal'; cfg.channel = getMegLabels(whichChannels);
+
+if isfield(cfg,'channel')
+    savename = [tfrFigDir filesep whichChannels '_' getVar('easy_categorisation_responseLockedTFR%s') '_%s.png'];
+else
+    savename = [tfrFigDir filesep getVar('easy_categorisation_responseLockedTFR%s') '_%s.png'];
+end
+erRespTfrAve.bfs = testDiffsAcrossTime(erRespTfrAll,cfg);
+plotTfr(erRespTfrAve, cfg, erRespTfrAve.bfs, sprintf(savename, 'tfr'))
+if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
+suptitle(['TFR Difference in Response Locked Categorisation Easy Difficulty ' freqs])
+
+if isfield(cfg,'channel')
+    savename = [tfrFigDir filesep whichChannels '_' getVar('hard_categorisation_responseLockedTFR%s') '_%s.png'];
+else
+    savename = [tfrFigDir filesep getVar('hard_categorisation_responseLockedTFR%s') '_%s.png'];
+end
+hrRespTfrAve.bfs = testDiffsAcrossTime(hrRespTfrAll,cfg);
+plotTfr(hrRespTfrAve, cfg, hrRespTfrAve.bfs, sprintf(savename, 'tfr'))
+if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
+suptitle(['TFR Difference in Response Locked Categorisation Hard Difficulty ' freqs])
+
+%% cat response diff
 cfg = [];
 % cfg.baseline     = [-1.0 -0.5];
 % cfg.baselinetype = 'absolute';
