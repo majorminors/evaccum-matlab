@@ -10,6 +10,7 @@ behavfile = fullfile(datadir,'behavioural','%s_MEGRTs.mat');
 toolsdir = fullfile(rootdir,'tools_analysis');
 addpath(genpath(fullfile(toolsdir,'lib')))
 brainDataFile = ['Preprocess' filesep 'timelocked_averages.mat'];
+figDir = fullfile(datadir,'behavFigs'); if ~exist(figDir,'dir'); mkdir(figDir); end
 
 
 toolbox = fullfile(rootdir,'..','..','Toolboxes','gramm'); addpath(toolbox); clear toolbox
@@ -154,6 +155,8 @@ g(1,3).set_names('x','Conditions','y','Mean RT (ms) with SEM');
 g(1,3).set_title('Mean RTs for Categorisation Difficulty');
 g(1,3).set_color_options('map',lilac);
 g.draw();
+f = gcf; f.Position = [10 10 1600 1600];
+print([figDir filesep 'rts.png'],'-dpng')
 
 disp('are easy and hard coherence different?')
 [a b c d] = ttest(s.megrts(strcmp(s.coherence,'Easy Coh')),s.megrts(strcmp(s.coherence,'Hard Coh')));
@@ -186,6 +189,8 @@ g(1,3).set_names('x','Conditions','y','Mean Accuracy (%) with SEM');
 g(1,3).set_title('Mean Accuracy for Categorisation Difficulty');
 g(1,3).set_color_options('map',lilac);
 g.draw();
+f = gcf; f.Position = [10 10 1600 1600];
+print([figDir filesep 'acc.png'],'-dpng')
 
 disp('are easy and hard coherence different?')
 [a b c d] = ttest(s.correct(strcmp(s.coherence,'Easy Coh')),s.correct(strcmp(s.coherence,'Hard Coh')));
