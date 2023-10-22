@@ -1,4 +1,4 @@
-function plotTimecourse(layout,colours,averageDataStructs,dataDiff,subjectDataStructs,xlims,ylims,channels,sensorType,leg,legendloc,theTitle,savename)
+function plotTimecourse(layout,colours,averageDataStructs,dataDiff,subjectDataStructs,xlims,ylims,channels,sensorType,leg,legendloc,theTitle,savename,h)
 
 if size(colours,1) ~= numel(averageDataStructs)
     error('not enough colours')
@@ -41,6 +41,22 @@ end; clear i
 hold on
 plotErrorFromStructs(averageDataStructs,colours,channels,theseErrs)
 line([0 0], get(gca,'YLim'), 'Color', 'k', 'LineStyle', '--')
+if exist('h','var') % plot our anova results of the RSA
+    ax = gca;
+    yLow = ax.YLim(1);
+    xLeft = ax.XLim(1);
+    xRight = ax.XLim(2);
+    ind = find(h.Interaction == 1);
+    yVals = yLow * ones(size(ind));
+    scatter(ind/1000+xLeft, yVals, [] , [1, 0.8196, 0.8627], 'filled');
+    ind = find(h.Coherence == 1);
+    yVals = (yLow + 5.0000e-07) * ones(size(ind));
+    scatter(ind/1000+xLeft, yVals, [], [0.851, 0.8196, 0.93135], 'filled');
+    ind = find(h.Rule == 1);
+    yVals = (yLow + 1.0000e-06) * ones(size(ind));
+    scatter(ind/1000+xLeft, yVals, [], [0.7020, 0.8196, 1], 'filled');
+end
+xlim([xLeft xRight]); clear ax yLow xLeft xRight
 % if ~isempty(xlims); xlim(xlims); end
 hold off;
 ylabel(['Mean ' sensorType{1} ' Amplitude (' sensorType{2} ')'])
