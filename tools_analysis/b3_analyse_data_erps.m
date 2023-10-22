@@ -72,14 +72,14 @@ parfor subjectNum = 1:numel(subjectFolders)
     subjectCode = pathParts{index}; %#ok
     if ~strcmp(subjectCode,subjectFolders(subjectNum).name); error('file doesnt match subject'); end
     
-    fprintf('this is subject: %s\n',subjectFolders(subjectNum).name)
+    fprintf('this is subject: %s...',subjectFolders(subjectNum).name)
     
      % grab info about all the meeg data files we care about
     theseFiles = dir([subjectFolders(subjectNum).folder filesep subjectFolders(subjectNum).name filesep inputFileName]);
     if isempty(theseFiles); continue; end
     
     % so here, load what you care about and play with them!
-    disp('loading')
+    fprintf('loading...')
 
     erpManips = {...
         'ec_responseLockedAverage' 'hc_responseLockedAverage'...
@@ -100,14 +100,21 @@ parfor subjectNum = 1:numel(subjectFolders)
     
     data{subjectNum} = load(thisFile,whichVars{:});
     
-    disp('loaded')
+    fprintf('loaded\n')
     
 end; clear theseFiles thisFile subjectFolders subjectNum subjectCode index pathParts
 clear erpManips erpConds
-delete(gcp('nocreate')); clear workers;
-if exist(tempPath,'dir');rmdir(tempPath,'s');end
+response = input('Do you want to delete the parallel pool? (y/n): ','s');
+if strcmpi(response,'y') || strcmpi(response,'yes')
+    disp('deleting...');
+    delete(gcp('nocreate')); clear workers;
+    system(['rm -rf ' tempPath]);
+    if exist(tempPath,'file'); warning('I couldnt delete the job directory :('); end
+else
+    disp('not deleting...')
+end
 
-disp('loading complete')
+fprintf('loading complete with %.0f subjects\n',sum(~cellfun(@isempty,data)))
 
 % get some layouts and calculate neighbours
 
@@ -116,7 +123,7 @@ disp('prep layouts and neighbours')
 % meg is standard---can just use FTs version
 megLayout = fullfile(ftDir,'template','layout','neuromag306all.lay');
 tmp = load(fullfile(ftDir,'template','neighbours','neuromag306mag_neighb.mat'),'neighbours');
-megNeighbours = tmp.neighbours;
+megNeighbours = tmp.neighbours; clear tmp
 % or make our own from a subject:
 % megLayout = fullfile(datadir,'S01','Preprocess','meg_layout.lay'); % note this layout will squeeze everything into an eeg circle in a topo plot---hard to read
 % cfg = [];
@@ -256,6 +263,161 @@ hchrOnsAve = ft_timelockgrandaverage(cfg, hchrOnsAll{:});
 
 disp('done')
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% let's do an anova on the conditions %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+disp('doing anova on conditions')
+
+dataSets.onset = {ecerOnsAll echrOnsAll hcerOnsAll hchrOnsAll};
+dataSets.response = {ecerRespAll echrRespAll hcerRespAll hchrRespAll};
+
+% novas = fieldnames(dataSets);
+% for i = 1:numel(novas)
+%     thisNova = novas{i};
+%     
+%     fprintf('starting with %s...',thisNova)
+%     
+%     nSubjects = numel(dataSets.(thisNova){1});
+%     nTimepoints = numel(dataSets.(thisNova){1}{1}.avg(1,:));
+%     nConditions = numel({'ecer' 'echr' 'hcer' 'hchr'});
+%     
+%     fprintf('compiling...')
+%     thisAnova = NaN(nSubjects,nTimepoints,nConditions); % initialise this
+%     for subject = 1:nSubjects
+%         for condition = 1:nConditions
+%             % we have all timepoints, so we don't need to loop them
+%             thisAnova(subject,:,condition) = getRawAmplitude(dataSets.(thisNova){condition}{subject}, CPP);
+%         end; clear subject
+%     end; clear condition
+%     
+%     fprintf('running anova...')
+%     
+%     [p, fdrh, stats] = doAnova(thisAnova);
+%     results.(thisNova).p = p;
+%     results.(thisNova).h = fdrh;
+%     results.(thisNova).stats = stats;
+%     
+%     clear p fp t thisAnova nSubjects nTimepoints nConditions
+%     
+%     fprintf('done\n')
+%     
+% end; clear i thisNova
+% 
+% disp('done anova on conditions')
+% 
+% plot(1:size(results.onset.h,1),results.onset.h.difficulty_x_manipulation)
+% plot(1:size(results.response.h,1),results.response.h.difficulty_x_manipulation)
+
+% % let's try a different one
+% 
+novas = fieldnames(dataSets);
+for i = 1:numel(novas)
+    thisNova = novas{i};
+    
+    fprintf('starting with %s\n',thisNova)
+    
+    % some initialisations
+    conditionNames = {'ecer' 'echr' 'hcer' 'hchr'};
+    nSubjects = numel(dataSets.(thisNova){1});
+    nTimepoints = numel(dataSets.(thisNova){1}{1}.avg(1,:));
+    nConditions = numel(conditionNames);
+    
+    % let's grab the data per subject, per condition and compile it
+    for subject = 1:nSubjects
+        for condition = 1:nConditions
+            % so this pulls out a row of mean amplitudes per timepoint
+            % stack them row-wise for subjects and the 3rd dimension is
+            % conditions
+            tmp(subject,:,condition) = getRawAmplitude(dataSets.(thisNova){condition}{subject}, CPP);
+        end; clear condition
+    end; clear subject
+    
+    % let's reshape it now, so we have the conditions row-wise and
+    % timepoints on the 3rd dimension
+    % I don't actually remember why I did this---maybe it just made better
+    % sense in my head?
+    conditionwiseData = permute(tmp, [1, 3, 2]); clear tmp
+    
+    % couple more initialisations
+    pVals = NaN(nTimepoints,3);
+    meanSq = NaN(nTimepoints,3);
+    fstat = NaN(nTimepoints,3);
+
+    % now we loop through the timepoints and construct the anova
+    for timepoint = 1:nTimepoints
+        if timepoint>1; fprintf(repmat('\b', 1, numel(timepointStr))); end
+        timepointStr = sprintf('timepoint %.0f of %.0f', timepoint, nTimepoints);
+        fprintf(timepointStr);
+        
+        % arbitrary index numbers for the subjects so the model fitting can
+        % identify the subject-specific effects
+        subjects = 1:nSubjects;
+        
+        % now collect into a table the subject ids + their data for each
+        % condition (second dimension) for this timepoint (3rd dimension)
+        t = array2table([subjects',conditionwiseData(:,1,timepoint),conditionwiseData(:,2,timepoint),conditionwiseData(:,3,timepoint),conditionwiseData(:,4,timepoint)],...
+            'VariableNames',{'Subject','ecer','echr','hcer','hchr'});
+        % create a table that indicates how the levels of the two
+        % manipulations vary across those conditions so we end up with:
+        % 1,1: easy coherence, easy rule
+        % 1,2: easy coherence, hard rule
+        % 2,1: hard coherence, easy rule
+        % 2,2: hard coherence, hard rule
+        within = table([1;1;2;2],[1;2;1;2],'VariableNames',{'Coherence','Rule'});
+        % specify the design---each condition on the intercept (1)
+        rm = fitrm(t,'ecer-echr,hcer-hchr ~ 1','WithinDesign',within);
+        % and we want to look at the interaction, so specify that
+        ranovatbl = ranova(rm, 'WithinModel','Coherence*Rule');
+        
+        % the ranova table comes out with stats for the main effects and
+        % the interaction now, but it's a bit weird, because it also
+        % produces invisible values for the Error rows or
+        % something? It looks like there are 4 p values in pVal, but
+        % actually the fourth is always 0.5 and this is where there is no
+        % value showing that corresponds to the Error row. Very odd.
+        % Anyway, make sure to select the actual row and not the *apparent*
+        % position. Here I loop though the actual row numbers.
+        for testIdx = 1:3
+            rowNumbers = [3,5,7]; % the correct row numbers
+            pVals(timepoint,testIdx) = ranovatbl.pValue(rowNumbers(testIdx));
+            meanSq(timepoint,testIdx) = ranovatbl.MeanSq(rowNumbers(testIdx));
+            fstat(timepoint,testIdx) = ranovatbl.F(rowNumbers(testIdx));
+        end; clear testIdx rowNumbers
+        clear ranovatbl conds rm t subjects within
+    end; clear timepoint
+    
+    % now Niko Kriegeskorte's FDR correction for that set of p-values
+    % if we want to correct each test seperately
+%     fdrp = NaN(1,3);
+%     for pidx = 1:3
+%         if ~isempty(FDRthreshold(pVals(:,pidx)))
+%             fdrp(:,pidx) = FDRthreshold(pVals(:,pidx));
+%         end
+%     end; clear pidx
+    % if we want to correct across tests instead
+    fdrp = FDRthreshold(pVals);
+    % now let's get where we can reject the null
+    fdrh = pVals < fdrp;
+    varNames = {'Coherence', 'Rule', 'Interaction'};
+    
+    % and compile them into tables for ease of reference
+    results.(thisNova).p = array2table(pVals, 'VariableNames', varNames);
+    results.(thisNova).h = array2table(fdrh, 'VariableNames', varNames);
+    results.(thisNova).meanSq = array2table(meanSq, 'VariableNames', varNames);
+    results.(thisNova).fstat = array2table(fstat, 'VariableNames', varNames);
+    clear pVals fdrh meanSq fstat
+    
+end; clear i thisNova
+% 
+% scatter(1:numel(results.onset.h.Interaction),results.onset.h.Interaction)
+% scatter(1:numel(results.response.h.Interaction),results.response.h.Interaction)
+% scatter(1:numel(results.onset.p.Interaction),results.onset.p.Interaction<0.05)
+% scatter(1:numel(results.response.p.Interaction),results.response.p.Interaction<0.05)
+    
+
+clear dataSets
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% get subjectwise differences %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -340,17 +502,18 @@ plotTimecourse(eegLayout,[lilac;teal;coral;maroon],... % layout and colours
     {ecerOnsAll,echrOnsAll,hcerOnsAll,hchrOnsAll},... % {subjectwise,data}
     [],[],CPP,... % xlims,ylims,channels
     {'EEG','uV'},... % sensor type and units for ylablel
-    {'EasyCoh EasyCat';'EasyCoh HardCat';'HardCoh EasyCat';'HardCoh HardCat'},'southeast','CPP (CP1 CPz CP2) in EEG: Onset in all Conditions',... % legend, legend location, plot title
-    [erpFigDir filesep 'eeg_allConds_ons_ERP.png']) % save loc
+    {'EasyCoh EasyCat';'EasyCoh HardCat';'HardCoh EasyCat';'HardCoh HardCat'},'northwest','CPP (CP1 CPz CP2) in EEG: Onset in all Conditions',... % legend, legend location, plot title
+    [erpFigDir filesep 'eeg_allConds_ons_ERP.png'],... % save loc
+    results.onset.h) % rsa significance
 %% response of all conditions in eeg
 plotTimecourse(eegLayout,[lilac;teal;coral;maroon],... % layout and colours
     {ecerRespAve, echrRespAve, hcerRespAve, hchrRespAve},[],... % {average,data},averageDifference (with bayes factors)
     {ecerRespAll,echrRespAll,hcerRespAll,hchrRespAll},... % {subjectwise,data}
     [],[],CPP,... % xlims,ylims,channels
     {'EEG','uV'},... % sensor type and units for ylablel
-    {'EasyCoh EasyCat';'EasyCoh HardCat';'HardCoh EasyCat';'HardCoh HardCat'},'southeast','CPP (CP1 CPz CP2) in EEG: Response in all Conditions',... % legend, legend location, plot title
-    [erpFigDir filesep 'eeg_allConds_resp_ERP.png']) % save loc
-
+    {'EasyCoh EasyCat';'EasyCoh HardCat';'HardCoh EasyCat';'HardCoh HardCat'},'northwest','CPP (CP1 CPz CP2) in EEG: Response in all Conditions',... % legend, legend location, plot title
+    [erpFigDir filesep 'eeg_allConds_resp_ERP.png'],... % save loc
+    results.response.h) % rsa significance
 %%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -526,5 +689,67 @@ bfs = bayesfactor_R_wrapper(diffs,'Rpath',RscriptPath,'returnindex',complementar
 return
 end
 
+function [pvals, fdrh, stats] = doAnova(thisAnova)
+% so we'll get six results from this:
+% main effect of subjects
+% main effect of difficulty
+% main effect of manipulations
+% interaction between subjects and diff
+% interaction between subjects and manip
+% interaction of diff and manip
+variableNames = {'subjects' 'difficulty' 'manipulation'};
+initResults = @(x) NaN(size(x,2), 6); % function to init a matrix per timepoint for six results
+pvals = initResults(thisAnova); 
+fstat = initResults(thisAnova); 
+meanSq = initResults(thisAnova); 
+subjs = repmat((1:size(thisAnova,1))',1,4); % create subject ids: a row with a unique number for each subject and then replicated horizontally four times for the four conditions
+cohLevel = repmat([1 1 2 2],size(thisAnova,1),1); % repmat the levels of coherence for the number of subjects: [easy easy hard hard]
+ruleLevel = repmat([1 2 1 2],size(thisAnova,1),1); % repmat the levels of rule for the number of subjects: [easy hard easy hard]
+% anovan then combines the difficulty and manipulation vectors to create the four distinct groups:
+% 1,1: easy coherence, easy rule
+% 1,2: easy coherence, hard rule
+% 2,1: hard coherence, easy rule
+% 2,2: hard coherence, hard rule
+for timepoint = 1:size(thisAnova,2) % loop through timepoints
+    if timepoint>1; fprintf(repmat('\b', 1, numel(timepointStr))); end
+    timepointStr = sprintf('timepoint %.0f of %.0f', timepoint, size(thisAnova,2));
+    fprintf(timepointStr);
+    tthisAnova = squeeze(thisAnova(:,timepoint,:)); % now we extract a 3D slice: all subjects, all conditions for a single timepoint
+    % we squeeze() it so it makes it 2D (because the 3rd dimension is not
+    % necessary as timepoint is only 1
+    [pvals(timepoint,:), t] = anovan(tthisAnova(:),{subjs(:),cohLevel(:),ruleLevel(:)},'random',1,'display','off','model','interaction','varnames',variableNames);
+    for tidx = 1:6 % loop through our six results to compile our test statistics for each timepoint
+        % t is basically a table: statistic names across the top, and test equations down the left side
+        fstat(timepoint,tidx) = t{tidx+1,6}; % grab the fstat
+        meanSq(timepoint,tidx) = t{tidx+1,5}; % grab the mean square
+    end; clear tidx
+
+end; clear timepoint
+
+% now Niko Kriegeskorte's FDR correction for that set of p-values
+% if we want to correct each test seperately
+fdrp = NaN(1,6);
+for pidx = 1:6
+    if ~isempty(FDRthreshold(pvals(:,pidx)))
+        fdrp(:,pidx) = FDRthreshold(pvals(:,pidx));
+    end
+end; clear pidx
+% if we want to correct across tests instead
+% fdrp = FDRthreshold(pvals);
+% now let's get where the null is rejected
+fdrh = pvals < fdrp;
+
+% let's make a table of these, so we can see what the cols correspond to
+testNames = t(2:7,1)'; testNames = cellfun(@(x) strrep(x,'*','_x_'),testNames,'UniformOutput',false);
+pvals = array2table(round(pvals,3), 'VariableNames', testNames);
+fdrh = array2table(fdrh, 'VariableNames', testNames);
+
+% and compile any other useful stats
+stats.fstat = array2table(fstat, 'VariableNames', testNames);
+stats.meanSq = array2table(meanSq, 'VariableNames', testNames);
+stats.fdrp = fdrp;
+
+return
+end
 
 
