@@ -24,8 +24,8 @@ tfrFigDir = fullfile(datadir, 'tfrFigs');
 if ~exist(tfrFigDir,'dir'); mkdir(tfrFigDir); end
 
 % we'll loop through subject data dirs, so just get the path from there
-inputFileName = ['Preprocess' filesep 'tfr_hanning.mat'];
-% inputFileName = ['Preprocess' filesep 'tfr_multi.mat'];
+% inputFileName = ['Preprocess' filesep 'tfr_hanning.mat'];
+inputFileName = ['Preprocess' filesep 'tfr_multi.mat'];
 if contains(inputFileName,'hanning')
     getVar = @(x) sprintf(x,'hann');
 elseif contains(inputFileName,'multi')
@@ -339,7 +339,7 @@ if isfield(cfg,'channel')
 else
     savename = [tfrFigDir filesep getVar('easy_coherence_onsetLockedTFR%s') '_%s.png'];
 end
-ecOnsTfrAve.bfs = testDiffsAcrossTime(ecOnsTfrAll,cfg);
+if ~isfield(ecOnsTfrAve,'bfs'); ecOnsTfrAve.bfs = testDiffsAcrossTime(ecOnsTfrAll,cfg); end
 plotTfr(ecOnsTfrAve, cfg, ecOnsTfrAve.bfs, sprintf(savename, 'tfr'))
 if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
 suptitle(['TFR Difference in Onset Locked Coherence Easy Difficulty ' freqs])
@@ -349,7 +349,7 @@ if isfield(cfg,'channel')
 else
     savename = [tfrFigDir filesep getVar('hard_coherence_onsetLockedTFR%s') '_%s.png'];
 end
-hcOnsTfrAve.bfs = testDiffsAcrossTime(hcOnsTfrAll,cfg);
+if ~isfield(hcOnsTfrAve,'bfs'); hcOnsTfrAve.bfs = testDiffsAcrossTime(hcOnsTfrAll,cfg); end
 plotTfr(hcOnsTfrAve, cfg, hcOnsTfrAve.bfs, sprintf(savename, 'tfr'))
 if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
 suptitle(['TFR Difference in Onset Locked Coherence Hard Difficulty ' freqs])
@@ -370,7 +370,7 @@ if isfield(cfg,'channel')
 else
     savename = [tfrFigDir filesep getVar('coherence_onsetLockedTFR%s') '_%s.png'];
 end
-cOnsTfrDiffAve.bfs = testDiffsAcrossTime(cOnsTfrDiffAll,cfg);
+if ~isfield(cOnsTfrDiffAve,'bfs'); cOnsTfrDiffAve.bfs = testDiffsAcrossTime(cOnsTfrDiffAll,cfg); end
 plotTfr(cOnsTfrDiffAve, cfg, cOnsTfrDiffAve.bfs, sprintf(savename, 'tfr'))
 if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
 suptitle(['TFR Difference in Onset Locked Coherence Difficulty ' freqs])
@@ -453,7 +453,7 @@ if isfield(cfg,'channel')
 else
     savename = [tfrFigDir filesep getVar('easy_coherence_responseLockedTFR%s') '_%s.png'];
 end
-ecRespTfrAve.bfs = testDiffsAcrossTime(ecRespTfrAll,cfg);
+if ~isfield(ecRespTfrAve, 'bfs'); ecRespTfrAve.bfs = testDiffsAcrossTime(ecRespTfrAll,cfg); end
 plotTfr(ecRespTfrAve, cfg, ecRespTfrAve.bfs, sprintf(savename, 'tfr'))
 if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
 suptitle(['TFR Difference in Response Locked Coherence Easy Difficulty ' freqs])
@@ -463,7 +463,7 @@ if isfield(cfg,'channel')
 else
     savename = [tfrFigDir filesep getVar('hard_coherence_responseLockedTFR%s') '_%s.png'];
 end
-hcRespTfrAve.bfs = testDiffsAcrossTime(hcRespTfrAll,cfg);
+if ~isfield(hcRespTfrAve, 'bfs'); hcRespTfrAve.bfs = testDiffsAcrossTime(hcRespTfrAll,cfg); end
 plotTfr(hcRespTfrAve, cfg, hcRespTfrAve.bfs, sprintf(savename, 'tfr'))
 if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
 suptitle(['TFR Difference in Response Locked Coherence Hard Difficulty ' freqs])
@@ -484,7 +484,7 @@ if isfield(cfg,'channel')
 else
     savename = [tfrFigDir filesep getVar('coherence_responseLockedTFR%s') '_%s.png'];
 end
-cRespTfrDiffAve.bfs = testDiffsAcrossTime(cRespTfrDiffAll,cfg);
+if ~isfield(cRespTfrDiffAve, 'bfs'); cRespTfrDiffAve.bfs = testDiffsAcrossTime(cRespTfrDiffAll,cfg); end
 plotTfr(cRespTfrDiffAve, cfg, cRespTfrDiffAve.bfs, sprintf(savename, 'tfr'))
 if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
 suptitle(['TFR Difference in Response Locked Coherence Difficulty ' freqs])
@@ -556,7 +556,7 @@ if isfield(cfg,'channel')
 else
     savename = [tfrFigDir filesep getVar('easy_categorisation_onsetLockedTFR%s') '_%s.png'];
 end
-% erOnsTfrAve.bfs = testDiffsAcrossTime(erOnsTfrAll,cfg);
+if ~isfield(erOnsTfrAve, 'bfs'); erOnsTfrAve.bfs = testDiffsAcrossTime(erOnsTfrAll,cfg); end
 plotTfr(erOnsTfrAve, cfg, erOnsTfrAve.bfs, sprintf(savename, 'tfr'))
 if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
 suptitle(['TFR Difference in Onset Locked Categorisation Easy Difficulty ' freqs])
@@ -566,7 +566,7 @@ if isfield(cfg,'channel')
 else
     savename = [tfrFigDir filesep getVar('hard_categorisation_onsetLockedTFR%s') '_%s.png'];
 end
-hrOnsTfrAve.bfs = testDiffsAcrossTime(hrOnsTfrAll,cfg);
+if ~isfield(hrOnsTfrAve, 'bfs'); hrOnsTfrAve.bfs = testDiffsAcrossTime(hrOnsTfrAll,cfg); end
 plotTfr(hrOnsTfrAve, cfg, hrOnsTfrAve.bfs, sprintf(savename, 'tfr'))
 if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
 suptitle(['TFR Difference in Onset Locked Categorisation Hard Difficulty ' freqs])
@@ -587,7 +587,7 @@ if isfield(cfg,'channel')
 else
     savename = [tfrFigDir filesep getVar('categorisation_onsetLockedTFR%s') '_%s.png'];
 end
-rOnsTfrDiffAve.bfs = testDiffsAcrossTime(rOnsTfrDiffAll,cfg);
+if ~isfield(rOnsTfrDiffAve, 'bfs'); rOnsTfrDiffAve.bfs = testDiffsAcrossTime(rOnsTfrDiffAll,cfg); end
 plotTfr(rOnsTfrDiffAve, cfg, rOnsTfrDiffAve.bfs, sprintf(savename, 'tfr'))
 if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
 suptitle(['TFR Difference in Onset Locked Categorisation Difficulty ' freqs])
@@ -626,7 +626,7 @@ if isfield(cfg,'channel')
 else
     savename = [tfrFigDir filesep getVar('easy_categorisation_responseLockedTFR%s') '_%s.png'];
 end
-erRespTfrAve.bfs = testDiffsAcrossTime(erRespTfrAll,cfg);
+if ~isfield(erRespTfrAve, 'bfs'); erRespTfrAve.bfs = testDiffsAcrossTime(erRespTfrAll,cfg); end
 plotTfr(erRespTfrAve, cfg, erRespTfrAve.bfs, sprintf(savename, 'tfr'))
 if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
 suptitle(['TFR Difference in Response Locked Categorisation Easy Difficulty ' freqs])
@@ -636,7 +636,7 @@ if isfield(cfg,'channel')
 else
     savename = [tfrFigDir filesep getVar('hard_categorisation_responseLockedTFR%s') '_%s.png'];
 end
-hrRespTfrAve.bfs = testDiffsAcrossTime(hrRespTfrAll,cfg);
+if ~isfield(hrRespTfrAve, 'bfs'); hrRespTfrAve.bfs = testDiffsAcrossTime(hrRespTfrAll,cfg); end
 plotTfr(hrRespTfrAve, cfg, hrRespTfrAve.bfs, sprintf(savename, 'tfr'))
 if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
 suptitle(['TFR Difference in Response Locked Categorisation Hard Difficulty ' freqs])
@@ -657,7 +657,7 @@ if isfield(cfg,'channel')
 else
     savename = [tfrFigDir filesep getVar('categorisation_responseLockedTFR%s') '_%s.png'];
 end
-rRespTfrDiffAve.bfs = testDiffsAcrossTime(rRespTfrDiffAll,cfg);
+if ~isfield(rRespTfrDiffAve, 'bfs'); rRespTfrDiffAve.bfs = testDiffsAcrossTime(rRespTfrDiffAll,cfg); end
 plotTfr(rRespTfrDiffAve, cfg, rRespTfrDiffAve.bfs, sprintf(savename, 'tfr'))
 if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
 suptitle(['TFR Difference in Response Locked Categorisation Difficulty ' freqs])
