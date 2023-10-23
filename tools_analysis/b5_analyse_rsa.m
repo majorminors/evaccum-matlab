@@ -64,10 +64,10 @@ fprintf('you have %.0f subjects\n', count); clear count
 subjects = numel(data);
 rsa = struct();
 for subject = 1:subjects % loop through subjects
+        fprintf('this is subject: %s\n',num2str(subject))
     thisSubj = data{subject};
     thisSubj = thisSubj.rsa;
     conditions = fieldnames(thisSubj); % get the conditions (fieldnames)
-    
     for condition = 1:numel(conditions) % loop though the conditions
         thisCond = conditions{condition};
         newCondName = strrep(thisCond,'LockedAverage',''); % we don't need this bit, so let's rename it
@@ -81,25 +81,48 @@ for subject = 1:subjects % loop through subjects
         models = fieldnames(thisSubj.(thisCond));
         for model = 1:numel(models)
             thisModel = models{model};
-            % grab the values
-            samples = thisSubj.(thisCond).(thisModel).samples;
-            trans_samples = thisSubj.(thisCond).(thisModel).fisher_transformed_samples;
             
+            vals = thisSubj.(thisCond).(thisModel).vals;
+            tvals = thisSubj.(thisCond).(thisModel).fisher_transformed_vals;
+            pvals = thisSubj.(thisCond).(thisModel).partialVals;
+            tpvals = thisSubj.(thisCond).(thisModel).fisher_transformed_partialVals;
+            if any(isnan(vals))
+                warning('contains nans')
+                vals = [];
+            end
+            if any(isnan(tvals))
+                warning('contains nans')
+                tvals = [];
+            end
+            if any(isnan(pvals))
+                warning('contains nans')
+                pvals = [];
+            end
+            if any(isnan(tpvals))
+                warning('contains nans')
+                tpvals = [];
+            end
+                        
             % concatenate the values row-wise
             if isfield(rsa.(newCondName),thisModel)
-                rsa.(newCondName).(thisModel).vals = cat(1, rsa.(newCondName).(thisModel).vals, samples);
-                rsa.(newCondName).(thisModel).tvals = cat(1, rsa.(newCondName).(thisModel).tvals, trans_samples);
+                rsa.(newCondName).(thisModel).vals = cat(1, rsa.(newCondName).(thisModel).vals, vals);
+                rsa.(newCondName).(thisModel).tvals = cat(1, rsa.(newCondName).(thisModel).tvals, tvals);
+                rsa.(newCondName).(thisModel).pvals = cat(1, rsa.(newCondName).(thisModel).vals, pvals);
+                rsa.(newCondName).(thisModel).tpvals = cat(1, rsa.(newCondName).(thisModel).tvals, tpvals);
             else
-                rsa.(newCondName).(thisModel).vals = samples;
-                rsa.(newCondName).(thisModel).tvals = trans_samples;
+                rsa.(newCondName).(thisModel).vals = thisSubj.(thisCond).(thisModel).vals;
+                rsa.(newCondName).(thisModel).tvals = thisSubj.(thisCond).(thisModel).fisher_transformed_vals;
+                rsa.(newCondName).(thisModel).pvals = thisSubj.(thisCond).(thisModel).partialVals;
+                rsa.(newCondName).(thisModel).tpvals = thisSubj.(thisCond).(thisModel).fisher_transformed_partialVals;
             end
-        end; clear model models thisModel samples trans_samples
+        end; clear model models thisModel vals tvals pvals tpvals trans_samples
     end; clear condition newCondName thisCond
 end; clear subject conditions thisSubj subjects
 
 clear data % don't need this anymore
 
 disp('done prepping data')
+fprintf('you have %.0f subjects\n', count); clear count
 
 %%%%%%%%%%%%%%%%%%%
 %% calculate bfs %%
@@ -109,8 +132,7 @@ disp('collecting bayes factors')
 
 nullInterval = '0.5,Inf';
 insideNull = 1;
-bfSaveName = [datadir filesep sprintf('rsa_%s.mat',nullInterval)];
-saveFigs = 0;
+bfSaveName = [datadir filesep sprintf('rsa_partial_%s.mat',nullInterval)];
 
 if exist(bfSaveName,'file')
     warning('bfs for this null interval exist');
@@ -128,6 +150,7 @@ if exist(bfSaveName,'file')
 else
     doBfs = 1;
 end
+
 
 if doBfs
     conditions = fieldnames(rsa);
@@ -150,9 +173,13 @@ if doBfs
     parfor condition = 1:numConditions
         thisCond = conditions{condition};
         models = fieldnames(rsa.(thisCond));
+        
+        % initialisations
         numModels = numel(models);
         bfs = cell(1,numModels);
         tbfs = cell(1,numModels);
+        pbfs = cell(1,numModels);
+        tpbfs = cell(1,numModels);
         
         % add the R module and get the path to Rscript
         [status, result] = system('module add R && which Rscript');
@@ -167,16 +194,43 @@ if doBfs
         for model = 1:numModels
             thisModel = models{model};
             
-            % now run the rscript version of the bayes analysis
-            %   we can also get the bf for the complementary interval
-            %   by specifying insideNull = 2 (default is 1)
-            bfs{model} = bayesfactor_R_wrapper(rsa.(thisCond).(thisModel).vals','Rpath',RscriptPath,'returnindex',insideNull,...
-                'args',['mu=0,rscale="medium",nullInterval=c(' nullInterval ')']);
-            tbfs{model} = bayesfactor_R_wrapper(rsa.(thisCond).(thisModel).tvals','Rpath',RscriptPath,'returnindex',insideNull,...
-                'args',['mu=0,rscale="medium",nullInterval=c(' nullInterval ')']);
+            vals = rsa.(thisCond).(thisModel).vals';
+            tvals = rsa.(thisCond).(thisModel).tvals';
+            pvals = rsa.(thisCond).(thisModel).pvals';
+            tpvals = rsa.(thisCond).(thisModel).tpvals';
+            
+%             now run the rscript version of the bayes analysis
+%             we can also get the bf for the complementary interval
+%             by specifying insideNull = 2 (default is 1)
+              if any(isnan(vals))
+                  bfs{model} = NaN(size(vals));
+              else
+                  bfs{model} = bayesfactor_R_wrapper(vals,'Rpath',RscriptPath,'returnindex',insideNull,...
+                      'args',['mu=0,rscale="medium",nullInterval=c(' nullInterval ')']);
+              end
+              if any(isnan(tvals))
+                  bfs{model} = NaN(size(tvals));
+              else
+                  tbfs{model} = bayesfactor_R_wrapper(tvals,'Rpath',RscriptPath,'returnindex',insideNull,...
+                      'args',['mu=0,rscale="medium",nullInterval=c(' nullInterval ')']);
+              end
+              if any(isnan(pvals))
+                  bfs{model} = NaN(size(pvals));
+              else
+                  pbfs{model} = bayesfactor_R_wrapper(pvals,'Rpath',RscriptPath,'returnindex',insideNull,...
+                      'args',['mu=0,rscale="medium",nullInterval=c(' nullInterval ')']);
+              end
+              if any(isnan(tpvals))
+                  bfs{model} = NaN(size(tpvals));
+              else
+                  tpbfs{model} = bayesfactor_R_wrapper(tpvals,'Rpath',RscriptPath,'returnindex',insideNull,...
+                      'args',['mu=0,rscale="medium",nullInterval=c(' nullInterval ')']);
+              end
         end
         conditionsBfs{condition} = bfs;
         conditionstBfs{condition} = tbfs;
+        conditionspBfs{condition} = pbfs;
+        conditionstpBfs{condition} = tpbfs;
     end; clear bfs tbfs
     
     % put the results back into the rsa struct
@@ -187,6 +241,8 @@ if doBfs
             thisModel = models{model};
             rsa.(thisCond).(thisModel).bfs = conditionsBfs{condition}{model};
             rsa.(thisCond).(thisModel).tbfs = conditionstBfs{condition}{model};
+            rsa.(thisCond).(thisModel).pbfs = conditionsBfs{condition}{model};
+            rsa.(thisCond).(thisModel).tpbfs = conditionstBfs{condition}{model};
         end; clear models model thisModel
     end; clear conditions condition thisCond
     save(bfSaveName,'rsa')
@@ -211,137 +267,167 @@ disp('done collecting bayes factors')
 %%%%%%%%%%%%%%%%
 
 disp('doing plots')
+saveFigs = 1;
+plotConds = {'stim' 'decbdry' 'dec_simple' 'resp'}; %'dec_detail_pred' 'dec_detail_null' 
+% plotConds = {'stim' 'decbdry' 'dec_simple' 'dec_detail_null' 'dec_detail_pred' 'resp'}; %  
+
+plotNames = {'Motion Direction' 'Decision Boundary' 'Motion Classification' 'Response'};
+% plotNames = {'Motion Direction' 'Decision Boundary' 'Motion Classification Simple' 'Motion Classification Null' 'Motion Classification Pred' 'Response'};
+
 
 errTerm = 'error'; % std 'error' or std 'deviation'
-plotTransformed = 0;
 
-if plotTransformed
-    whichVals = 'tvals';
+plotTransformed = 0;
+plotPartials = 1;
+
+whichVals = 'vals';
+whichBfs = 'bfs';
+if plotPartials
+    whichVals = ['p' whichVals];
+    whichBfs = ['p' whichBfs];
 else
-    whichVals = 'vals';
 end
 
-% get ylims for the rsa
-count = 0;
-conditions = fieldnames(rsa);
-for condition = 1:numel(conditions)
-    thisCond = conditions{condition};
-    models = fieldnames(rsa.(thisCond));
-    for model = 1:numel(models)
-        thisModel = models{model};
-        count = count+1;
-        vals = mean(rsa.(thisCond).(thisModel).(whichVals));
-        switch errTerm
-            case 'deviation'
-                thisErr = std(rsa.(thisCond).(thisModel).(whichVals));
-            case 'error'
-                thisErr = std(rsa.(thisCond).(thisModel).(whichVals)) / sqrt(size(rsa.(thisCond).(thisModel).(whichVals), 1));
-        end
-        ymax(count) = max([max(thisErr) max(vals)]);
-        ymin(count) = min([min(thisErr) min(vals)]);
-    end; clear models model thisModel
-end; clear conditions condition thisCond count
-ymax = max(ymax)+max(ymax)/5;
-ymin = min(ymin)-min(ymin)/5;
+if plotTransformed
+    whichVals = ['t' whichVals];
+    whichBfs = ['t' whichBfs];
+end
+% disp(whichVals)
+% disp(whichBfs)
 
-for lock = {'coherence' 'response'}
+% get ylims for the rsa
+plotGroups = {{'ecer_' 'echr_' 'hcer_' 'hchr_'} {'ec_' 'hc_' 'er_' 'hr_'}};
+groupNames = {'conditions' 'manipulations'};
+for thisGroup = 1:numel(plotGroups)
+    tmp = fieldnames(rsa);
+    conditions = tmp(startsWith(fieldnames(rsa),plotGroups{thisGroup})); clear tmp
     
-    figure;
-    conditions = fieldnames(rsa);
-    conditions = conditions(contains(conditions,lock));
+    count = 0;
     for condition = 1:numel(conditions)
         thisCond = conditions{condition};
-                
-        models = fieldnames(rsa.(thisCond));
+        %     models = fieldnames(rsa.(thisCond));
+        models = plotConds;
+        
+        % let's collect up some plot limits
         for model = 1:numel(models)
             thisModel = models{model};
-            
-            timepoints = 1:numel(rsa.(thisCond).(thisModel).bfs);
-            bfs = rsa.(thisCond).(thisModel).bfs;
+            count = count+1;
             vals = mean(rsa.(thisCond).(thisModel).(whichVals));
-            std_dev = std(rsa.(thisCond).(thisModel).(whichVals));
-            std_err = std(rsa.(thisCond).(thisModel).(whichVals)) / sqrt(size(rsa.(thisCond).(thisModel).(whichVals), 1));
             switch errTerm
                 case 'deviation'
-                    thisErr = std_dev;
+                    thisErr = std(rsa.(thisCond).(thisModel).(whichVals));
                 case 'error'
-                    thisErr = std_err;
+                    thisErr = std(rsa.(thisCond).(thisModel).(whichVals)) / sqrt(size(rsa.(thisCond).(thisModel).(whichVals), 1));
             end
-            
-            if contains(thisCond,'response')
-                onset = 600; % to subtract from timepoints
-                xlims = [-600 200];
-                condName = thisCond;
-            elseif contains(thisCond,'coherence')
-                onset = 500; % to subtract from timepoints
-                xlims = [-500 1500];
-                condName = strrep(thisCond,'coherence','onset');
-            end
-            timepoints = timepoints-onset;
-            
-            % first the correlation
-            subplot(2*numel(conditions),numel(models),(condition-1)*numel(models)*2 + model);
-            corrCol = [0.4 0.8 0.6];
-            fillCol = [1.0 0.7 0.7];
-            x_fill = [timepoints, fliplr(timepoints)]; % x values for the fill
-            y_upper = vals + thisErr; % upper bound of the fill
-            y_lower = vals - thisErr; % lower bound of the fill
-            fill(x_fill, [y_upper, fliplr(y_lower)], fillCol, 'FaceAlpha', 0.5, 'EdgeColor', 'none')
-            hold on
-            plot(timepoints,vals,'color',corrCol)
-            hold off
-            xlabel('Time (s)')
-            ylabel(['Decoding (std' errTerm(1:3) ')'])
-            ylim([ymin ymax])
-            xlim([timepoints(1),timepoints(end)])
-            title([strrep(condName,'_',' ') ' ' thisModel])
-            clear corrCol fillCol
-            
-            % then the bayesfactors
-            subplot(2*numel(conditions),numel(models),condition*numel(models)*2 - numel(models) + model);
-            load('bayes_colourmap.mat'); % in BFF repo
-            exponential_minmax=6;
-            val_col_map = logspace(-exponential_minmax,exponential_minmax,size(colours,1));
-            scatter_colours = zeros(length(timepoints), 3);  % preallocate for efficiency
-            for t = 1:length(timepoints)
-                [~,idx] = min(abs(val_col_map-bfs(t)));
-                scatter_colours(t, :) = colours(idx,1:3);
-            end
-            scatter(timepoints, bfs, 30, scatter_colours, 'filled');
-            line(get(gca,'XLim'),[1 1], 'Color', [0.7 0.7 0.7], 'LineStyle', '--')
-            ax = gca;
-            set(ax,'YScale','log','XLim',[timepoints(1),timepoints(end)], ...
-                'YLim',[1*10^(-exponential_minmax) 1*10^exponential_minmax],'YTick',10.^(-exponential_minmax:2:exponential_minmax))
-            xlabel('Time (s)')
-            ylabel('BF (log scale)')
-            colormap(colours)
-            cbh = colorbar;
-            caxis([-exponential_minmax,exponential_minmax])
-            cbh.Units = 'normalized';
-            cbh.Limits = [-exponential_minmax,exponential_minmax];
-            cbh.Position(1) = 0.92;cbh.Position(3) = 0.01;cbh.Position(4) = ax.Position(4);cbh.Position(2) = ax.Position(2);
-            cbh.Label.String = 'Bayes Factor';
-            f = gcf; f.Position = [10 10 1600 1600];
-            if exponential_minmax<=4
-                cbh.Ticks = [-exponential_minmax, -1, -0.5, 0, 0.5, 1, exponential_minmax];
-            else
-                cbh.Ticks = [-exponential_minmax, -1, 0, 1, exponential_minmax];
-            end
-            cbh.TickLabels=arrayfun(@(x) ['10^{' num2str(x) '}'], cbh.Ticks, 'UniformOutput', false);
-            cbh.TickLabels(strcmp(cbh.TickLabels,'10^{0}')) = {'Inconclusive'};
-            cbh.TickLabels(strcmp(cbh.TickLabels,'10^{0.5}') | strcmp(cbh.TickLabels,'10^{-0.5}')) = {'Moderate'};
-            cbh.TickLabels(strcmp(cbh.TickLabels,'10^{1}') | strcmp(cbh.TickLabels,'10^{-1}')) = {'Strong'};
-            
+            ymax(count) = max([max(thisErr) max(vals)]);
+            ymin(count) = min([min(thisErr) min(vals)]);
         end; clear models model thisModel
-    end; clear conditions condition thisCond
+    end; clear condition thisCond count
+    ymax = max(ymax)+max(ymax)/5;
+    ymin = min(ymin)+min(ymin)/5;
     
-    if saveFigs
-        tmp = split(condName,'_');
-        print([figDir filesep tmp{2} '_rsa.png'],'-dpng')
-        clear tmp
-    end
-
-end; clear lock
+    for lock = {'coherence' 'response'}
+        
+        figure;
+        lockConds = conditions(contains(conditions,lock));
+        for condition = 1:numel(lockConds)
+            thisCond = lockConds{condition};
+            
+            %     models = fieldnames(rsa.(thisCond));
+            models = plotConds;
+            for model = 1:numel(models)
+                thisModel = models{model};
+                
+                timepoints = 1:numel(rsa.(thisCond).(thisModel).(whichBfs));
+                bfs = rsa.(thisCond).(thisModel).(whichBfs);
+                vals = mean(rsa.(thisCond).(thisModel).(whichVals));
+                std_dev = std(rsa.(thisCond).(thisModel).(whichVals));
+                std_err = std(rsa.(thisCond).(thisModel).(whichVals)) / sqrt(size(rsa.(thisCond).(thisModel).(whichVals), 1));
+                switch errTerm
+                    case 'deviation'
+                        thisErr = std_dev;
+                    case 'error'
+                        thisErr = std_err;
+                end
+                
+                if contains(thisCond,'response')
+                    onset = 600; % to subtract from timepoints
+                    xlims = [-600 200];
+                    condName = thisCond;
+                elseif contains(thisCond,'coherence')
+                    onset = 500; % to subtract from timepoints
+                    xlims = [-500 1500];
+                    condName = strrep(thisCond,'coherence','onset');
+                end
+                timepoints = timepoints-onset;
+                
+                % first the correlation
+                subplot(2*numel(lockConds),numel(models),(condition-1)*numel(models)*2 + model);
+                corrCol = [0.4 0.8 0.6];
+                fillCol = [1.0 0.7 0.7];
+                x_fill = [timepoints, fliplr(timepoints)]; % x values for the fill
+                y_upper = vals + thisErr; % upper bound of the fill
+                y_lower = vals - thisErr; % lower bound of the fill
+                fill(x_fill, [y_upper, fliplr(y_lower)], fillCol, 'FaceAlpha', 0.5, 'EdgeColor', 'none') % the fill
+                hold on
+                plot(timepoints,vals,'color',corrCol) % the actual rsa correlation
+                line(get(gca,'XLim'), [0 0], 'Color', [0.1 0.1 0.1], 'LineStyle', '-') % plot a line along zero on the y
+                xlabel('Time (s)')
+                ylabel(['Decoding (std' errTerm(1:3) ')'])
+                ylim([ymin ymax])
+                line([0 0], get(gca,'YLim'), 'Color', [0.7 0.7 0.7], 'LineStyle', '--') % plot a line to mark the timepoint of interest
+                hold off
+                xlim([timepoints(1),timepoints(end)])
+                title([regexprep(regexprep(strrep(condName,'_',' '), '(?<!\S)(\S)(\S*)', '${upper($1)}${lower($2)}'), '(\S+\s)(\S+)', '$1$2-Locked')...
+                    ' ' plotNames{strcmp(plotConds,thisModel)}])
+                clear corrCol fillCol
+                
+                % then the bayesfactors
+                subplot(2*numel(lockConds),numel(models),condition*numel(models)*2 - numel(models) + model);
+                load('bayes_colourmap.mat'); % in BFF repo
+                exponential_minmax=6;
+                val_col_map = logspace(-exponential_minmax,exponential_minmax,size(colours,1));
+                scatter_colours = zeros(length(timepoints), 3);  % preallocate for efficiency
+                for t = 1:length(timepoints)
+                    [~,idx] = min(abs(val_col_map-bfs(t)));
+                    scatter_colours(t, :) = colours(idx,1:3);
+                end
+                scatter(timepoints, bfs, 30, scatter_colours, 'filled');
+                line(get(gca,'XLim'),[1 1], 'Color', [0.7 0.7 0.7], 'LineStyle', '--') % plot a line along inconclusive evidence
+                ax = gca;
+                set(ax,'YScale','log','XLim',[timepoints(1),timepoints(end)], ...
+                    'YLim',[1*10^(-exponential_minmax) 1*10^exponential_minmax],'YTick',10.^(-exponential_minmax:2:exponential_minmax))
+                xlabel('Time (s)')
+                ylabel('BF (log scale)')
+                colormap(colours)
+                cbh = colorbar;
+                caxis([-exponential_minmax,exponential_minmax])
+                cbh.Units = 'normalized';
+                cbh.Limits = [-exponential_minmax,exponential_minmax];
+                cbh.Position(1) = 0.92;cbh.Position(3) = 0.01;cbh.Position(4) = ax.Position(4);cbh.Position(2) = ax.Position(2);
+                cbh.Label.String = 'Bayes Factor';
+                f = gcf; f.Position = [10 10 1600 1600];
+                if exponential_minmax<=4
+                    cbh.Ticks = [-exponential_minmax, -1, -0.5, 0, 0.5, 1, exponential_minmax];
+                else
+                    cbh.Ticks = [-exponential_minmax, -1, 0, 1, exponential_minmax];
+                end
+                cbh.TickLabels=arrayfun(@(x) ['10^{' num2str(x) '}'], cbh.Ticks, 'UniformOutput', false);
+                cbh.TickLabels(strcmp(cbh.TickLabels,'10^{0}')) = {'Inconclusive'};
+                cbh.TickLabels(strcmp(cbh.TickLabels,'10^{0.5}') | strcmp(cbh.TickLabels,'10^{-0.5}')) = {'Moderate'};
+                cbh.TickLabels(strcmp(cbh.TickLabels,'10^{1}') | strcmp(cbh.TickLabels,'10^{-1}')) = {'Strong'};
+                
+            end; clear models model thisModel
+        end; clear condition thisCond lockConds
+        
+        if saveFigs
+            tmp = split(condName,'_');
+            print([figDir filesep groupNames{thisGroup} '_' tmp{2} '_rsa.png'],'-dpng')
+            clear tmp
+        end
+        
+    end; clear lock
+end; clear thisGroup conditions
 
 disp('done doing plots')
 
