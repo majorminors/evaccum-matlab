@@ -272,6 +272,8 @@ disp('doing anova on conditions')
 dataSets.onset = {ecerOnsAll echrOnsAll hcerOnsAll hchrOnsAll};
 dataSets.response = {ecerRespAll echrRespAll hcerRespAll hchrRespAll};
 
+% we can try erins, but this does a mixed model with subjects as a random
+% effect: not quite an rm anova
 % novas = fieldnames(dataSets);
 % for i = 1:numel(novas)
 %     thisNova = novas{i};
@@ -309,8 +311,7 @@ dataSets.response = {ecerRespAll echrRespAll hcerRespAll hchrRespAll};
 % plot(1:size(results.onset.h,1),results.onset.h.difficulty_x_manipulation)
 % plot(1:size(results.response.h,1),results.response.h.difficulty_x_manipulation)
 
-% % let's try a different one
-% 
+% let's try an rm anova
 novas = fieldnames(dataSets);
 for i = 1:numel(novas)
     thisNova = novas{i};
@@ -364,11 +365,12 @@ for i = 1:numel(novas)
         % 1,2: easy coherence, hard rule
         % 2,1: hard coherence, easy rule
         % 2,2: hard coherence, hard rule
-        within = table([1;1;2;2],[1;2;1;2],'VariableNames',{'Coherence','Rule'});
+        within = table(categorical([1;1;2;2]),categorical([1;2;1;2]),'VariableNames',{'Coherence','Rule'});
         % specify the design---each condition on the intercept (1)
-        rm = fitrm(t,'ecer-echr,hcer-hchr ~ 1','WithinDesign',within);
+        rm = fitrm(t,'ecer,echr,hcer,hchr ~ 1', 'WithinDesign', within);
         % and we want to look at the interaction, so specify that
         ranovatbl = ranova(rm, 'WithinModel','Coherence*Rule');
+%         writetable(t)
         
         % the ranova table comes out with stats for the main effects and
         % the interaction now, but it's a bit weird, because it also
@@ -410,10 +412,10 @@ for i = 1:numel(novas)
     
 end; clear i thisNova
 % 
-% scatter(1:numel(results.onset.h.Interaction),results.onset.h.Interaction)
-% scatter(1:numel(results.response.h.Interaction),results.response.h.Interaction)
-% scatter(1:numel(results.onset.p.Interaction),results.onset.p.Interaction<0.05)
-% scatter(1:numel(results.response.p.Interaction),results.response.p.Interaction<0.05)
+scatter(1:numel(results.onset.h.Interaction),results.onset.h.Interaction)
+scatter(1:numel(results.response.h.Interaction),results.response.h.Interaction)
+scatter(1:numel(results.onset.p.Interaction),results.onset.p.Interaction<0.05)
+scatter(1:numel(results.response.p.Interaction),results.response.p.Interaction<0.05)
     
 
 clear dataSets
