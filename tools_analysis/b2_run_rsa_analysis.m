@@ -25,7 +25,7 @@ saveFileName = [rootDir filesep 'rsa.mat'];
 % here we get the filtered (but not ICAed) data
 inputFilePattern = fullfile(preProcDir,'run*_f_transmid.fif');
 
-templateRdms = {'stim' 'decbdry' 'dec_simple' 'dec_detail_pred' 'dec_detail_null' 'resp'};
+templateRdmNames = {'stim' 'decbdry' 'dec_simple' 'resp'}; %  'dec_detail_pred' 'dec_detail_null'
 
 %%%%%%%%%%%%%%%
 %% prep data %%
@@ -134,15 +134,6 @@ for fileNum = 1:numel(theseFiles)
     cfg.run = thisRun;
     cfg.trl = trlFromFile(cfg); % my trl is by default locked to the trial onset to end, so we're just looking at the trial plus 500ms prior
     cohOnsetErpData{fileNum} = ft_redefinetrial(cfg,rawData);    
-%     % then baseline correction
-%     baselineWindow = [-0.2 0];
-%     cfg = [];
-%     cfg.latency = baselineWindow;
-%     baselineData = ft_selectdata(cfg,cohOnsetErpData{fileNum}); % hold onto this data for response locked
-%     cfg = [];
-%     cfg.demean          = 'yes';
-%     cfg.baselinewindow  = baselineWindow; % assumes we're demeaning coherence-locked stimuli
-%     cohOnsetErpData{fileNum} = ft_preprocessing(cfg,cohOnsetErpData{fileNum});
     % reject artefacts
     cohOnsetErpData{fileNum} = rejectArtefacts(cohOnsetErpData{fileNum}, combinedLayout,ftDir);
 %     any(cellfun(@(x) any(isnan(x(:))), cohOnsetErpData{1}.trial))
@@ -157,20 +148,7 @@ for fileNum = 1:numel(theseFiles)
     cfg.pre = -600; % pre response
     cfg.post = 200; % post response (when locked to response)
     cfg.trl = trlFromFile(cfg);
-    % if we want to look at the raw data
     respLockedErpData{fileNum} = ft_redefinetrial(cfg,rawData);
-    % we can calculate our own baseline correction here
-    % so first get the mean of the baseline window data
-%     baselineData = cellfun(@(x) mean(x,2), baselineData.trial,'UniformOutput',false);
-%     for tidx = 1:length(baselineData)
-%         % then subtract each trial baseline mean from the response-locked
-%         % epoch data
-%         respLockedErpData{fileNum}.trial{tidx} = respLockedErpData{fileNum}.trial{tidx}-baselineData{tidx};
-%     end
-    % or we could try to carry over the baseline correction from the onset
-    % locked data, but this produces a bunch of nans for reasons I couldn't
-    % figure out in a cursory investigation
-%     respLockedErpData{fileNum} = ft_redefinetrial(cfg,cohOnsetErpData{fileNum});
     % reject artefacts
     respLockedErpData{fileNum} = rejectArtefacts(respLockedErpData{fileNum}, combinedLayout,ftDir);
 %     any(cellfun(@(x) any(isnan(x(:))), respLockedErpData{1}.trial))
@@ -193,31 +171,31 @@ responseLockedErpData = ft_appenddata(cfg,respLockedErpData{:}); clear respLocke
 
 % first response-locked
 
-% disp('>>> compiling condition-wise averages')
-% 
-% cfg = [];
-% cfg.keeptrials = 1; % we want to keep trials for cosmo
-% cfg.trials = getTrialIndicesConditions(responseLockedErpData,1); % good trials, 1st condition
-% data.ecer_responseLockedAverage = ft_timelockanalysis(cfg, responseLockedErpData);
-% cfg.trials = getTrialIndicesConditions(responseLockedErpData,2); % good trials, 2nd condition
-% data.echr_responseLockedAverage = ft_timelockanalysis(cfg, responseLockedErpData);
-% cfg.trials = getTrialIndicesConditions(responseLockedErpData,3); % good trials, 3rd condition
-% data.hcer_responseLockedAverage = ft_timelockanalysis(cfg, responseLockedErpData);
-% cfg.trials = getTrialIndicesConditions(responseLockedErpData,4); % good trials, 4th condition
-% data.hchr_responseLockedAverage = ft_timelockanalysis(cfg, responseLockedErpData);
-% 
-% % now onset locked
-% 
-% cfg = [];
-% cfg.keeptrials = 1; % we want to keep trials for cosmo
-% cfg.trials = getTrialIndicesConditions(coherenceOnsetErpData,1); % good trials, 1st condition
-% data.ecer_coherenceLockedAverage = ft_timelockanalysis(cfg, coherenceOnsetErpData);
-% cfg.trials = getTrialIndicesConditions(coherenceOnsetErpData,2); % good trials, 2nd condition
-% data.echr_coherenceLockedAverage = ft_timelockanalysis(cfg, coherenceOnsetErpData);
-% cfg.trials = getTrialIndicesConditions(coherenceOnsetErpData,3); % good trials, 3rd condition
-% data.hcer_coherenceLockedAverage = ft_timelockanalysis(cfg, coherenceOnsetErpData);
-% cfg.trials = getTrialIndicesConditions(coherenceOnsetErpData,4); % good trials, 4th condition
-% data.hchr_coherenceLockedAverage = ft_timelockanalysis(cfg, coherenceOnsetErpData);
+disp('>>> compiling condition-wise averages')
+
+cfg = [];
+cfg.keeptrials = 1; % we want to keep trials for cosmo
+cfg.trials = getTrialIndicesConditions(responseLockedErpData,1); % good trials, 1st condition
+data.ecer_responseLockedAverage = ft_timelockanalysis(cfg, responseLockedErpData);
+cfg.trials = getTrialIndicesConditions(responseLockedErpData,2); % good trials, 2nd condition
+data.echr_responseLockedAverage = ft_timelockanalysis(cfg, responseLockedErpData);
+cfg.trials = getTrialIndicesConditions(responseLockedErpData,3); % good trials, 3rd condition
+data.hcer_responseLockedAverage = ft_timelockanalysis(cfg, responseLockedErpData);
+cfg.trials = getTrialIndicesConditions(responseLockedErpData,4); % good trials, 4th condition
+data.hchr_responseLockedAverage = ft_timelockanalysis(cfg, responseLockedErpData);
+
+% now onset locked
+
+cfg = [];
+cfg.keeptrials = 1; % we want to keep trials for cosmo
+cfg.trials = getTrialIndicesConditions(coherenceOnsetErpData,1); % good trials, 1st condition
+data.ecer_coherenceLockedAverage = ft_timelockanalysis(cfg, coherenceOnsetErpData);
+cfg.trials = getTrialIndicesConditions(coherenceOnsetErpData,2); % good trials, 2nd condition
+data.echr_coherenceLockedAverage = ft_timelockanalysis(cfg, coherenceOnsetErpData);
+cfg.trials = getTrialIndicesConditions(coherenceOnsetErpData,3); % good trials, 3rd condition
+data.hcer_coherenceLockedAverage = ft_timelockanalysis(cfg, coherenceOnsetErpData);
+cfg.trials = getTrialIndicesConditions(coherenceOnsetErpData,4); % good trials, 4th condition
+data.hchr_coherenceLockedAverage = ft_timelockanalysis(cfg, coherenceOnsetErpData);
 
 %% now averaged across manipulations
 
@@ -258,7 +236,7 @@ disp('>>> now cosmo')
 %% prep for cosmo
 % https://www.cosmomvpa.org/contents_demo.html#demo-meeg-timelock-searchlight
 
-for manipulation = {'ec' 'hc' 'er' 'hr'}
+for manipulation = {'ecer' 'echr' 'hcer' 'hchr' 'ec' 'hc' 'er' 'hr'}
     for timeLock = {'%s_responseLockedAverage' '%s_coherenceLockedAverage'}
         thisManipulation = manipulation{:};
         thisTimelock = sprintf(timeLock{:},thisManipulation);
@@ -343,12 +321,36 @@ for manipulation = {'ec' 'hc' 'er' 'hr'}
         measure_args.metric='Spearman'; % metric to use to compute MEG dsm
         measure_args.center_data=true; % removes the mean pattern before correlating
         % run searchlight between our RDM and our trial data
-        for thisModel = templateRdms
-            measure_args.target_dsm = makeRdm(thisModel{:},theseTrialIds);
-            rsa.(thisTimelock).(thisModel{:}) = cosmo_searchlight(ds,nbrhood,measure,measure_args);
+        for thisModelName = templateRdmNames
+            fprintf('compiling model: %s\n',thisModelName{:});
+            rsa.(thisTimelock).(thisModelName{:}).model = makeRdm(thisModelName{:},theseTrialIds);
+        end; clear count
+        for thisModelName = templateRdmNames
+            fprintf('calculating raw correlation for model: %s\n',thisModelName{:});
+            measure_args.target_dsm = rsa.(thisTimelock).(thisModelName{:}).model;
+            tmp = cosmo_searchlight(ds,nbrhood,measure,measure_args);
+            rsa.(thisTimelock).(thisModelName{:}).vals = tmp.samples;
+            rmfield(tmp,'samples'); rsa.(thisTimelock).(thisModelName{:}).all = tmp; clear tmp
             % fisher transform the correlation values so they are more
             % normally distributed for group analysis
-            rsa.(thisTimelock).(thisModel{:}).fisher_transformed_samples=atanh(rsa.(thisTimelock).(thisModel{:}).samples);
+            rsa.(thisTimelock).(thisModelName{:}).fisher_transformed_vals = atanh(rsa.(thisTimelock).(thisModelName{:}).vals);
+            if numel(templateRdmNames)>1
+                modelIdx = strcmp(thisModelName,fieldnames(rsa.(thisTimelock)));
+                fprintf('now calculating partial correlation against models: %s\n',char(join(templateRdmNames(~modelIdx),', ')));
+                clear comparisonRdms
+                for i = templateRdmNames(~modelIdx)
+                    if ~exist('comparisonRdms','var')
+                        comparisonRdms = {rsa.(thisTimelock).(i{:}).model};
+                    else
+                        comparisonRdms = [comparisonRdms {rsa.(thisTimelock).(i{:}).model}];
+                    end
+                end; clear i
+                measure_args.regress_dsm = comparisonRdms;
+                tmp = cosmo_searchlight(ds,nbrhood,measure,measure_args);
+                rsa.(thisTimelock).(thisModelName{:}).partialVals = tmp.samples;
+                rmfield(tmp,'samples'); rsa.(thisTimelock).(thisModelName{:}).allPartial = tmp; clear tmp
+                rsa.(thisTimelock).(thisModelName{:}).fisher_transformed_partialVals = atanh(rsa.(thisTimelock).(thisModelName{:}).partialVals);
+            end
         end % model loop
     end %timelock loop
 end %manipulation loop
