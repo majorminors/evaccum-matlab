@@ -25,7 +25,7 @@ saveFileName = [rootDir filesep 'rsa.mat'];
 % here we get the filtered (but not ICAed) data
 inputFilePattern = fullfile(preProcDir,'run*_f_transmid.fif');
 
-templateRdmNames = {'stim' 'decbdry' 'dec_simple' 'resp'}; %  'dec_detail_pred' 'dec_detail_null'
+templateRdms = {'stim' 'decbdry' 'dec_simple' 'resp'}; % 'dec_detail_pred' 'dec_detail_null' 
 
 %%%%%%%%%%%%%%%
 %% prep data %%
@@ -134,6 +134,15 @@ for fileNum = 1:numel(theseFiles)
     cfg.run = thisRun;
     cfg.trl = trlFromFile(cfg); % my trl is by default locked to the trial onset to end, so we're just looking at the trial plus 500ms prior
     cohOnsetErpData{fileNum} = ft_redefinetrial(cfg,rawData);    
+%     % then baseline correction
+%     baselineWindow = [-0.2 0];
+%     cfg = [];
+%     cfg.latency = baselineWindow;
+%     baselineData = ft_selectdata(cfg,cohOnsetErpData{fileNum}); % hold onto this data for response locked
+%     cfg = [];
+%     cfg.demean          = 'yes';
+%     cfg.baselinewindow  = baselineWindow; % assumes we're demeaning coherence-locked stimuli
+%     cohOnsetErpData{fileNum} = ft_preprocessing(cfg,cohOnsetErpData{fileNum});
     % reject artefacts
     cohOnsetErpData{fileNum} = rejectArtefacts(cohOnsetErpData{fileNum}, combinedLayout,ftDir);
 %     any(cellfun(@(x) any(isnan(x(:))), cohOnsetErpData{1}.trial))
@@ -148,7 +157,20 @@ for fileNum = 1:numel(theseFiles)
     cfg.pre = -600; % pre response
     cfg.post = 200; % post response (when locked to response)
     cfg.trl = trlFromFile(cfg);
+    % if we want to look at the raw data
     respLockedErpData{fileNum} = ft_redefinetrial(cfg,rawData);
+    % we can calculate our own baseline correction here
+    % so first get the mean of the baseline window data
+%     baselineData = cellfun(@(x) mean(x,2), baselineData.trial,'UniformOutput',false);
+%     for tidx = 1:length(baselineData)
+%         % then subtract each trial baseline mean from the response-locked
+%         % epoch data
+%         respLockedErpData{fileNum}.trial{tidx} = respLockedErpData{fileNum}.trial{tidx}-baselineData{tidx};
+%     end
+    % or we could try to carry over the baseline correction from the onset
+    % locked data, but this produces a bunch of nans for reasons I couldn't
+    % figure out in a cursory investigation
+%     respLockedErpData{fileNum} = ft_redefinetrial(cfg,cohOnsetErpData{fileNum});
     % reject artefacts
     respLockedErpData{fileNum} = rejectArtefacts(respLockedErpData{fileNum}, combinedLayout,ftDir);
 %     any(cellfun(@(x) any(isnan(x(:))), respLockedErpData{1}.trial))
@@ -236,7 +258,7 @@ disp('>>> now cosmo')
 %% prep for cosmo
 % https://www.cosmomvpa.org/contents_demo.html#demo-meeg-timelock-searchlight
 
-for manipulation = {'ecer' 'echr' 'hcer' 'hchr' 'ec' 'hc' 'er' 'hr'}
+for manipulation = {'ec' 'hc' 'er' 'hr' 'ecer' 'echr' 'hcer' 'hchr'}
     for timeLock = {'%s_responseLockedAverage' '%s_coherenceLockedAverage'}
         thisManipulation = manipulation{:};
         thisTimelock = sprintf(timeLock{:},thisManipulation);
@@ -320,38 +342,40 @@ for manipulation = {'ecer' 'echr' 'hcer' 'hchr' 'ec' 'hc' 'er' 'hr'}
         measure_args.type='Spearman'; % correlation type between target and MEG dsms
         measure_args.metric='Spearman'; % metric to use to compute MEG dsm
         measure_args.center_data=true; % removes the mean pattern before correlating
-        % run searchlight between our RDM and our trial data
-        for thisModelName = templateRdmNames
-            fprintf('compiling model: %s\n',thisModelName{:});
-            rsa.(thisTimelock).(thisModelName{:}).model = makeRdm(thisModelName{:},theseTrialIds);
-        end; clear count
-        for thisModelName = templateRdmNames
-            fprintf('calculating raw correlation for model: %s\n',thisModelName{:});
-            measure_args.target_dsm = rsa.(thisTimelock).(thisModelName{:}).model;
-            tmp = cosmo_searchlight(ds,nbrhood,measure,measure_args);
-            rsa.(thisTimelock).(thisModelName{:}).vals = tmp.samples;
-            rmfield(tmp,'samples'); rsa.(thisTimelock).(thisModelName{:}).all = tmp; clear tmp
+        % run searchlight between our RDM and our trial data to get the raw correlations
+        if numel(templateRdms) > 1;comparisonRdms = {};end % init this, in case we want to check partials
+        for thisModel = templateRdms
+            fprintf('getting raw correlations for model %s\n', thisModel{:})
+            thisRdm = makeRdm(thisModel{:},theseTrialIds);
+            measure_args.target_dsm = thisRdm;
+            rsa.(thisTimelock).(thisModel{:}) = cosmo_searchlight(ds,nbrhood,measure,measure_args);
             % fisher transform the correlation values so they are more
             % normally distributed for group analysis
-            rsa.(thisTimelock).(thisModelName{:}).fisher_transformed_vals = atanh(rsa.(thisTimelock).(thisModelName{:}).vals);
-            if numel(templateRdmNames)>1
-                modelIdx = strcmp(thisModelName,fieldnames(rsa.(thisTimelock)));
-                fprintf('now calculating partial correlation against models: %s\n',char(join(templateRdmNames(~modelIdx),', ')));
-                clear comparisonRdms
-                for i = templateRdmNames(~modelIdx)
-                    if ~exist('comparisonRdms','var')
-                        comparisonRdms = {rsa.(thisTimelock).(i{:}).model};
-                    else
-                        comparisonRdms = [comparisonRdms {rsa.(thisTimelock).(i{:}).model}];
-                    end
-                end; clear i
-                measure_args.regress_dsm = comparisonRdms;
+            rsa.(thisTimelock).(thisModel{:}).fisher_transformed_samples=atanh(rsa.(thisTimelock).(thisModel{:}).samples);
+            rsa.(thisTimelock).(thisModel{:}).rdm = thisRdm;
+            if numel(templateRdms) > 1; comparisonRdms = [comparisonRdms {thisRdm}];end % collate these in case we want to check partials
+            clear thisRdm
+        end; clear thisModel % model loop
+        if numel(templateRdms) > 1
+            % ok, now we want to do the same thing, but to get partial correlations out
+            % we could, in theory, do this in the same loop as before, but for some reason I was getting very different results when I did it, so rather than work out why I will just do it seperately
+            measure_args=struct();
+            measure_args.type='Spearman'; % correlation type between target and MEG dsms
+            measure_args.metric='Spearman'; % metric to use to compute MEG dsm
+            measure_args.center_data=true; % removes the mean pattern before correlating
+            for thisModel = templateRdms
+                fprintf('getting partial correlations for model %s\n', thisModel{:})
+                thisRdm = makeRdm(thisModel{:},theseTrialIds);
+                measure_args.target_dsm = thisRdm;
+                compareFunc = @(x) ~isequal(x, thisRdm);
+                toCompare = comparisonRdms(cellfun(compareFunc, comparisonRdms));
+                measure_args.regress_dsm = toCompare; clear toCompare
                 tmp = cosmo_searchlight(ds,nbrhood,measure,measure_args);
-                rsa.(thisTimelock).(thisModelName{:}).partialVals = tmp.samples;
-                rmfield(tmp,'samples'); rsa.(thisTimelock).(thisModelName{:}).allPartial = tmp; clear tmp
-                rsa.(thisTimelock).(thisModelName{:}).fisher_transformed_partialVals = atanh(rsa.(thisTimelock).(thisModelName{:}).partialVals);
-            end
-        end % model loop
+                rsa.(thisTimelock).(thisModel{:}).partial_samples = tmp.samples;
+                rsa.(thisTimelock).(thisModel{:}).fisher_transformed_partial_samples = atanh(tmp.samples);
+                clear tmp compareFunc toCompare thisRdm
+            end % model loop
+        end % if multiple models
     end %timelock loop
 end %manipulation loop
     

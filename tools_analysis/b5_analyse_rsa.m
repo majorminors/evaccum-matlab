@@ -64,12 +64,13 @@ fprintf('you have %.0f subjects\n', count); clear count
 subjects = numel(data);
 rsa = struct();
 for subject = 1:subjects % loop through subjects
-        fprintf('this is subject: %s\n',num2str(subject))
     thisSubj = data{subject};
     thisSubj = thisSubj.rsa;
     conditions = fieldnames(thisSubj); % get the conditions (fieldnames)
+    
     for condition = 1:numel(conditions) % loop though the conditions
         thisCond = conditions{condition};
+        
         newCondName = strrep(thisCond,'LockedAverage',''); % we don't need this bit, so let's rename it
         
         % create the field if it doesn't exist
@@ -81,48 +82,31 @@ for subject = 1:subjects % loop through subjects
         models = fieldnames(thisSubj.(thisCond));
         for model = 1:numel(models)
             thisModel = models{model};
+            % grab the values
+            samples = thisSubj.(thisCond).(thisModel).samples;
+            trans_samples = thisSubj.(thisCond).(thisModel).fisher_transformed_samples;
+            part_samples = thisSubj.(thisCond).(thisModel).partial_samples;
+            part_trans_samples = thisSubj.(thisCond).(thisModel).fisher_transformed_partial_samples;
             
-            vals = thisSubj.(thisCond).(thisModel).vals;
-            tvals = thisSubj.(thisCond).(thisModel).fisher_transformed_vals;
-            pvals = thisSubj.(thisCond).(thisModel).partialVals;
-            tpvals = thisSubj.(thisCond).(thisModel).fisher_transformed_partialVals;
-            if any(isnan(vals))
-                warning('contains nans')
-                vals = [];
-            end
-            if any(isnan(tvals))
-                warning('contains nans')
-                tvals = [];
-            end
-            if any(isnan(pvals))
-                warning('contains nans')
-                pvals = [];
-            end
-            if any(isnan(tpvals))
-                warning('contains nans')
-                tpvals = [];
-            end
-                        
             % concatenate the values row-wise
             if isfield(rsa.(newCondName),thisModel)
-                rsa.(newCondName).(thisModel).vals = cat(1, rsa.(newCondName).(thisModel).vals, vals);
-                rsa.(newCondName).(thisModel).tvals = cat(1, rsa.(newCondName).(thisModel).tvals, tvals);
-                rsa.(newCondName).(thisModel).pvals = cat(1, rsa.(newCondName).(thisModel).vals, pvals);
-                rsa.(newCondName).(thisModel).tpvals = cat(1, rsa.(newCondName).(thisModel).tvals, tpvals);
+                rsa.(newCondName).(thisModel).vals = cat(1, rsa.(newCondName).(thisModel).vals, samples);
+                rsa.(newCondName).(thisModel).tvals = cat(1, rsa.(newCondName).(thisModel).tvals, trans_samples);
+                rsa.(newCondName).(thisModel).pvals = cat(1, rsa.(newCondName).(thisModel).vals, part_samples);
+                rsa.(newCondName).(thisModel).ptvals = cat(1, rsa.(newCondName).(thisModel).tvals, part_trans_samples);
             else
-                rsa.(newCondName).(thisModel).vals = thisSubj.(thisCond).(thisModel).vals;
-                rsa.(newCondName).(thisModel).tvals = thisSubj.(thisCond).(thisModel).fisher_transformed_vals;
-                rsa.(newCondName).(thisModel).pvals = thisSubj.(thisCond).(thisModel).partialVals;
-                rsa.(newCondName).(thisModel).tpvals = thisSubj.(thisCond).(thisModel).fisher_transformed_partialVals;
+                rsa.(newCondName).(thisModel).vals = samples;
+                rsa.(newCondName).(thisModel).tvals = trans_samples;
+                rsa.(newCondName).(thisModel).pvals = part_samples;
+                rsa.(newCondName).(thisModel).ptvals = part_trans_samples;
             end
-        end; clear model models thisModel vals tvals pvals tpvals trans_samples
+        end; clear model models thisModel samples trans_samples part_samples part_trans_samples
     end; clear condition newCondName thisCond
 end; clear subject conditions thisSubj subjects
 
 clear data % don't need this anymore
 
 disp('done prepping data')
-fprintf('you have %.0f subjects\n', count); clear count
 
 %%%%%%%%%%%%%%%%%%%
 %% calculate bfs %%
@@ -132,7 +116,8 @@ disp('collecting bayes factors')
 
 nullInterval = '0.5,Inf';
 insideNull = 1;
-bfSaveName = [datadir filesep sprintf('rsa_partial_%s.mat',nullInterval)];
+bfSaveName = [datadir filesep sprintf('rsa_%s.mat',nullInterval)];
+saveFigs = 0;
 
 if exist(bfSaveName,'file')
     warning('bfs for this null interval exist');
@@ -150,7 +135,6 @@ if exist(bfSaveName,'file')
 else
     doBfs = 1;
 end
-
 
 if doBfs
     conditions = fieldnames(rsa);
@@ -173,13 +157,13 @@ if doBfs
     parfor condition = 1:numConditions
         thisCond = conditions{condition};
         models = fieldnames(rsa.(thisCond));
-        
-        % initialisations
         numModels = numel(models);
+        
+        % initialise these so the parfor loop can fill them up
         bfs = cell(1,numModels);
         tbfs = cell(1,numModels);
         pbfs = cell(1,numModels);
-        tpbfs = cell(1,numModels);
+        ptbfs = cell(1,numModels);
         
         % add the R module and get the path to Rscript
         [status, result] = system('module add R && which Rscript');
@@ -194,43 +178,22 @@ if doBfs
         for model = 1:numModels
             thisModel = models{model};
             
-            vals = rsa.(thisCond).(thisModel).vals';
-            tvals = rsa.(thisCond).(thisModel).tvals';
-            pvals = rsa.(thisCond).(thisModel).pvals';
-            tpvals = rsa.(thisCond).(thisModel).tpvals';
-            
-%             now run the rscript version of the bayes analysis
-%             we can also get the bf for the complementary interval
-%             by specifying insideNull = 2 (default is 1)
-              if any(isnan(vals))
-                  bfs{model} = NaN(size(vals));
-              else
-                  bfs{model} = bayesfactor_R_wrapper(vals,'Rpath',RscriptPath,'returnindex',insideNull,...
-                      'args',['mu=0,rscale="medium",nullInterval=c(' nullInterval ')']);
-              end
-              if any(isnan(tvals))
-                  bfs{model} = NaN(size(tvals));
-              else
-                  tbfs{model} = bayesfactor_R_wrapper(tvals,'Rpath',RscriptPath,'returnindex',insideNull,...
-                      'args',['mu=0,rscale="medium",nullInterval=c(' nullInterval ')']);
-              end
-              if any(isnan(pvals))
-                  bfs{model} = NaN(size(pvals));
-              else
-                  pbfs{model} = bayesfactor_R_wrapper(pvals,'Rpath',RscriptPath,'returnindex',insideNull,...
-                      'args',['mu=0,rscale="medium",nullInterval=c(' nullInterval ')']);
-              end
-              if any(isnan(tpvals))
-                  bfs{model} = NaN(size(tpvals));
-              else
-                  tpbfs{model} = bayesfactor_R_wrapper(tpvals,'Rpath',RscriptPath,'returnindex',insideNull,...
-                      'args',['mu=0,rscale="medium",nullInterval=c(' nullInterval ')']);
-              end
+            % now run the rscript version of the bayes analysis
+            %   we can also get the bf for the complementary interval
+            %   by specifying insideNull = 2 (default is 1)
+            bfs{model} = bayesfactor_R_wrapper(rsa.(thisCond).(thisModel).vals','Rpath',RscriptPath,'returnindex',insideNull,...
+                'args',['mu=0,rscale="medium",nullInterval=c(' nullInterval ')']);
+            tbfs{model} = bayesfactor_R_wrapper(rsa.(thisCond).(thisModel).tvals','Rpath',RscriptPath,'returnindex',insideNull,...
+                'args',['mu=0,rscale="medium",nullInterval=c(' nullInterval ')']);
+            pbfs{model} = bayesfactor_R_wrapper(rsa.(thisCond).(thisModel).pvals','Rpath',RscriptPath,'returnindex',insideNull,...
+                'args',['mu=0,rscale="medium",nullInterval=c(' nullInterval ')']);
+            ptbfs{model} = bayesfactor_R_wrapper(rsa.(thisCond).(thisModel).ptvals','Rpath',RscriptPath,'returnindex',insideNull,...
+                'args',['mu=0,rscale="medium",nullInterval=c(' nullInterval ')']);
         end
         conditionsBfs{condition} = bfs;
         conditionstBfs{condition} = tbfs;
         conditionspBfs{condition} = pbfs;
-        conditionstpBfs{condition} = tpbfs;
+        conditionsptBfs{condition} = ptbfs;
     end; clear bfs tbfs
     
     % put the results back into the rsa struct
@@ -241,8 +204,8 @@ if doBfs
             thisModel = models{model};
             rsa.(thisCond).(thisModel).bfs = conditionsBfs{condition}{model};
             rsa.(thisCond).(thisModel).tbfs = conditionstBfs{condition}{model};
-            rsa.(thisCond).(thisModel).pbfs = conditionsBfs{condition}{model};
-            rsa.(thisCond).(thisModel).tpbfs = conditionstBfs{condition}{model};
+            rsa.(thisCond).(thisModel).pbfs = conditionspBfs{condition}{model};
+            rsa.(thisCond).(thisModel).ptbfs = conditionsptBfs{condition}{model};
         end; clear models model thisModel
     end; clear conditions condition thisCond
     save(bfSaveName,'rsa')
@@ -268,47 +231,38 @@ disp('done collecting bayes factors')
 
 disp('doing plots')
 saveFigs = 1;
-plotConds = {'stim' 'decbdry' 'dec_simple' 'resp'}; %'dec_detail_pred' 'dec_detail_null' 
-% plotConds = {'stim' 'decbdry' 'dec_simple' 'dec_detail_null' 'dec_detail_pred' 'resp'}; %  
-
+plotConds = {'stim' 'decbdry' 'dec_simple' 'resp'};
 plotNames = {'Motion Direction' 'Decision Boundary' 'Motion Classification' 'Response'};
-% plotNames = {'Motion Direction' 'Decision Boundary' 'Motion Classification Simple' 'Motion Classification Null' 'Motion Classification Pred' 'Response'};
-
 
 errTerm = 'error'; % std 'error' or std 'deviation'
+plotTransformed = 1;
+plotPartials = 0;
 
-plotTransformed = 0;
-plotPartials = 1;
+
 
 whichVals = 'vals';
 whichBfs = 'bfs';
-if plotPartials
-    whichVals = ['p' whichVals];
-    whichBfs = ['p' whichBfs];
-else
-end
-
 if plotTransformed
     whichVals = ['t' whichVals];
     whichBfs = ['t' whichBfs];
 end
-% disp(whichVals)
-% disp(whichBfs)
+if plotPartials
+    whichVals = ['p' whichVals];
+    whichBfs = ['p' whichBfs];
+end
 
-% get ylims for the rsa
 plotGroups = {{'ecer_' 'echr_' 'hcer_' 'hchr_'} {'ec_' 'hc_' 'er_' 'hr_'}};
 groupNames = {'conditions' 'manipulations'};
 for thisGroup = 1:numel(plotGroups)
     tmp = fieldnames(rsa);
     conditions = tmp(startsWith(fieldnames(rsa),plotGroups{thisGroup})); clear tmp
-    
+
+    % get ylims for the rsa
     count = 0;
     for condition = 1:numel(conditions)
         thisCond = conditions{condition};
-        %     models = fieldnames(rsa.(thisCond));
+        % models = fieldnames(rsa.(thisCond));
         models = plotConds;
-        
-        % let's collect up some plot limits
         for model = 1:numel(models)
             thisModel = models{model};
             count = count+1;
@@ -324,16 +278,16 @@ for thisGroup = 1:numel(plotGroups)
         end; clear models model thisModel
     end; clear condition thisCond count
     ymax = max(ymax)+max(ymax)/5;
-    ymin = min(ymin)+min(ymin)/5;
-    
+    ymin = min(ymin)-min(ymin)/5;
+
     for lock = {'coherence' 'response'}
         
         figure;
         lockConds = conditions(contains(conditions,lock));
         for condition = 1:numel(lockConds)
             thisCond = lockConds{condition};
-            
-            %     models = fieldnames(rsa.(thisCond));
+                    
+            % models = fieldnames(rsa.(thisCond));
             models = plotConds;
             for model = 1:numel(models)
                 thisModel = models{model};
@@ -425,7 +379,7 @@ for thisGroup = 1:numel(plotGroups)
             print([figDir filesep groupNames{thisGroup} '_' tmp{2} '_rsa.png'],'-dpng')
             clear tmp
         end
-        
+
     end; clear lock
 end; clear thisGroup conditions
 
