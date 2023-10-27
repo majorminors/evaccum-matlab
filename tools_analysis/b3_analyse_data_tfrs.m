@@ -331,7 +331,7 @@ cfg = [];
 cfg.showlabels   = 'yes';
 cfg.layout       = megLayout;
 cfg.maskstyle = 'saturation';
-% cfg.xlim=[-0.5 1.5];
+cfg.xlim=[-0.2 1.5];
 % whichChannels = 'parietal'; cfg.channel = getMegLabels(whichChannels);
 
 if isfield(cfg,'channel')
@@ -362,7 +362,7 @@ cfg = [];
 cfg.showlabels   = 'yes';
 cfg.layout       = megLayout;
 cfg.maskstyle = 'saturation';
-% cfg.xlim=[-0.5 1.5];
+cfg.xlim=[-0.2 1.5];
 % whichChannels = 'parietal'; cfg.channel = getMegLabels(whichChannels);
 
 if isfield(cfg,'channel')
@@ -548,7 +548,7 @@ cfg = [];
 cfg.showlabels   = 'yes';
 cfg.layout       = megLayout;
 cfg.maskstyle = 'saturation';
-% cfg.xlim=[-0.5 1.5];
+cfg.xlim=[-0.2 1.5];
 % whichChannels = 'parietal'; cfg.channel = getMegLabels(whichChannels);
 
 if isfield(cfg,'channel')
@@ -579,7 +579,7 @@ cfg = [];
 cfg.showlabels   = 'yes';
 cfg.layout       = megLayout;
 cfg.maskstyle = 'saturation';
-% cfg.xlim=[-0.5 1.5];
+cfg.xlim=[-0.2 1.5];
 % whichChannels = 'parietal'; cfg.channel = getMegLabels(whichChannels);
 
 if isfield(cfg,'channel')

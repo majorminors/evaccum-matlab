@@ -310,7 +310,7 @@ for thisGroup = 1:numel(plotGroups)
                     condName = thisCond;
                 elseif contains(thisCond,'coherence')
                     onset = 500; % to subtract from timepoints
-                    xlims = [-500 1500];
+                    xlims = [-200 1500];
                     condName = strrep(thisCond,'coherence','onset');
                 end
                 timepoints = timepoints-onset;

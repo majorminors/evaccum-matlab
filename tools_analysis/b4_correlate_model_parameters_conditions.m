@@ -317,7 +317,7 @@ disp('done')
 
 disp('getting bayes factors')
 
-nullInterval = '-0.1,0.1';
+nullInterval = '-0.05,0.05';
 % nullInterval = '0.2,1';
 bfSlopeSavename = [saveDir filesep 'model_correlations_conditionsOnly_slope_bfs_null_%s.mat'];
 bfAmplitudeSavename = [saveDir filesep 'model_correlations_conditionsOnly_amplitude_bfs_null_%s.mat'];
@@ -480,7 +480,7 @@ for thisParam = unique(correlations.ParameterName)'
                 xlims = [-600 200];
             elseif contains(thisLockedTo,'coherence')
                 onset = 500; % to subtract from timepoints
-                xlims = [-500 1500];
+                xlims = [-200 1500];
             end
             timepoints = timepoints-onset;
             

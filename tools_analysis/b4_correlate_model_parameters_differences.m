@@ -375,7 +375,7 @@ for paramCond = unique(correlations.ParameterCondition)'
                     xlims = [-600 200];
                 elseif contains(thisLockedTo,'Onset')
                     onset = 500; % to subtract from timepoints
-                    xlims = [-500 1500];
+                    xlims = [-200 1500];
                 end
                 timepoints = timepoints-onset;
                 

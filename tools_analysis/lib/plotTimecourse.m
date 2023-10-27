@@ -55,8 +55,8 @@ if exist('h','var') % plot our anova results of the RSA
     ind = find(h.Rule == 1);
     yVals = (yLow + 1.0000e-06) * ones(size(ind));
     scatter(ind/1000+xLeft, yVals, [], [0.7020, 0.8196, 1], 'filled');
+    xlim([xLeft xRight]); clear ax yLow xLeft xRight
 end
-xlim([xLeft xRight]); clear ax yLow xLeft xRight
 % if ~isempty(xlims); xlim(xlims); end
 hold off;
 ylabel(['Mean ' sensorType{1} ' Amplitude (' sensorType{2} ')'])
