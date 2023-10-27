@@ -412,10 +412,10 @@ for i = 1:numel(novas)
     
 end; clear i thisNova
 % 
-scatter(1:numel(results.onset.h.Interaction),results.onset.h.Interaction)
-scatter(1:numel(results.response.h.Interaction),results.response.h.Interaction)
-scatter(1:numel(results.onset.p.Interaction),results.onset.p.Interaction<0.05)
-scatter(1:numel(results.response.p.Interaction),results.response.p.Interaction<0.05)
+% scatter(1:numel(results.onset.h.Interaction),results.onset.h.Interaction)
+% scatter(1:numel(results.response.h.Interaction),results.response.h.Interaction)
+% scatter(1:numel(results.onset.p.Interaction),results.onset.p.Interaction<0.05)
+% scatter(1:numel(results.response.p.Interaction),results.response.p.Interaction<0.05)
     
 
 clear dataSets
@@ -433,9 +433,22 @@ for subject = 1:numel(ecRespAll)
     cRespDiffAll{subject}= getDifference(ecRespAll{subject}, hcRespAll{subject});
     rOnsDiffAll{subject} = getDifference(erOnsAll{subject}, hrOnsAll{subject});
     rRespDiffAll{subject}= getDifference(erRespAll{subject}, hrRespAll{subject});
-
+    
+    ecOnsDiffAll{subject} = getDifference(ecerOnsAll{subject}, echrOnsAll{subject});
+    hcOnsDiffAll{subject}= getDifference(hcerOnsAll{subject}, hchrOnsAll{subject});
+    ttestOnsDiffAll{subject} = getDifference(ecOnsDiffAll{subject}, hcOnsDiffAll{subject});
+    
+    ecRespDiffAll{subject} = getDifference(ecerRespAll{subject}, echrRespAll{subject});
+    hcRespDiffAll{subject}= getDifference(hcerRespAll{subject}, hchrRespAll{subject});
+    ttestRespDiffAll{subject}= getDifference(ecRespDiffAll{subject}, hcRespDiffAll{subject});
 
 end; clear subject
+
+ttestOnsDiffAve = ft_timelockgrandaverage(cfg, ttestOnsDiffAll{:});
+ttestRespDiffAve = ft_timelockgrandaverage(cfg, ttestRespDiffAll{:});
+ttestOnsDiffAve.bfs = testDiffsAcrossTime(ttestOnsDiffAll,CPP);
+ttestRespDiffAve.bfs = testDiffsAcrossTime(ttestRespDiffAll,CPP);
+
 
 % disp('getting averages')
 % 
@@ -499,23 +512,38 @@ plotTimecourse(eegLayout,[teal;coral],...
     {'easy cat';'hard cat'},'northwest','CPP (CP1 CPz CP2) in EEG: Categorisation Response',...
     [erpFigDir filesep 'eeg_cat_resp_ERP.png'])
 %% onset of all conditions in eeg
+% plotTimecourse(eegLayout,[lilac;teal;coral;maroon],... % layout and colours
+%     {ecerOnsAve, echrOnsAve, hcerOnsAve, hchrOnsAve},[],... % {average,data},averageDifference (with bayes factors)
+%     {ecerOnsAll,echrOnsAll,hcerOnsAll,hchrOnsAll},... % {subjectwise,data}
+%     [-0.2 1.5],[],CPP,... % xlims,ylims,channels
+%     {'EEG','uV'},... % sensor type and units for ylablel
+%     {'EasyCoh EasyCat';'EasyCoh HardCat';'HardCoh EasyCat';'HardCoh HardCat'},'northwest','CPP (CP1 CPz CP2) in EEG: Onset in all Conditions',... % legend, legend location, plot title
+%     [erpFigDir filesep 'eeg_allConds_ons_ERP.png'],... % save loc
+%     results.onset.h) % rsa significance
 plotTimecourse(eegLayout,[lilac;teal;coral;maroon],... % layout and colours
-    {ecerOnsAve, echrOnsAve, hcerOnsAve, hchrOnsAve},[],... % {average,data},averageDifference (with bayes factors)
+    {ecerOnsAve, echrOnsAve, hcerOnsAve, hchrOnsAve},ttestOnsDiffAve,... % {average,data},averageDifference (with bayes factors)
     {ecerOnsAll,echrOnsAll,hcerOnsAll,hchrOnsAll},... % {subjectwise,data}
-    [],[],CPP,... % xlims,ylims,channels
+    [-0.2 1.5],[],CPP,... % xlims,ylims,channels
     {'EEG','uV'},... % sensor type and units for ylablel
     {'EasyCoh EasyCat';'EasyCoh HardCat';'HardCoh EasyCat';'HardCoh HardCat'},'northwest','CPP (CP1 CPz CP2) in EEG: Onset in all Conditions',... % legend, legend location, plot title
-    [erpFigDir filesep 'eeg_allConds_ons_ERP.png'],... % save loc
-    results.onset.h) % rsa significance
+    [erpFigDir filesep 'eeg_allConds_ons_ERP.png']) % save loc
+
 %% response of all conditions in eeg
+% plotTimecourse(eegLayout,[lilac;teal;coral;maroon],... % layout and colours
+%     {ecerRespAve, echrRespAve, hcerRespAve, hchrRespAve},[],... % {average,data},averageDifference (with bayes factors)
+%     {ecerRespAll,echrRespAll,hcerRespAll,hchrRespAll},... % {subjectwise,data}
+%     [],[],CPP,... % xlims,ylims,channels
+%     {'EEG','uV'},... % sensor type and units for ylablel
+%     {'EasyCoh EasyCat';'EasyCoh HardCat';'HardCoh EasyCat';'HardCoh HardCat'},'northwest','CPP (CP1 CPz CP2) in EEG: Response in all Conditions',... % legend, legend location, plot title
+%     [erpFigDir filesep 'eeg_allConds_resp_ERP.png'],... % save loc
+%     results.response.h) % rsa significance
 plotTimecourse(eegLayout,[lilac;teal;coral;maroon],... % layout and colours
-    {ecerRespAve, echrRespAve, hcerRespAve, hchrRespAve},[],... % {average,data},averageDifference (with bayes factors)
+    {ecerRespAve, echrRespAve, hcerRespAve, hchrRespAve},ttestRespDiffAve,... % {average,data},averageDifference (with bayes factors)
     {ecerRespAll,echrRespAll,hcerRespAll,hchrRespAll},... % {subjectwise,data}
     [],[],CPP,... % xlims,ylims,channels
     {'EEG','uV'},... % sensor type and units for ylablel
     {'EasyCoh EasyCat';'EasyCoh HardCat';'HardCoh EasyCat';'HardCoh HardCat'},'northwest','CPP (CP1 CPz CP2) in EEG: Response in all Conditions',... % legend, legend location, plot title
-    [erpFigDir filesep 'eeg_allConds_resp_ERP.png'],... % save loc
-    results.response.h) % rsa significance
+    [erpFigDir filesep 'eeg_allConds_resp_ERP.png']) % save loc
 %%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -657,7 +685,9 @@ figHandle = plot(selected_time, selected_data)
 return
 end
 
-function bfs = testDiffsAcrossTime(dataStruct,channels,complementary)
+function bfs = testDiffsAcrossTime(dataStruct,channels,complementary,nullInterval)
+
+if ~exist('nullInterval','var'); nullInterval = '0.5,Inf'; end
 
 for i = 1:numel(dataStruct)
     % if multiple channels, get the average, else get the channel
@@ -683,7 +713,7 @@ end
 %   by specifying complementary = 2. Let's set a default:
 if ~exist('complementary','var'); complementary = 1; end
 bfs = bayesfactor_R_wrapper(diffs,'Rpath',RscriptPath,'returnindex',complementary,...
-    'args','mu=0,rscale="medium",nullInterval=c(0.5,Inf)');
+    'args',['mu=0,rscale="medium",nullInterval=c(' nullInterval ')']);
 
 % alternatively they have implemented it in matlab
 % [bfs, bfs_complementary_interval] = bayesfactor(diffs, 'interval',[-Inf Inf]);
