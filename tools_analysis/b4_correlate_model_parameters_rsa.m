@@ -217,7 +217,7 @@ else
                     if numel(unique(theseTimepoints)) > 1; error('you have different timepoints'); else; theseTimepoints = theseTimepoints(1); end
                     
                     models = unique(data(thisSubject).rsaCorrs.Model)';
-                                        
+                    
                     modelCount = 0;
                     for thisModel = models
                         modelCount = modelCount+1;
@@ -236,8 +236,8 @@ else
                         timepointRsa{t} = rsaCorrs(:,t,modelCount);
                         timepointParams{t} = params;
                         r_rsaCorrs(t) = corr(rsaCorrs(:,t,modelCount), params, 'type', 'Pearson');
-                    end; clear t 
-                    
+                    end; clear t
+                                        
                     correlations = [correlations;...
                         table(timepoints',repmat(thisParameter,numel(timepoints),1),repmat(thisParameterCond,numel(timepoints),1),...
                         repmat(thisCondition,numel(timepoints),1),repmat(thisLockedTo,numel(timepoints),1),...
@@ -259,10 +259,45 @@ else
     else
         disp('not deleting...')
     end
-
+    
     
     save(correlationsSaveName,'correlations')
     
+end
+
+disp('done')
+
+% tmp1 = load([saveDir filesep 'model_correlations_conditions_01.mat']);
+% tmp2 = load([saveDir filesep 'model_correlations_conditionsOnly_amplitude_bfs_null_-0.05,0.05.mat']);
+% tmp1.correlations.bfs = tmp2.amplitudeBFs.bf2';
+%% get the rsa correlation bfs
+tmp = load([datadir filesep 'rsa_0.5,Inf.mat']);
+parameters = unique([data(1).param.ParamName])';
+parameterConds = unique([data(1).param.Condition])';
+lockedTos = unique([data(1).rsaCorrs.LockedTo])';
+conditions = unique([data(1).rsaCorrs.Condition])';
+models = unique([data(1).rsaCorrs.Model])';
+count = 0;
+for thisLockedTo = lockedTos
+    rsaLock = strrep(thisLockedTo,'Locked','');
+    for thisCondition = conditions
+        for thisModel = models
+            
+            tmpbf = tmp.rsa.([thisCondition{:} '_' rsaLock{:}]).(thisModel{:}).pbfs;
+                            
+            for thisParameter = parameters
+
+                dataidx = ...
+                    strcmp(correlations.ParameterCondition,thisCondition)...
+                    & strcmp(correlations.Condition,thisCondition)...
+                    & strcmp(correlations.ParameterName,thisParameter)...
+                    & strcmp(correlations.LockedTo,thisLockedTo)...
+                    & strcmp(correlations.Model,thisModel);
+                correlations.RsaBfs(dataidx) = tmpbf;
+                
+            end
+        end
+    end
 end
 
 disp('done')
@@ -368,120 +403,136 @@ for thisParam = unique(correlations.ParameterName)'
     for thisCond = unique(correlations.Condition)'
         for thisLockedTo = unique(correlations.LockedTo)'
             paramCond = thisCond; % if you want to look cross cond, you can add this back as a for loop
+            for thisModel = unique(correlations.Model)'
+                
+                dataidx = ...
+                    strcmp(correlations.ParameterCondition,paramCond)...
+                    & strcmp(correlations.ParameterName,thisParam)...
+                    & strcmp(correlations.Condition,thisCond)...
+                    & strcmp(correlations.LockedTo,thisLockedTo)...
+                    & strcmp(correlations.Model,thisModel);
+                
+                theseParams = correlations.ParamVals(dataidx);
+                
+                theseData = correlations.RsaCorrelations(dataidx);
+                if plotInside
+                    thesebfs = correlations.bf1(dataidx);
+                else
+                    thesebfs = correlations.bf2(dataidx);
+                end
+                theseRs = correlations.R_Rsa(dataidx);
+                allRs = correlations.R_Rsa;
+                theseRsaBfs = correlations.RsaBfs(dataidx);
+                theseRsaBfs(theseRsaBfs >= 10^2) = 10^2;
+                theseRsaBfs(theseRsaBfs >= 10^1 & theseRsaBfs < 10^2) = 10^1;
+                theseRsaBfs(theseRsaBfs >= 10^0.5 & theseRsaBfs < 10^1) = 10^0.5;
+                theseRsaBfs(theseRsaBfs > 10^-0.5 & theseRsaBfs < 10^0.5) = NaN;
+                theseRsaBfs(theseRsaBfs <= 10^-0.5 & theseRsaBfs > 10^-1) = 10^-0.5;
+                theseRsaBfs(theseRsaBfs <= 10^-1 & theseRsaBfs > 10^-2) = 10^-1;
+                theseRsaBfs(theseRsaBfs <= 10^-2) = 10^-2;
+                
+                
+                slopeInvalidColour = [1, 0.6, 0.6];
+                
+                timepoints = correlations.Timepoint(dataidx);
+                
+                if contains(thisLockedTo,'response')
+                    onset = 600; % to subtract from timepoints
+                    xlims = [-600 200];
+                elseif contains(thisLockedTo,'coherence')
+                    onset = 500; % to subtract from timepoints
+                    xlims = [-200 1500];
+                end
+                timepoints = timepoints-onset;
+                
+                if plotMovie
+                    % little movie of the correlation
+                    for i = 100+onset:numel(theseParams)
+                        % scatterplot data
+                        scatterHandles(i) = scatter(theseParams{i}, theseData{i});
+                        hold on
+                        % plot the slope line
+                        p = polyfit(theseParams{i}, theseData{i}, 1);
+                        slope = p(1);
+                        yFit = polyval(p, xlim);
+                        plot(xlim, yFit, 'r--');
+                        % add some labels
+                        title([thisCond ' ' thisParam ' ' thisLockedTo])
+                        xlabel('Parameter Values')
+                        ylabel('Amplitude')
+                        annotation('textbox', [0.7, 0.8, 0.1, 0.1], 'String', ['Time: ' num2str(i-onset)], 'FitBoxToText', 'on');
+                        if slope > 0;slope_str = 'Positive';elseif slope < 0;slope_str = 'Negative';else;slope_str = 'Zero';end
+                        annotation('textbox', [0.7, 0.7, 0.1, 0.1], 'String', ['Slope: ' slope_str], 'FitBoxToText', 'on');
+                        % set the axis limits
+                        xlim([min(min([theseParams{:}])), max(max([theseParams{:}]))]);
+                        ylim([min(min([theseData{:}])), max(max([theseData{:}]))]);
+                        % do a quick pause for a short duration
+                        pause(0.001);
+                        % clear the figure
+                        clf;
+                    end; clear i
+                    close all
+                end
+                
+                figure;
+                
+                % plot correlations
+                subplot(2,1,1)
+                color_map = summer(length(theseRs));
+                color_map = color_map(:, [2, 1, 3]);  % Rearrange color map channels
+                abs_Rs = abs(theseRs);
+                scatter_colours = 1 - abs_Rs / max(abs_Rs);  % Scaling the color values to make darker as value moves away from 0
+                scatter(timepoints, theseRs, [], scatter_colours, 'filled');
+                colormap(color_map);
+                %         cbh = colorbar;
+                xlim(xlims)
+                ylim([min(allRs)-0.1 max(allRs)+0.1])
+                line(get(gca,'XLim'), [0 0], 'Color', [0.5 0.5 0.5], 'LineStyle', '-')
+                line([0 0], get(gca,'YLim'), 'Color', [0.1 0.1 0.1], 'LineStyle', '--')
+                xlabel('Timepoints');
+                ylabel('Correlations (r)');
+                modelTitle = strrep(thisModel{:}, '_', '-');
+                title(['Correlation: ' upper(thisCond{:}) ' ' thisLockedTo{:} ' (' thisParam{:} ' and ' modelTitle ')'])
+                clear modelTitle
+                
+                % plot bayes factors
+                subplot(2,1,2)
+                load('bayes_colourmap.mat'); % in BFF repo
+                exponential_minmax=2;
+                val_col_map = logspace(-exponential_minmax,exponential_minmax,size(colours,1));
+                scatter_colours = zeros(length(timepoints), 3);  % preallocate for efficiency
+                for t = 1:length(timepoints)
+                    [~,idx] = min(abs(val_col_map-thesebfs(t)));
+                    scatter_colours(t, :) = colours(idx,1:3);
+                end
+                scatter(timepoints, thesebfs, 30, scatter_colours, 'filled');
+                line(get(gca,'XLim'),[1 1], 'Color', [0.5 0.5 0.5], 'LineStyle', '--')
+                hold on
+                scatter(timepoints, theseRsaBfs, 20, 'k', 'filled')
+                hold off
+                ax = gca;
+                set(ax,'YScale','log','XLim',xlims, ...
+                    'YLim',[1e-2 1e2],'YTick',10.^(-3:1:3))
+                xlabel('Time (s)')
+                ylabel('BF (log scale)')
+                colormap(ax,colours)
+                cbh = colorbar;
+                caxis([-exponential_minmax,exponential_minmax])
+                cbh.Units = 'normalized';
+                cbh.Limits = [-exponential_minmax,exponential_minmax];
+                cbh.Position(1) = 0.92;cbh.Position(3) = 0.01;cbh.Position(4) = ax.Position(4);cbh.Position(2) = ax.Position(2);
+                cbh.Label.String = 'Bayes Factor';
+                f = gcf; f.Position = [10 10 1600 1600];
+                cbh.Ticks = [-2, -1, -0.5, 0, 0.5, 1, 2];
+                cbh.TickLabels=arrayfun(@(x) ['10^{' num2str(x) '}'], cbh.Ticks, 'UniformOutput', false);
+                cbh.TickLabels(strcmp(cbh.TickLabels,'10^{0}')) = {'Inconclusive'};
+                cbh.TickLabels(strcmp(cbh.TickLabels,'10^{0.5}') | strcmp(cbh.TickLabels,'10^{-0.5}')) = {'Moderate'};
+                cbh.TickLabels(strcmp(cbh.TickLabels,'10^{1}') | strcmp(cbh.TickLabels,'10^{-1}')) = {'Strong'};
                         
-            dataidx = ...
-                strcmp(correlations.ParameterCondition,paramCond)...
-                & strcmp(correlations.ParameterName,thisParam)...
-                & strcmp(correlations.Condition,thisCond)...
-                & strcmp(correlations.LockedTo,thisLockedTo);
-            
-            theseParams = correlations.ParamVals(dataidx);
-
-            theseData = correlations.Amplitudes(dataidx);
-            if plotInside
-                thesebfs = correlations.bf1(dataidx);
-            else
-                thesebfs = correlations.bf2(dataidx);
-            end
-            theseRs = correlations.R_Rsa(dataidx);
-            allRs = correlations.R_Rsa;
-            
-            
-            slopeInvalidColour = [1, 0.6, 0.6];
-            
-            timepoints = correlations.Timepoint(dataidx);
-            
-            if contains(thisLockedTo,'response')
-                onset = 600; % to subtract from timepoints
-                xlims = [-600 200];
-            elseif contains(thisLockedTo,'coherence')
-                onset = 500; % to subtract from timepoints
-                xlims = [-200 1500];
-            end
-            timepoints = timepoints-onset;
-            
-            if plotMovie
-                % little movie of the correlation
-                for i = 100+onset:numel(theseParams)
-                    % scatterplot data
-                    scatterHandles(i) = scatter(theseParams{i}, theseData{i});
-                    hold on
-                    % plot the slope line
-                    p = polyfit(theseParams{i}, theseData{i}, 1);
-                    slope = p(1);
-                    yFit = polyval(p, xlim);
-                    plot(xlim, yFit, 'r--');
-                    % add some labels
-                    title([thisCond ' ' thisParam ' ' thisLockedTo])
-                    xlabel('Parameter Values')
-                    ylabel('Amplitude')
-                    annotation('textbox', [0.7, 0.8, 0.1, 0.1], 'String', ['Time: ' num2str(i-onset)], 'FitBoxToText', 'on');
-                    if slope > 0;slope_str = 'Positive';elseif slope < 0;slope_str = 'Negative';else;slope_str = 'Zero';end
-                    annotation('textbox', [0.7, 0.7, 0.1, 0.1], 'String', ['Slope: ' slope_str], 'FitBoxToText', 'on');
-                    % set the axis limits
-                    xlim([min(min([theseParams{:}])), max(max([theseParams{:}]))]);
-                    ylim([min(min([theseData{:}])), max(max([theseData{:}]))]);
-                    % do a quick pause for a short duration
-                    pause(0.001);
-                    % clear the figure
-                    clf;
-                end; clear i
-                close all
-            end
-
-            figure;
-            
-            % plot correlations
-            subplot(2,1,1)
-            color_map = summer(length(theseRs));
-            color_map = color_map(:, [2, 1, 3]);  % Rearrange color map channels
-            abs_Rs = abs(theseRs);
-            scatter_colours = 1 - abs_Rs / max(abs_Rs);  % Scaling the color values to make darker as value moves away from 0
-            scatter(timepoints, theseRs, [], scatter_colours, 'filled');
-            colormap(color_map);
-            %         cbh = colorbar;
-            xlim(xlims)
-            ylim([min(allRs)-0.1 max(allRs)+0.1])
-            line(get(gca,'XLim'), [0 0], 'Color', [0.5 0.5 0.5], 'LineStyle', '-')
-            line([0 0], get(gca,'YLim'), 'Color', [0.1 0.1 0.1], 'LineStyle', '--')
-            xlabel('Timepoints');
-            ylabel('Correlations (r)');
-            title(['Correlation: ' thisParam{:} ' (' paramCond{:} ') and RSA of ' thisLockedTo{:} ' (' thisCond{:} ')'])
-            
-            % plot bayes factors
-            subplot(2,1,2)
-            load('bayes_colourmap.mat'); % in BFF repo
-            exponential_minmax=2;
-            val_col_map = logspace(-exponential_minmax,exponential_minmax,size(colours,1));
-            scatter_colours = zeros(length(timepoints), 3);  % preallocate for efficiency
-            for t = 1:length(timepoints)
-                [~,idx] = min(abs(val_col_map-thesebfs(t)));
-                scatter_colours(t, :) = colours(idx,1:3);
-            end
-            scatter(timepoints, thesebfs, 30, scatter_colours, 'filled');
-            line(get(gca,'XLim'),[1 1], 'Color', [0.5 0.5 0.5], 'LineStyle', '--')
-            ax = gca;
-            set(ax,'YScale','log','XLim',[timepoints(1),timepoints(end)], ...
-                'YLim',[1e-2 1e2],'YTick',10.^(-3:1:3))
-            xlabel('Time (s)')
-            ylabel('BF (log scale)')
-            colormap(ax,colours)
-            cbh = colorbar;
-            caxis([-exponential_minmax,exponential_minmax])
-            cbh.Units = 'normalized';
-            cbh.Limits = [-exponential_minmax,exponential_minmax];
-            cbh.Position(1) = 0.92;cbh.Position(3) = 0.01;cbh.Position(4) = ax.Position(4);cbh.Position(2) = ax.Position(2);
-            cbh.Label.String = 'Bayes Factor';
-            f = gcf; f.Position = [10 10 1600 1600];
-            pause(1)
-            cbh.Ticks = [-2, -1, -0.5, 0, 0.5, 1, 2];
-            cbh.TickLabels=arrayfun(@(x) ['10^{' num2str(x) '}'], cbh.Ticks, 'UniformOutput', false);
-            cbh.TickLabels(strcmp(cbh.TickLabels,'10^{0}')) = {'Inconclusive'};
-            cbh.TickLabels(strcmp(cbh.TickLabels,'10^{0.5}') | strcmp(cbh.TickLabels,'10^{-0.5}')) = {'Moderate'};
-            cbh.TickLabels(strcmp(cbh.TickLabels,'10^{1}') | strcmp(cbh.TickLabels,'10^{-1}')) = {'Strong'};
-            
-            print([saveDir filesep 'RSA_' thisParam{:} '_' paramCond{:} '_' thisCond{:} '_' thisLockedTo{:} '.png'],'-dpng')
-            
+                pause(1)
+                print([saveDir filesep 'RSA_' thisParam{:} '_' paramCond{:} '_' thisCond{:} '_' thisLockedTo{:} '_' thisModel{:} '.png'],'-dpng')
+                
+            end; clear thisModel
         end; clear thisLockedTo
     end; clear thisCond
 end; clear thisParam
