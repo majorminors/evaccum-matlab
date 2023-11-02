@@ -11,7 +11,7 @@ cfg            = [];
 cfg.showlabels = 'yes';
 cfg.fontsize   = 6;
 cfg.layout     = layout;
-% if ~isempty(xlims); cfg.xlim = xlims; end
+if ~isempty(xlims); cfg.xlim = xlims; end
 if ~isempty(ylims); cfg.ylim = ylims; end
 cfg.channel    = channels;
 % cfg.channel    = 'EEG';
@@ -57,7 +57,7 @@ if exist('h','var') % plot our anova results of the RSA
     scatter(ind/1000+xLeft, yVals, [], [0.7020, 0.8196, 1], 'filled');
     xlim([xLeft xRight]); clear ax yLow xLeft xRight
 end
-% if ~isempty(xlims); xlim(xlims); end
+if ~isempty(xlims); xlim(xlims); end
 hold off;
 ylabel(['Mean ' sensorType{1} ' Amplitude (' sensorType{2} ')'])
 xlabel('Time (s)')
@@ -80,6 +80,7 @@ if ~isempty(dataDiff)
     ax = gca;
     set(ax,'YScale','log','XLim',[dataDiff.time(1),dataDiff.time(end)], ...
             'YLim',[1e-6 1e6],'YTick',10.^(-6:2:6))
+    if ~isempty(xlims); xlim(xlims); end
     xlabel('Time (s)')
     ylabel('BF (log scale)')
     colormap(colours)
