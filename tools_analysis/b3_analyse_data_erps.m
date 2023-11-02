@@ -512,38 +512,38 @@ plotTimecourse(eegLayout,[teal;coral],...
     {'easy cat';'hard cat'},'northwest','CPP (CP1 CPz CP2) in EEG: Categorisation Response',...
     [erpFigDir filesep 'eeg_cat_resp_ERP.png'])
 %% onset of all conditions in eeg
-% plotTimecourse(eegLayout,[lilac;teal;coral;maroon],... % layout and colours
-%     {ecerOnsAve, echrOnsAve, hcerOnsAve, hchrOnsAve},[],... % {average,data},averageDifference (with bayes factors)
-%     {ecerOnsAll,echrOnsAll,hcerOnsAll,hchrOnsAll},... % {subjectwise,data}
-%     [-0.2 1.5],[],CPP,... % xlims,ylims,channels
-%     {'EEG','uV'},... % sensor type and units for ylablel
-%     {'EasyCoh EasyCat';'EasyCoh HardCat';'HardCoh EasyCat';'HardCoh HardCat'},'northwest','CPP (CP1 CPz CP2) in EEG: Onset in all Conditions',... % legend, legend location, plot title
-%     [erpFigDir filesep 'eeg_allConds_ons_ERP.png'],... % save loc
-%     results.onset.h) % rsa significance
+plotTimecourse(eegLayout,[lilac;teal;coral;maroon],... % layout and colours
+    {ecerOnsAve, echrOnsAve, hcerOnsAve, hchrOnsAve},[],... % {average,data},averageDifference (with bayes factors)
+    {ecerOnsAll,echrOnsAll,hcerOnsAll,hchrOnsAll},... % {subjectwise,data}
+    [-0.2 1.5],[],CPP,... % xlims,ylims,channels
+    {'EEG','uV'},... % sensor type and units for ylablel
+    {'EasyCoh EasyCat';'EasyCoh HardCat';'HardCoh EasyCat';'HardCoh HardCat'},'northwest','CPP (CP1 CPz CP2) in EEG: Onset in all Conditions',... % legend, legend location, plot title
+    [erpFigDir filesep 'eeg_allConds_ons_ERP_anova.png'],... % save loc
+    results.onset.h) % rsa significance
 plotTimecourse(eegLayout,[lilac;teal;coral;maroon],... % layout and colours
     {ecerOnsAve, echrOnsAve, hcerOnsAve, hchrOnsAve},ttestOnsDiffAve,... % {average,data},averageDifference (with bayes factors)
     {ecerOnsAll,echrOnsAll,hcerOnsAll,hchrOnsAll},... % {subjectwise,data}
     [-0.2 1.5],[],CPP,... % xlims,ylims,channels
     {'EEG','uV'},... % sensor type and units for ylablel
     {'EasyCoh EasyCat';'EasyCoh HardCat';'HardCoh EasyCat';'HardCoh HardCat'},'northwest','CPP (CP1 CPz CP2) in EEG: Onset in all Conditions',... % legend, legend location, plot title
-    [erpFigDir filesep 'eeg_allConds_ons_ERP.png']) % save loc
+    [erpFigDir filesep 'eeg_allConds_ons_ERP_bayes.png']) % save loc
 
 %% response of all conditions in eeg
-% plotTimecourse(eegLayout,[lilac;teal;coral;maroon],... % layout and colours
-%     {ecerRespAve, echrRespAve, hcerRespAve, hchrRespAve},[],... % {average,data},averageDifference (with bayes factors)
-%     {ecerRespAll,echrRespAll,hcerRespAll,hchrRespAll},... % {subjectwise,data}
-%     [],[],CPP,... % xlims,ylims,channels
-%     {'EEG','uV'},... % sensor type and units for ylablel
-%     {'EasyCoh EasyCat';'EasyCoh HardCat';'HardCoh EasyCat';'HardCoh HardCat'},'northwest','CPP (CP1 CPz CP2) in EEG: Response in all Conditions',... % legend, legend location, plot title
-%     [erpFigDir filesep 'eeg_allConds_resp_ERP.png'],... % save loc
-%     results.response.h) % rsa significance
+plotTimecourse(eegLayout,[lilac;teal;coral;maroon],... % layout and colours
+    {ecerRespAve, echrRespAve, hcerRespAve, hchrRespAve},[],... % {average,data},averageDifference (with bayes factors)
+    {ecerRespAll,echrRespAll,hcerRespAll,hchrRespAll},... % {subjectwise,data}
+    [],[],CPP,... % xlims,ylims,channels
+    {'EEG','uV'},... % sensor type and units for ylablel
+    {'EasyCoh EasyCat';'EasyCoh HardCat';'HardCoh EasyCat';'HardCoh HardCat'},'northwest','CPP (CP1 CPz CP2) in EEG: Response in all Conditions',... % legend, legend location, plot title
+    [erpFigDir filesep 'eeg_allConds_resp_ERP_anova.png'],... % save loc
+    results.response.h) % rsa significance
 plotTimecourse(eegLayout,[lilac;teal;coral;maroon],... % layout and colours
     {ecerRespAve, echrRespAve, hcerRespAve, hchrRespAve},ttestRespDiffAve,... % {average,data},averageDifference (with bayes factors)
     {ecerRespAll,echrRespAll,hcerRespAll,hchrRespAll},... % {subjectwise,data}
     [],[],CPP,... % xlims,ylims,channels
     {'EEG','uV'},... % sensor type and units for ylablel
     {'EasyCoh EasyCat';'EasyCoh HardCat';'HardCoh EasyCat';'HardCoh HardCat'},'northwest','CPP (CP1 CPz CP2) in EEG: Response in all Conditions',... % legend, legend location, plot title
-    [erpFigDir filesep 'eeg_allConds_resp_ERP.png']) % save loc
+    [erpFigDir filesep 'eeg_allConds_resp_ERP_bayes.png']) % save loc
 %%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -603,7 +603,7 @@ cOnsDiffAve.bfs = testDiffsAcrossTime(cOnsDiffAll,frontal);
 plotTimecourse(eegLayout,[teal;coral],... % layout and colours
     {ecOnsAve,hcOnsAve},cOnsDiffAve,... % {average,data},averageDifference (with bayes factors)
     {ecOnsAll,hcOnsAll},... % {subjectwise,data}
-    [],[],frontal,... % xlims,ylims,channels
+    [-0.2 1.5],[],frontal,... % xlims,ylims,channels
     {'EEG','uV'},... % sensor type and units for ylablel
     {'easy coh';'hard coh'},'northwest','Frontal sensors in EEG: Coherence Onset',... % legend, legend location, plot title
     [erpFigDir filesep 'eeg_coh_ons_frontal_ERP.png']) % save loc
@@ -620,7 +620,7 @@ rOnsDiffAve.bfs = testDiffsAcrossTime(rOnsDiffAll,frontal);
 plotTimecourse(eegLayout,[teal;coral],... % layout and colours
     {erOnsAve,hrOnsAve},rOnsDiffAve,... % {average,data},averageDifference (with bayes factors)
     {erOnsAll,hrOnsAll},... % {subjectwise,data}
-    [],[],frontal,... % xlims,ylims,channels
+    [-0.2 1.5],[],frontal,... % xlims,ylims,channels
     {'EEG','uV'},... % sensor type and units for ylablel
     {'easy cat';'hard cat'},'northwest','Frontal sensors in EEG: Categorisation Onset',... % legend, legend location, plot title
     [erpFigDir filesep 'eeg_cat_ons_frontal_ERP.png']) % save loc
