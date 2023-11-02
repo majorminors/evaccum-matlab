@@ -26,7 +26,7 @@ switch freqs
         % hanning is good for low freqs, up to gamma (30Hz)
         % we will use the fieldtrip tutorial settings: https://www.fieldtriptoolbox.org/tutorial/timefrequencyanalysis/#hanning-taper-fixed-window-length
         cfg.taper        = 'hanning';
-        cfg.foi          = 2:2:30; % do 1 to 30 Hz in steps of 2 Hz
+        cfg.foi          = 2:2:40; % do 1 to 30 Hz in steps of 2 Hz
         % t_ftimewin: 1/length of time window in sec must equal cfg.foi Hz steps. an integer number of cycles must fit in the time window.
         cfg.t_ftimwin    = ones(length(cfg.foi),1).*0.5; % length of time window = 0.5 sec
 end
