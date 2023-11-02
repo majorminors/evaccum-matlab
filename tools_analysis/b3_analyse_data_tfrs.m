@@ -24,8 +24,8 @@ tfrFigDir = fullfile(datadir, 'tfrFigs');
 if ~exist(tfrFigDir,'dir'); mkdir(tfrFigDir); end
 
 % we'll loop through subject data dirs, so just get the path from there
-% inputFileName = ['Preprocess' filesep 'tfr_hanning.mat'];
-inputFileName = ['Preprocess' filesep 'tfr_multi.mat'];
+inputFileName = ['Preprocess' filesep 'tfr_hanning.mat'];
+% inputFileName = ['Preprocess' filesep 'tfr_multi.mat'];
 if contains(inputFileName,'hanning')
     getVar = @(x) sprintf(x,'hann');
 elseif contains(inputFileName,'multi')
