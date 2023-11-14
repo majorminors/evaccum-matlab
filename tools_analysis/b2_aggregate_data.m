@@ -37,7 +37,7 @@ if exist(erpOutputFilename,'file') && ~overwrite
 elseif ~exist(erpOutputFilename,'file') || overwrite
     if exist(erpOutputFilename,'file')
         warning('>>> erp file exists and overwrite is on: ill delete is so it wont get loaded into your next analysis')
-        system(['rm -f ' erpOutputFilename])
+        system(['rm -f ' erpOutputFilename]);
     end
     doErp = 1;
 end
@@ -47,7 +47,7 @@ if exist(tfrLowOutputFilename,'file') && ~overwrite
 elseif ~exist(tfrLowOutputFilename,'file') || overwrite
     if exist(tfrLowOutputFilename,'file')
         warning('>>> tfr low file exists and overwrite is on: ill delete is so it wont get loaded into your next analysis')
-        system(['rm -f ' tfrLowOutputFilename])
+        system(['rm -f ' tfrLowOutputFilename]);
     end
     doTfrLow = 1;
 end
@@ -57,7 +57,7 @@ if exist(tfrHighOutputFilename,'file') && ~overwrite
 elseif ~exist(tfrHighOutputFilename,'file') || overwrite
     if exist(tfrHighOutputFilename,'file')
         warning('>>> tfr high file exists and overwrite is on: ill delete is so it wont get loaded into your next analysis')
-        system(['rm -f ' tfrHighOutputFilename])
+        system(['rm -f ' tfrHighOutputFilename]);
     end
     doTfrHigh = 1;
 end
@@ -112,7 +112,7 @@ for fileNum = 1:numel(theseFiles)
 %     cfg.hpfilter        = 'yes';
 %     cfg.hpfreq          = 0.5;
     cfg.lpfilter        = 'yes';
-    cfg.lpfreq          = 200; % cut off everything above high gamma
+    cfg.lpfreq          = 100; % cut off everything above high gamma
     rawData = ft_preprocessing(cfg,rawData);
     
     % let's make a layout using the data
@@ -155,6 +155,12 @@ for fileNum = 1:numel(theseFiles)
     % reject artefacts
     cohOnsetErpData{fileNum} = rejectArtefacts(cohOnsetErpData{fileNum}, combinedLayout,ftDir);
     
+    % downsample
+    cfg = [];
+    cfg.method = 'downsample';
+    cfg.resamplefs = 250; % frequency at which the data will be resampled (default = 256 Hz) must be at least double your highest frequency
+    cohOnsetErpData{fileNum} = ft_resampledata(cfg, cohOnsetErpData{fileNum});
+    
     % now to response
     disp('>>> compiling erp dataset locked to response')
     cfg = [];
@@ -182,6 +188,12 @@ for fileNum = 1:numel(theseFiles)
 %     respLockedErpData{fileNum} = ft_redefinetrial(cfg,cohOnsetErpData{fileNum});
     % reject artefacts
     respLockedErpData{fileNum} = rejectArtefacts(respLockedErpData{fileNum}, combinedLayout,ftDir);
+    
+    % downsample
+    cfg = [];
+    cfg.method = 'downsample';
+    cfg.resamplefs = 250; % frequency at which the data will be resampled (default = 256 Hz) must be at least double your highest frequency
+    respLockedErpData{fileNum} = ft_resampledata(cfg, respLockedErpData{fileNum});
 
     %% now let's do the same thing for tfr analysis: onset and response locked epochs
     % we want more padding for this
@@ -224,7 +236,6 @@ for fileNum = 1:numel(theseFiles)
     respLockedTfrData{fileNum} = rejectArtefacts(respLockedTfrData{fileNum}, combinedLayout,ftDir);
     
     
-    
 end
 
 clear rawData
@@ -235,6 +246,7 @@ disp('>>> appending datasets')
 
 % append them all
 cfg = [];
+cfg.keepsampleinfo='no';
 coherenceOnsetErpData = ft_appenddata(cfg,cohOnsetErpData{:}); clear cohOnsetErpData
 responseLockedErpData = ft_appenddata(cfg,respLockedErpData{:}); clear respLockedErpData
 coherenceOnsetTfrData = ft_appenddata(cfg,cohOnsetTfrData{:}); clear cohOnsetTfrData

@@ -147,6 +147,12 @@ for fileNum = 1:numel(theseFiles)
     cohOnsetErpData{fileNum} = rejectArtefacts(cohOnsetErpData{fileNum}, combinedLayout,ftDir);
 %     any(cellfun(@(x) any(isnan(x(:))), cohOnsetErpData{1}.trial))
 
+    % downsample
+    cfg = [];
+    cfg.method = 'downsample';
+    cfg.resamplefs = 250; % frequency at which the data will be resampled (default = 256 Hz) must be at least double your highest frequency
+    cohOnsetErpData{fileNum} = ft_resampledata(cfg, cohOnsetErpData{fileNum});
+
     % now to response
     disp('>>> compiling erp dataset locked to response')
     cfg = [];
@@ -174,6 +180,12 @@ for fileNum = 1:numel(theseFiles)
     % reject artefacts
     respLockedErpData{fileNum} = rejectArtefacts(respLockedErpData{fileNum}, combinedLayout,ftDir);
 %     any(cellfun(@(x) any(isnan(x(:))), respLockedErpData{1}.trial))
+
+    % downsample
+    cfg = [];
+    cfg.method = 'downsample';
+    cfg.resamplefs = 250; % frequency at which the data will be resampled (default = 256 Hz) must be at least double your highest frequency
+    respLockedErpData{fileNum} = ft_resampledata(cfg, respLockedErpData{fileNum});
     
     clear baselineWindow baselineData
 end
@@ -186,6 +198,7 @@ disp('>>> appending datasets')
 
 % append them all
 cfg = [];
+cfg.keepsampleinfo='no';
 coherenceOnsetErpData = ft_appenddata(cfg,cohOnsetErpData{:}); clear cohOnsetErpData
 responseLockedErpData = ft_appenddata(cfg,respLockedErpData{:}); clear respLockedErpData
 
