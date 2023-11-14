@@ -87,6 +87,7 @@ for subject = 1:subjects % loop through subjects
             trans_samples = thisSubj.(thisCond).(thisModel).fisher_transformed_samples;
             part_samples = thisSubj.(thisCond).(thisModel).partial_samples;
             part_trans_samples = thisSubj.(thisCond).(thisModel).fisher_transformed_partial_samples;
+            timepoints = thisSubj.(thisCond).(thisModel).a.fdim.values{1};
             
             % concatenate the values row-wise
             if isfield(rsa.(newCondName),thisModel)
@@ -94,12 +95,15 @@ for subject = 1:subjects % loop through subjects
                 rsa.(newCondName).(thisModel).tvals = cat(1, rsa.(newCondName).(thisModel).tvals, trans_samples);
                 rsa.(newCondName).(thisModel).pvals = cat(1, rsa.(newCondName).(thisModel).vals, part_samples);
                 rsa.(newCondName).(thisModel).ptvals = cat(1, rsa.(newCondName).(thisModel).tvals, part_trans_samples);
+                if any(rsa.(newCondName).(thisModel).timepoints ~= timepoints); error('you have different timepoints'); end
             else
                 rsa.(newCondName).(thisModel).vals = samples;
                 rsa.(newCondName).(thisModel).tvals = trans_samples;
                 rsa.(newCondName).(thisModel).pvals = part_samples;
                 rsa.(newCondName).(thisModel).ptvals = part_trans_samples;
+                rsa.(newCondName).(thisModel).timepoints = timepoints;
             end
+            clear timepoints
         end; clear model models thisModel samples trans_samples part_samples part_trans_samples
     end; clear condition newCondName thisCond
 end; clear subject conditions thisSubj subjects
@@ -220,10 +224,163 @@ if doBfs
     else
         disp('not deleting...')
     end
-
+    
 end; clear doBfs
 
 disp('done collecting bayes factors')
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% analyse rsa differences %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+nullInterval = '0.5,Inf';
+insideNull = 1;
+bfDiffSaveName = [datadir filesep sprintf('rsa_diffs_%s.mat',nullInterval)];
+saveFigs = 1;
+
+if exist(bfDiffSaveName,'file')
+    warning('bfs for this null interval exist');
+    response = input('Do you want to overwrite? (y/n): ','s');
+    if strcmpi(response,'y') || strcmpi(response,'yes')
+        disp('removing file...');
+        system(['rm -rf ' bfDiffSaveName]);
+        if exist(bfDiffSaveName,'file'); error('I couldnt delete it :('); end
+        doBfDiffs = 1;
+    else
+        disp('loading')
+        load(bfDiffSaveName);
+        doBfDiffs = 0;
+    end
+else
+    doBfDiffs = 1;
+end
+
+models = {'stim' 'decbdry' 'dec_simple' 'resp'};
+modelNames = {'Motion Direction' 'Decision Boundary' 'Motion Classification' 'Response'};
+coh = {'ec_' 'hc_'};
+cat = {'er_' 'hr_'};
+conds = {'ecer_' 'echr_' 'hcer_' 'hchr_'};
+
+if doBfDiffs
+    
+    [status, result] = system('module add R && which Rscript');
+    if status == 0
+        disp('R module added successfully');
+        RscriptPath = strtrim(result);
+        disp(['Rscript path: ' RscriptPath]);
+    else
+        error('Failed to add R and/or locate Rscript');
+    end
+    
+    for model = models
+        fprintf('model %s...',model{:});
+        
+        for lockedTo = {'response' 'coherence'}
+            fprintf('locked to %s\n',lockedTo{:});
+            
+            if ~exist('bfs','var')
+                diffBfs = struct();
+            end
+            if ~isfield(diffBfs,'coh')
+                diffBfs.coh = [];
+            end
+            if ~isfield(diffBfs,'cat')
+                diffBfs.cat = [];
+            end
+            if ~isfield(diffBfs,'int')
+                diffBfs.int = [];
+            end
+            
+            diffBfs.coh = [diffBfs.coh {model{:}; lockedTo{:}; bayesfactor_R_wrapper(rsa.([coh{1} lockedTo{:}]).(model{:}).vals'-rsa.([coh{2} lockedTo{:}]).(model{:}).vals',...
+                'Rpath',RscriptPath,'returnindex',insideNull,...
+                'args',['mu=0,rscale="medium",nullInterval=c(' nullInterval ')'])}];
+            diffBfs.cat = [diffBfs.cat {model{:}; lockedTo{:}; bayesfactor_R_wrapper(rsa.([cat{1} lockedTo{:}]).(model{:}).vals'-rsa.([cat{2} lockedTo{:}]).(model{:}).vals',...
+                'Rpath',RscriptPath,'returnindex',insideNull,...
+                'args',['mu=0,rscale="medium",nullInterval=c(' nullInterval ')'])}];
+            diffBfs.int = [diffBfs.int {model{:}; lockedTo{:}; bayesfactor_R_wrapper(...
+                (rsa.([conds{1} lockedTo{:}]).(model{:}).vals'-rsa.([conds{2} lockedTo{:}]).(model{:}).vals')-...
+                (rsa.([conds{3} lockedTo{:}]).(model{:}).vals'-rsa.([conds{4} lockedTo{:}]).(model{:}).vals'),...
+                'Rpath',RscriptPath,'returnindex',insideNull,...
+                'args',['mu=0,rscale="medium",nullInterval=c(' nullInterval ')'])}];
+            
+        end; clear lockedTo
+        
+    end; clear model
+    
+    save(bfDiffSaveName,'diffBfs')
+end; clear doBfDiffs
+
+types = {'coh', 'cat'};
+
+for h = {'response' 'coherence'}
+    figure;
+    for i = 1:numel(types)
+        type = types{i};
+        for j = 1:numel(models)
+            model_name = models{j};
+            theseBfs = diffBfs.(type){3,find(strcmp(model_name, diffBfs.(type)(1,:)) & strcmp(h, diffBfs.(type)(2,:)))};
+            subplot(numel(types), numel(models), (i-1)*numel(models)+j);
+            
+            timepoints = rsa.(['ecer_' h{:}]).(model_name).timepoints';
+            
+            if contains(h,'response')
+                xlims = [-0.6 0.2];
+            elseif contains(h,'coherence')
+                xlims = [-0.2 1.5];
+            end
+            
+            load('bayes_colourmap.mat'); % in BFF repo
+            exponential_minmax=6;
+            val_col_map = logspace(-exponential_minmax,exponential_minmax,size(colours,1));
+            scatter_colours = zeros(length(timepoints), 3);  % preallocate for efficiency
+            for t = 1:length(timepoints)
+                [~,idx] = min(abs(val_col_map-theseBfs(t)));
+                scatter_colours(t, :) = colours(idx,1:3);
+            end
+            scatter(timepoints, theseBfs, 30, scatter_colours, 'filled');
+            line(get(gca,'XLim'),[1 1], 'Color', [0.7 0.7 0.7], 'LineStyle', '--') % plot a line along inconclusive evidence
+            ax = gca;
+            set(ax,'YScale','log','XLim',xlims, ...
+                'YLim',[1*10^(-exponential_minmax) 1*10^exponential_minmax],'YTick',10.^(-exponential_minmax:2:exponential_minmax))
+            xlabel('Time (s)')
+            ylabel('BF (log scale)')
+            if strcmp(type,'cat')
+                tmp = 'Cat Diff';
+            elseif strcmp(type,'coh')
+                tmp = 'Coh Diff';
+            end
+            title([tmp ' in ' modelNames{j}]);
+            colormap(colours)
+            cbh = colorbar;
+            caxis([-exponential_minmax,exponential_minmax])
+            cbh.Units = 'normalized';
+            cbh.Limits = [-exponential_minmax,exponential_minmax];
+            cbh.Position(1) = 0.92;cbh.Position(3) = 0.01;cbh.Position(4) = ax.Position(4);cbh.Position(2) = ax.Position(2);
+            cbh.Label.String = 'Bayes Factor';
+            f = gcf; f.Position = [10 10 1600 1600];
+            if exponential_minmax<=4
+                cbh.Ticks = [-exponential_minmax, -1, -0.5, 0, 0.5, 1, exponential_minmax];
+            else
+                cbh.Ticks = [-exponential_minmax, -1, 0, 1, exponential_minmax];
+            end
+            cbh.TickLabels=arrayfun(@(x) ['10^{' num2str(x) '}'], cbh.Ticks, 'UniformOutput', false);
+            cbh.TickLabels(strcmp(cbh.TickLabels,'10^{0}')) = {'Inconclusive'};
+            cbh.TickLabels(strcmp(cbh.TickLabels,'10^{0.5}') | strcmp(cbh.TickLabels,'10^{-0.5}')) = {'Moderate'};
+            cbh.TickLabels(strcmp(cbh.TickLabels,'10^{1}') | strcmp(cbh.TickLabels,'10^{-1}')) = {'Strong'};
+            
+            
+        end; clear j
+    end; clear i
+    
+    tmp = h{:}; tmp(1) = upper(tmp(1));
+    suptitle([tmp ' Locked'])
+    clear tmp
+    
+    if saveFigs
+        print([figDir filesep h{:} '_locked_rsa_diffs.png'],'-dpng')
+    end
+end; clear h
+
 
 %%%%%%%%%%%%%%%%
 %% plot them! %%
@@ -256,7 +413,7 @@ groupNames = {'conditions' 'manipulations'};
 for thisGroup = 1:numel(plotGroups)
     tmp = fieldnames(rsa);
     conditions = tmp(startsWith(fieldnames(rsa),plotGroups{thisGroup})); clear tmp
-
+    
     % get ylims for the rsa
     count = 0;
     for condition = 1:numel(conditions)
@@ -279,20 +436,20 @@ for thisGroup = 1:numel(plotGroups)
     end; clear condition thisCond count
     ymax = max(ymax)+max(ymax)/5;
     ymin = min(ymin)-min(ymin)/5;
-
+    
     for lock = {'coherence' 'response'}
         
         figure;
         lockConds = conditions(contains(conditions,lock));
         for condition = 1:numel(lockConds)
             thisCond = lockConds{condition};
-                    
+            
             % models = fieldnames(rsa.(thisCond));
             models = plotConds;
             for model = 1:numel(models)
                 thisModel = models{model};
                 
-                timepoints = 1:numel(rsa.(thisCond).(thisModel).(whichBfs));
+                timepoints = rsa.(thisCond).(thisModel).timepoints';
                 bfs = rsa.(thisCond).(thisModel).(whichBfs);
                 vals = mean(rsa.(thisCond).(thisModel).(whichVals));
                 std_dev = std(rsa.(thisCond).(thisModel).(whichVals));
@@ -305,33 +462,33 @@ for thisGroup = 1:numel(plotGroups)
                 end
                 
                 if contains(thisCond,'response')
-                    onset = 600; % to subtract from timepoints
-                    xlims = [-600 200];
+                    xlims = [-0.6 0.2];
                     condName = thisCond;
                 elseif contains(thisCond,'coherence')
-                    onset = 500; % to subtract from timepoints
-                    xlims = [-200 1500];
+                    xlims = [-0.2 1.5];
                     condName = strrep(thisCond,'coherence','onset');
                 end
-                timepoints = timepoints-onset;
+                tmp = abs(xlims-timepoints); % get absolute difference between desired xlims and timepoints
+                [~,tmp] = min(tmp); % get the indices of the minimum difference
+                xlims = timepoints(tmp)'; % use the timepoints closest to the desired xlims (by minimum absolute difference)
                 
                 % first the correlation
                 subplot(2*numel(lockConds),numel(models),(condition-1)*numel(models)*2 + model);
                 corrCol = [0.4 0.8 0.6];
                 fillCol = [1.0 0.7 0.7];
-                x_fill = [timepoints, fliplr(timepoints)]; % x values for the fill
+                x_fill = [timepoints', fliplr(timepoints')]; % x values for the fill
                 y_upper = vals + thisErr; % upper bound of the fill
                 y_lower = vals - thisErr; % lower bound of the fill
                 fill(x_fill, [y_upper, fliplr(y_lower)], fillCol, 'FaceAlpha', 0.5, 'EdgeColor', 'none') % the fill
                 hold on
-                plot(timepoints,vals,'color',corrCol) % the actual rsa correlation
+                plot(timepoints',vals,'color',corrCol) % the actual rsa correlation
                 line(get(gca,'XLim'), [0 0], 'Color', [0.1 0.1 0.1], 'LineStyle', '-') % plot a line along zero on the y
                 xlabel('Time (s)')
                 ylabel(['Decoding (std' errTerm(1:3) ')'])
                 ylim([ymin ymax])
                 line([0 0], get(gca,'YLim'), 'Color', [0.7 0.7 0.7], 'LineStyle', '--') % plot a line to mark the timepoint of interest
                 hold off
-                xlim([timepoints(1),timepoints(end)])
+                xlim(xlims)
                 title([regexprep(regexprep(strrep(condName,'_',' '), '(?<!\S)(\S)(\S*)', '${upper($1)}${lower($2)}'), '(\S+\s)(\S+)', '$1$2-Locked')...
                     ' ' plotNames{strcmp(plotConds,thisModel)}])
                 clear corrCol fillCol
@@ -349,7 +506,7 @@ for thisGroup = 1:numel(plotGroups)
                 scatter(timepoints, bfs, 30, scatter_colours, 'filled');
                 line(get(gca,'XLim'),[1 1], 'Color', [0.7 0.7 0.7], 'LineStyle', '--') % plot a line along inconclusive evidence
                 ax = gca;
-                set(ax,'YScale','log','XLim',[timepoints(1),timepoints(end)], ...
+                set(ax,'YScale','log','XLim',xlims, ...
                     'YLim',[1*10^(-exponential_minmax) 1*10^exponential_minmax],'YTick',10.^(-exponential_minmax:2:exponential_minmax))
                 xlabel('Time (s)')
                 ylabel('BF (log scale)')
@@ -379,7 +536,7 @@ for thisGroup = 1:numel(plotGroups)
             print([figDir filesep groupNames{thisGroup} '_' tmp{2} '_rsa.png'],'-dpng')
             clear tmp
         end
-
+        
     end; clear lock
 end; clear thisGroup conditions
 
