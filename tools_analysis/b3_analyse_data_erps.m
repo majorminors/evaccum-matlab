@@ -150,13 +150,13 @@ eegNeighbours = ft_prepare_neighbours(cfg);
 
 % and we'll collect useful sensors
 
-% we can plot these
-cfg = [];
-cfg.layout = eegLayout;
+% % we can plot these
+% cfg = [];
+% cfg.layout = eegLayout;
 % % cfg.layout = megLayout;
-layout = ft_prepare_layout(cfg);
-% ft_plot_layout(layout);
-% clear layout
+% layout = ft_prepare_layout(cfg);
+% % ft_plot_layout(layout);
+% % clear layout
 
 
 CPP = {'EEG040' 'EEG041' 'EEG042'};
@@ -388,6 +388,7 @@ for i = 1:numel(novas)
         end; clear testIdx rowNumbers
         clear ranovatbl conds rm t subjects within
     end; clear timepoint
+    fprintf('\n')
     
     % now Niko Kriegeskorte's FDR correction for that set of p-values
     % if we want to correct each test seperately
@@ -400,6 +401,7 @@ for i = 1:numel(novas)
     % if we want to correct across tests instead
     fdrp = FDRthreshold(pVals);
     % now let's get where we can reject the null
+    if isempty(fdrp); fdrp = 0; end
     fdrh = pVals < fdrp;
     varNames = {'Coherence', 'Rule', 'Interaction'};
     
@@ -518,7 +520,7 @@ plotTimecourse(eegLayout,[lilac;teal;coral;maroon],... % layout and colours
     [-0.2 1.5],[],CPP,... % xlims,ylims,channels
     {'EEG','uV'},... % sensor type and units for ylablel
     {'EasyCoh EasyCat';'EasyCoh HardCat';'HardCoh EasyCat';'HardCoh HardCat'},'northwest','CPP (CP1 CPz CP2) in EEG: Onset in all Conditions',... % legend, legend location, plot title
-    [erpFigDir filesep 'eeg_allConds_ons_ERP_anova.png'],... % save loc
+    [erpFigDir filesep 'eeg_allConds_ons_ERP.png'],... % save loc
     results.onset.h) % rsa significance
 plotTimecourse(eegLayout,[lilac;teal;coral;maroon],... % layout and colours
     {ecerOnsAve, echrOnsAve, hcerOnsAve, hchrOnsAve},ttestOnsDiffAve,... % {average,data},averageDifference (with bayes factors)
@@ -535,7 +537,7 @@ plotTimecourse(eegLayout,[lilac;teal;coral;maroon],... % layout and colours
     [],[],CPP,... % xlims,ylims,channels
     {'EEG','uV'},... % sensor type and units for ylablel
     {'EasyCoh EasyCat';'EasyCoh HardCat';'HardCoh EasyCat';'HardCoh HardCat'},'northwest','CPP (CP1 CPz CP2) in EEG: Response in all Conditions',... % legend, legend location, plot title
-    [erpFigDir filesep 'eeg_allConds_resp_ERP_anova.png'],... % save loc
+    [erpFigDir filesep 'eeg_allConds_resp_ERP.png'],... % save loc
     results.response.h) % rsa significance
 plotTimecourse(eegLayout,[lilac;teal;coral;maroon],... % layout and colours
     {ecerRespAve, echrRespAve, hcerRespAve, hchrRespAve},ttestRespDiffAve,... % {average,data},averageDifference (with bayes factors)

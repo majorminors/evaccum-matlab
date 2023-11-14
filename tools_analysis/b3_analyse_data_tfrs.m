@@ -24,8 +24,8 @@ tfrFigDir = fullfile(datadir, 'tfrFigs');
 if ~exist(tfrFigDir,'dir'); mkdir(tfrFigDir); end
 
 % we'll loop through subject data dirs, so just get the path from there
-inputFileName = ['Preprocess' filesep 'tfr_hanning.mat'];
-% inputFileName = ['Preprocess' filesep 'tfr_multi.mat'];
+% inputFileName = ['Preprocess' filesep 'tfr_hanning.mat'];
+inputFileName = ['Preprocess' filesep 'tfr_multi.mat'];
 if contains(inputFileName,'hanning')
     getVar = @(x) sprintf(x,'hann');
 elseif contains(inputFileName,'multi')
@@ -372,7 +372,7 @@ else
 end
 if ~isfield(cOnsTfrDiffAve,'bfs'); cOnsTfrDiffAve.bfs = testDiffsAcrossTime(cOnsTfrDiffAll,cfg); end
 plotTfr(cOnsTfrDiffAve, cfg, cOnsTfrDiffAve.bfs, sprintf(savename, 'tfr'))
-if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
+if contains(savename,'hann'); freqs = '(1-40Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
 suptitle(['TFR Difference in Onset Locked Coherence Difficulty ' freqs])
 
 % ft_multiplotTFR(cfg, cOnsTfrDiffAve);
@@ -486,7 +486,7 @@ else
 end
 if ~isfield(cRespTfrDiffAve, 'bfs'); cRespTfrDiffAve.bfs = testDiffsAcrossTime(cRespTfrDiffAll,cfg); end
 plotTfr(cRespTfrDiffAve, cfg, cRespTfrDiffAve.bfs, sprintf(savename, 'tfr'))
-if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
+if contains(savename,'hann'); freqs = '(1-40Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
 suptitle(['TFR Difference in Response Locked Coherence Difficulty ' freqs])
 
 % ft_multiplotTFR(cfg, cRespTfrDiffAve);
@@ -589,7 +589,7 @@ else
 end
 if ~isfield(rOnsTfrDiffAve, 'bfs'); rOnsTfrDiffAve.bfs = testDiffsAcrossTime(rOnsTfrDiffAll,cfg); end
 plotTfr(rOnsTfrDiffAve, cfg, rOnsTfrDiffAve.bfs, sprintf(savename, 'tfr'))
-if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
+if contains(savename,'hann'); freqs = '(1-40Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
 suptitle(['TFR Difference in Onset Locked Categorisation Difficulty ' freqs])
 
 % ft_multiplotTFR(cfg, rOnsTfrDiffAve);
@@ -659,7 +659,7 @@ else
 end
 if ~isfield(rRespTfrDiffAve, 'bfs'); rRespTfrDiffAve.bfs = testDiffsAcrossTime(rRespTfrDiffAll,cfg); end
 plotTfr(rRespTfrDiffAve, cfg, rRespTfrDiffAve.bfs, sprintf(savename, 'tfr'))
-if contains(savename,'hann'); freqs = '(1-30Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
+if contains(savename,'hann'); freqs = '(1-40Hz)'; elseif contains(savename,'multi'); freqs = '(30-150Hz)'; end
 suptitle(['TFR Difference in Response Locked Categorisation Difficulty ' freqs])
 
 % ft_multiplotTFR(cfg, rRespTfrDiffAve);

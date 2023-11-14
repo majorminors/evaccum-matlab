@@ -41,7 +41,7 @@ end; clear statSaveFile
 
 % define parameters for plotting
 % timestep      = 0.05; %(in seconds)
-sampling_rate = 1000;
+sampling_rate = 250;
 sample_count  = length(stats.time);
 j = [timebounds(1):timestep:timebounds(2)];   % in secs, get some timings for each subplot for the xlims
 m = [1:timestep*sampling_rate:sample_count];  % get the timings according to the M/EEG samples to index into the clusters

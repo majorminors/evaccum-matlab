@@ -115,8 +115,8 @@ for subjectidx = 1:size(validSubjectParams,1)
     end; clear thisCond conds count
     
     % now grab the rsaCorrs
-    rsaCorrs = table('Size', [numel(fieldnames(rsa{subjectidx})) 5], 'VariableTypes', {'string', 'string', 'string', 'cell', 'double'},...
-        'VariableNames', {'LockedTo', 'Condition', 'Model', 'Values', 'TimePoints'});
+    rsaCorrs = table('Size', [numel(fieldnames(rsa{subjectidx})) 6], 'VariableTypes', {'string', 'string', 'string', 'cell', 'double', 'cell'},...
+        'VariableNames', {'LockedTo', 'Condition', 'Model', 'Values', 'TimePoints', 'TimepointValues'});
     count = 0;
     for thisVar = fieldnames(rsa{subjectidx})'
         for thisModel = fieldnames(rsa{subjectidx}.(thisVar{:}))'
@@ -129,7 +129,7 @@ for subjectidx = 1:size(validSubjectParams,1)
             
             whichRsaCorrs = 'partial_samples'; % samples partial_samples fisher_transformed_samples fisher_transformed_partial_samples
             
-            rsaCorrs(count,:) = {lockedTo, condition, thisModel {rsa{subjectidx}.(thisVar{:}).(thisModel{:})}, numel(rsa{subjectidx}.(thisVar{:}).(thisModel{:}).(whichRsaCorrs))};
+            rsaCorrs(count,:) = {lockedTo, condition, thisModel {rsa{subjectidx}.(thisVar{:}).(thisModel{:})}, numel(rsa{subjectidx}.(thisVar{:}).(thisModel{:}).(whichRsaCorrs)), {rsa{subjectidx}.(thisVar{:}).(thisModel{:}).a.fdim.values{1}}};
         end
     end; clear count condition lockedTo thisVar thisModel
     
@@ -213,9 +213,11 @@ else
                     
                     params(thisSubject,1) = data(thisSubject).param.ParamValue(strcmp(data(thisSubject).param.ParamName, thisParameter) & strcmp(data(thisSubject).param.Condition, thisParameterCond));
                     
-                    theseTimepoints = data(thisSubject).rsaCorrs.TimePoints(strcmp(data(thisSubject).rsaCorrs.LockedTo,thisLockedTo) & strcmp(data(thisSubject).rsaCorrs.Condition,thisCondition));
-                    if numel(unique(theseTimepoints)) > 1; error('you have different timepoints'); else; theseTimepoints = theseTimepoints(1); end
-                    
+                    numTimepoints = data(thisSubject).rsaCorrs.TimePoints(strcmp(data(thisSubject).rsaCorrs.LockedTo,thisLockedTo) & strcmp(data(thisSubject).rsaCorrs.Condition,thisCondition));
+                    if numel(unique(numTimepoints)) > 1; error('you have different numbers of timepoints'); else; numTimepoints = numTimepoints(1); end
+                    theseTimepoints = data(thisSubject).rsaCorrs.TimepointValues(strcmp(data(thisSubject).rsaCorrs.LockedTo,thisLockedTo) & strcmp(data(thisSubject).rsaCorrs.Condition,thisCondition));
+                    if any(mean(cell2mat(theseTimepoints)) ~= theseTimepoints{1});  error('you have different timepoints'); else theseTimepoints = theseTimepoints{1}; end
+
                     models = unique(data(thisSubject).rsaCorrs.Model)';
                     
                     modelCount = 0;
@@ -230,8 +232,7 @@ else
                 modelCount = 0;
                 for thisModel = models
                     modelCount = modelCount+1;
-                    timepoints = 1:theseTimepoints;
-                    parfor t = timepoints
+                    parfor t = 1:numTimepoints
                         % calculate correlations
                         timepointRsa{t} = rsaCorrs(:,t,modelCount);
                         timepointParams{t} = params;
@@ -239,9 +240,9 @@ else
                     end; clear t
                                         
                     correlations = [correlations;...
-                        table(timepoints',repmat(thisParameter,numel(timepoints),1),repmat(thisParameterCond,numel(timepoints),1),...
-                        repmat(thisCondition,numel(timepoints),1),repmat(thisLockedTo,numel(timepoints),1),...
-                        timepointRsa',timepointParams',r_rsaCorrs',repmat(thisModel,numel(timepoints),1),'VariableNames', varNames)
+                        table(theseTimepoints',repmat(thisParameter,numTimepoints,1),repmat(thisParameterCond,numTimepoints,1),...
+                        repmat(thisCondition,numTimepoints,1),repmat(thisLockedTo,numTimepoints,1),...
+                        timepointRsa',timepointParams',r_rsaCorrs',repmat(thisModel,numTimepoints,1),'VariableNames', varNames)
                         ];
                     clear timepoints timepointRsa timepointParams r_rsaCorrs
                 end
@@ -437,17 +438,17 @@ for thisParam = unique(correlations.ParameterName)'
                 timepoints = correlations.Timepoint(dataidx);
                 
                 if contains(thisLockedTo,'response')
-                    onset = 600; % to subtract from timepoints
-                    xlims = [-600 200];
+                    xlims = [-0.6 0.2];
                 elseif contains(thisLockedTo,'coherence')
-                    onset = 500; % to subtract from timepoints
-                    xlims = [-200 1500];
+                    xlims = [-0.2 1.5];
                 end
-                timepoints = timepoints-onset;
+                tmp = abs(xlims-timepoints); % get absolute difference between desired xlims and timepoints
+                [~,tmp] = min(tmp); % get the indices of the minimum difference
+                xlims = timepoints(tmp)'; % use the timepoints closest to the desired xlims (by minimum absolute difference)
                 
                 if plotMovie
                     % little movie of the correlation
-                    for i = 100+onset:numel(theseParams)
+                    for i = 1:numel(theseParams)
                         % scatterplot data
                         scatterHandles(i) = scatter(theseParams{i}, theseData{i});
                         hold on
@@ -460,7 +461,7 @@ for thisParam = unique(correlations.ParameterName)'
                         title([thisCond ' ' thisParam ' ' thisLockedTo])
                         xlabel('Parameter Values')
                         ylabel('Amplitude')
-                        annotation('textbox', [0.7, 0.8, 0.1, 0.1], 'String', ['Time: ' num2str(i-onset)], 'FitBoxToText', 'on');
+                        annotation('textbox', [0.7, 0.8, 0.1, 0.1], 'String', ['Time (secs): ' num2str(timepoints(i))], 'FitBoxToText', 'on');
                         if slope > 0;slope_str = 'Positive';elseif slope < 0;slope_str = 'Negative';else;slope_str = 'Zero';end
                         annotation('textbox', [0.7, 0.7, 0.1, 0.1], 'String', ['Slope: ' slope_str], 'FitBoxToText', 'on');
                         % set the axis limits

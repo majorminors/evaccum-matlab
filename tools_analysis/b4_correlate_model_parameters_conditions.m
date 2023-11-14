@@ -141,8 +141,8 @@ for subjectidx = 1:size(validSubjectParams,1)
     end; clear thisCond conds count
     
     % now grab the amplitudes
-    amplitude = table('Size', [numel(varsToLoad) 4], 'VariableTypes', {'string', 'string', 'cell', 'double'},...
-        'VariableNames', {'LockedTo', 'Condition', 'Values', 'TimePoints'});
+    amplitude = table('Size', [numel(varsToLoad) 5], 'VariableTypes', {'string', 'string', 'cell', 'double', 'cell'},...
+        'VariableNames', {'LockedTo', 'Condition', 'Values', 'TimePoints', 'TimepointValues'});
     count = 0;
     for thisVar = varsToLoad
         count = count+1;
@@ -152,17 +152,18 @@ for subjectidx = 1:size(validSubjectParams,1)
         lockedTo = strrep(lockedTo, 'Average', ''); lockedTo = lockedTo{:};
         clear splitStr
         
-        amplitude(count,:) = {lockedTo, condition, {getRawAmplitude(ftData{subjectidx}.(thisVar{:}),CPP)}, numel(getRawAmplitude(ftData{subjectidx}.(thisVar{:}),CPP))};
+        amplitude(count,:) = {lockedTo, condition, {getRawAmplitude(ftData{subjectidx}.(thisVar{:}),CPP)}, numel(getRawAmplitude(ftData{subjectidx}.(thisVar{:}),CPP)), {ftData{subjectidx}.(thisVar{:}).time}};
     end; clear count condition lockedTo thisVar
     
     % then create the local changes in slope
-    slope = table('Size', [size(amplitude,1) 4], 'VariableTypes', {'string', 'string', 'cell', 'double'}, 'VariableNames', {'LockedTo', 'Condition', 'Slope', 'TimePoints'});
+    slope = table('Size', [size(amplitude,1) 5], 'VariableTypes', {'string', 'string', 'cell', 'double', 'cell'}, 'VariableNames', {'LockedTo', 'Condition', 'Slope', 'TimePoints', 'TimepointValues'});
     for i = 1:size(amplitude,1)
         timepoints = amplitude.TimePoints(i);
         amplitudeData = amplitude.Values{i};
         lockedTo = amplitude.LockedTo{i};
         condition = amplitude.Condition{i};
         slopeData = zeros(1, timepoints);
+        timeVals = amplitude.TimepointValues{i};
         
         for t = 1:timepoints
             if t<slopeTimeWindow+1
@@ -172,7 +173,7 @@ for subjectidx = 1:size(validSubjectParams,1)
             end
         end; clear t
         
-        slope(i,:) = {lockedTo, condition, {slopeData}, timepoints};
+        slope(i,:) = {lockedTo, condition, {slopeData}, timepoints, {timeVals}};
         clear slopeData
     end; clear i
     
@@ -265,16 +266,15 @@ else
                         error('timepoints for slope and amplitude not equal---you are using the same timepoints for both, so correct this')
                     end
                     parfor t = 1:theseTimepoints
-                        timepoints(thisSubject,t) = t;
+                        timepoints(thisSubject,t) = data(thisSubject).amplitude.TimepointValues{ampIdx}(t);
                         slopes(thisSubject,t) = data(thisSubject).slope.Slope{slopeIdx}(t);
                         amplitudes(thisSubject,t) = data(thisSubject).amplitude.Values{ampIdx}(t);
                     end; clear t
                     
                 end; clear thisSubject
                 
-                if any(mean(timepoints) ~= 1:theseTimepoints); error('timepoints not equal across participants?'); end
-                timepoints = mean(timepoints);
-                parfor t = timepoints
+                timepoints = mean(timepoints); % get just one of these
+                parfor t = 1:numel(timepoints)
                     % calculate correlations
                     timepointAmps{t} = amplitudes(:,t);
                     timepointSlopes{t} = slopes(:,t);
@@ -317,7 +317,7 @@ disp('done')
 
 disp('getting bayes factors')
 
-nullInterval = '-0.05,0.05';
+nullInterval = '-0.1,0.1';
 % nullInterval = '0.2,1';
 bfSlopeSavename = [saveDir filesep 'model_correlations_conditionsOnly_slope_bfs_null_%s.mat'];
 bfAmplitudeSavename = [saveDir filesep 'model_correlations_conditionsOnly_amplitude_bfs_null_%s.mat'];
@@ -476,17 +476,17 @@ for thisParam = unique(correlations.ParameterName)'
             timepoints = correlations.Timepoint(dataidx);
             
             if contains(thisLockedTo,'response')
-                onset = 600; % to subtract from timepoints
-                xlims = [-600 200];
+                xlims = [-0.6 0.2];
             elseif contains(thisLockedTo,'coherence')
-                onset = 500; % to subtract from timepoints
-                xlims = [-200 1500];
+                xlims = [-0.2 1.5];
             end
-            timepoints = timepoints-onset;
+            tmp = abs(xlims-timepoints); % get absolute difference between desired xlims and timepoints
+            [~,tmp] = min(tmp); % get the indices of the minimum difference
+            xlims = timepoints(tmp)'; % use the timepoints closest to the desired xlims (by minimum absolute difference)
             
             if plotMovie
                 % little movie of the correlation
-                for i = 100+onset:numel(theseParams)
+                for i = 1:numel(theseParams)
                     % scatterplot data
                     scatterHandles(i) = scatter(theseParams{i}, theseData{i});
                     hold on
@@ -499,7 +499,7 @@ for thisParam = unique(correlations.ParameterName)'
                     title([thisCond ' ' thisParam ' ' thisLockedTo])
                     xlabel('Parameter Values')
                     ylabel('Amplitude')
-                    annotation('textbox', [0.7, 0.8, 0.1, 0.1], 'String', ['Time: ' num2str(i-onset)], 'FitBoxToText', 'on');
+                    annotation('textbox', [0.7, 0.8, 0.1, 0.1], 'String', ['Time (secs): ' num2str(timepoints(i))], 'FitBoxToText', 'on');
                     if slope > 0;slope_str = 'Positive';elseif slope < 0;slope_str = 'Negative';else;slope_str = 'Zero';end
                     annotation('textbox', [0.7, 0.7, 0.1, 0.1], 'String', ['Slope: ' slope_str], 'FitBoxToText', 'on');
                     % set the axis limits
@@ -554,7 +554,7 @@ for thisParam = unique(correlations.ParameterName)'
             scatter(timepoints, thesebfs, 30, scatter_colours, 'filled');
             line(get(gca,'XLim'),[1 1], 'Color', [0.5 0.5 0.5], 'LineStyle', '--')
             ax = gca;
-            set(ax,'YScale','log','XLim',[timepoints(1),timepoints(end)], ...
+            set(ax,'YScale','log','XLim',xlims, ...
                 'YLim',[1e-2 1e2],'YTick',10.^(-3:1:3))
             if strcmp(tipo,'Slope')
                 % plot a red bar over invalid timepoints

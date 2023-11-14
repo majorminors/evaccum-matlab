@@ -146,7 +146,7 @@ disp('done')
 
 disp('getting correlations')
 
-correlationsSaveName = [saveDir filesep 'model_correlations_differences_02.mat'];
+correlationsSaveName = [saveDir filesep 'model_correlations_differences_03.mat'];
 
 if exist(correlationsSaveName,'file')
     disp('file exists: loading')
@@ -253,7 +253,7 @@ disp('done')
 
 disp('getting bayes factors')
 
-nullInterval = '0.2,1';
+nullInterval = '-0.1,0.1';
 bfSlopeSavename = [saveDir filesep 'model_correlations_differences_slope_bfs_null_%s.mat'];
 bfAmplitudeSavename = [saveDir filesep 'model_correlations_differences_amplitude_bfs_null_%s.mat'];
 if exist(sprintf(bfSlopeSavename,nullInterval),'file')
@@ -370,14 +370,14 @@ for paramCond = unique(correlations.ParameterCondition)'
                 
                 timepoints = correlations.Timepoint(dataidx);
                 
-                if contains(thisLockedTo,'Response')
-                    onset = 600; % to subtract from timepoints
-                    xlims = [-600 200];
-                elseif contains(thisLockedTo,'Onset')
-                    onset = 500; % to subtract from timepoints
-                    xlims = [-200 1500];
+                if contains(thisLockedTo,'response')
+                    xlims = [-0.6 0.2];
+                elseif contains(thisLockedTo,'coherence')
+                    xlims = [-0.2 1.5];
                 end
-                timepoints = timepoints-onset;
+                tmp = abs(xlims-timepoints); % get absolute difference between desired xlims and timepoints
+                [~,tmp] = min(tmp); % get the indices of the minimum difference
+                xlims = timepoints(tmp)'; % use the timepoints closest to the desired xlims (by minimum absolute difference)
                 
                 % plot correlations
                 subplot(2,1,1)
@@ -418,7 +418,7 @@ for paramCond = unique(correlations.ParameterCondition)'
                 scatter(timepoints, thesebfs, 30, scatter_colours, 'filled');
                 line(get(gca,'XLim'),[1 1], 'Color', [0.5 0.5 0.5], 'LineStyle', '--')
                 ax = gca;
-                set(ax,'YScale','log','XLim',[timepoints(1),timepoints(end)], ...
+                set(ax,'YScale','log','XLim',xlims, ...
                     'YLim',[1e-2 1e2],'YTick',10.^(-3:1:3))
                 if strcmp(tipo,'Slope')
                     % plot a red bar over invalid timepoints

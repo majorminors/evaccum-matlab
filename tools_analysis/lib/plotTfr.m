@@ -14,6 +14,7 @@ h.Colormap=colours;
 h.GridVisible = 'off';
 xlabel('time (ms)');
 ylabel('frequency');
+set(struct(h).Axes.Title,'String','Bayes Factors')
 % % temporarily change axis units 
 % originalUnits = h.Units;  % save original units (probaly normalized)
 % h.Units = 'centimeters';  % any unit that will result in squares
