@@ -46,7 +46,8 @@ for runi = 1:numel(runfiles)
     elseif exist(runfiles{runi},'file') && ~overwrite
         continue
     end
-    copyfile(sourcefiles{runi},runfiles{runi});
+%     copyfile(sourcefiles{runi},runfiles{runi});
+    system(['ln -s ' source sourcefiles{runi} ' ' runfiles{runi}]);
 end
 % cellfun(@copyfile,sourcefiles,runfiles,'UniformOutput',false);
 disp('done importing meg data')
@@ -84,7 +85,8 @@ else
     target = [mriFolder,filesep,mriSubFld,filesep,target.name];
     
     
-    copyfile(target,T1Folder);
+    %copyfile(target,T1Folder);
+    system(['ln -s ' target filesep '* ' T1Folder filesep]);
     
 end
 disp('done importing mri struct(s)')
