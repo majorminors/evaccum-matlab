@@ -1,6 +1,8 @@
 %%%%%%%%%%%%
 %% set up %%
 %%%%%%%%%%%%
+%
+% THERE IS ACTUALLY NO NEED FOR THIS SCRIPT BECAUSE THE CONDITIONS VERSION DOES BOTH CONDITIONS AND MANIPULATIONS
 
 clear all
 
@@ -48,9 +50,7 @@ subjectParams.v1_hr = mean([subjectParams.v1_echr, subjectParams.v1_hchr],2);
 
 % load meeg data
 varsToLoad = {...
-    'ecer_responseLockedAverage','echr_responseLockedAverage','hcer_responseLockedAverage','hchr_responseLockedAverage',...
     'ec_responseLockedAverage','hc_responseLockedAverage','er_responseLockedAverage','hr_responseLockedAverage',...
-    'ecer_coherenceLockedAverage','echr_coherenceLockedAverage','hcer_coherenceLockedAverage','hchr_coherenceLockedAverage',...
     'ec_coherenceLockedAverage','hc_coherenceLockedAverage','er_coherenceLockedAverage','hr_coherenceLockedAverage'...
     };
 
@@ -126,6 +126,7 @@ for subjectidx = 1:size(validSubjectParams,1)
     count = 0;
     splitStr = split(varsToLoad, '_');
     conds = splitStr(:,~contains(splitStr(:,:,2),'response'),1); % just need one of the two of these, for parameters
+    conds = conds(find(cellfun(@(x) length(x) == 2, conds))); % just get the manipulations
     clear splitStr
     param = table('Size', [numel(conds) 3], 'VariableTypes', {'string', 'string', 'double'},...
         'VariableNames', {'ParamName', 'Condition', 'ParamValue'});
@@ -192,7 +193,7 @@ disp('done')
 
 disp('getting correlations')
 
-correlationsSaveName = [saveDir filesep 'model_correlations_conditions_01.mat'];
+correlationsSaveName = [saveDir filesep 'model_correlations_manipulations_01.mat'];
 
 if exist(correlationsSaveName,'file')
     warning('file exists');
@@ -319,8 +320,8 @@ disp('getting bayes factors')
 
 nullInterval = '-0.1,0.1';
 % nullInterval = '0.2,1';
-bfSlopeSavename = [saveDir filesep 'model_correlations_conditionsOnly_slope_bfs_null_%s.mat'];
-bfAmplitudeSavename = [saveDir filesep 'model_correlations_conditionsOnly_amplitude_bfs_null_%s.mat'];
+bfSlopeSavename = [saveDir filesep 'model_correlations_manipulations_slope_bfs_null_%s.mat'];
+bfAmplitudeSavename = [saveDir filesep 'model_correlations_manipulations_amplitude_bfs_null_%s.mat'];
 if exist(sprintf(bfSlopeSavename,nullInterval),'file')
     warning('slope bfs for this null interval exist');
     response = input('Do you want to overwrite? (y/n): ','s');
