@@ -477,6 +477,74 @@ disp('done')
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 
+[high low] = returnHighVsLow(ecerOnsAll,CPP);
+plotTimecourse(eegLayout,[teal;coral],... % layout and colours
+    {ecerOnsAve,ecerOnsAve},[],... % {average,data},averageDifference (with bayes factors)
+    {high,low},... % {subjectwise,data}
+    [-0.2 1.5],[],CPP,... % xlims,ylims,channels
+    {'EEG','uV'},... % sensor type and units for ylablel
+    {'high';'low'},'northwest','CPP (CP1 CPz CP2) in EEG: ecer',... % legend, legend location, plot title
+    []) % save loc
+[high low] = returnHighVsLow(echrOnsAll,CPP);
+plotTimecourse(eegLayout,[teal;coral],... % layout and colours
+    {echrOnsAve,echrOnsAve},[],... % {average,data},averageDifference (with bayes factors)
+    {high,low},... % {subjectwise,data}
+    [-0.2 1.5],[],CPP,... % xlims,ylims,channels
+    {'EEG','uV'},... % sensor type and units for ylablel
+    {'high';'low'},'northwest','CPP (CP1 CPz CP2) in EEG: echr',... % legend, legend location, plot title
+    []) % save loc
+[high low] = returnHighVsLow(hcerOnsAll,CPP);
+plotTimecourse(eegLayout,[teal;coral],... % layout and colours
+    {hcerOnsAve,hcerOnsAve},[],... % {average,data},averageDifference (with bayes factors)
+    {high,low},... % {subjectwise,data}
+    [-0.2 1.5],[],CPP,... % xlims,ylims,channels
+    {'EEG','uV'},... % sensor type and units for ylablel
+    {'high';'low'},'northwest','CPP (CP1 CPz CP2) in EEG: hcer',... % legend, legend location, plot title
+    []) % save loc
+[high low] = returnHighVsLow(hchrOnsAll,CPP);
+plotTimecourse(eegLayout,[teal;coral],... % layout and colours
+    {hchrOnsAve,hchrOnsAve},[],... % {average,data},averageDifference (with bayes factors)
+    {high,low},... % {subjectwise,data}
+    [-0.2 1.5],[],CPP,... % xlims,ylims,channels
+    {'EEG','uV'},... % sensor type and units for ylablel
+    {'high';'low'},'northwest','CPP (CP1 CPz CP2) in EEG: hchr',... % legend, legend location, plot title
+    []) % save loc
+
+[high low] = returnHighVsLow(ecerRespAll,CPP);
+plotTimecourse(eegLayout,[teal;coral],... % layout and colours
+    {ecerRespAve,ecerRespAve},[],... % {average,data},averageDifference (with bayes factors)
+    {high,low},... % {subjectwise,data}
+    [-0.6 0.2],[],CPP,... % xlims,ylims,channels
+    {'EEG','uV'},... % sensor type and units for ylablel
+    {'high';'low'},'northwest','CPP (CP1 CPz CP2) in EEG: ecer',... % legend, legend location, plot title
+    []) % save loc
+[high low] = returnHighVsLow(echrRespAll,CPP);
+plotTimecourse(eegLayout,[teal;coral],... % layout and colours
+    {echrRespAve,echrRespAve},[],... % {average,data},averageDifference (with bayes factors)
+    {high,low},... % {subjectwise,data}
+    [-0.6 0.2],[],CPP,... % xlims,ylims,channels
+    {'EEG','uV'},... % sensor type and units for ylablel
+    {'high';'low'},'northwest','CPP (CP1 CPz CP2) in EEG: echr',... % legend, legend location, plot title
+    []) % save loc
+[high low] = returnHighVsLow(hcerRespAll,CPP);
+plotTimecourse(eegLayout,[teal;coral],... % layout and colours
+    {hcerRespAve,hcerRespAve},[],... % {average,data},averageDifference (with bayes factors)
+    {high,low},... % {subjectwise,data}
+    [-0.6 0.2],[],CPP,... % xlims,ylims,channels
+    {'EEG','uV'},... % sensor type and units for ylablel
+    {'high';'low'},'northwest','CPP (CP1 CPz CP2) in EEG: hcer',... % legend, legend location, plot title
+    []) % save loc
+[high low] = returnHighVsLow(hchrRespAll,CPP);
+plotTimecourse(eegLayout,[teal;coral],... % layout and colours
+    {hchrRespAve,hchrRespAve},[],... % {average,data},averageDifference (with bayes factors)
+    {high,low},... % {subjectwise,data}
+    [-0.6 0.2],[],CPP,... % xlims,ylims,channels
+    {'EEG','uV'},... % sensor type and units for ylablel
+    {'high';'low'},'northwest','CPP (CP1 CPz CP2) in EEG: hchr',... % legend, legend location, plot title
+    []) % save loc
+
+
+
 %% coh onset in eeg
 cOnsDiffAve.bfs = testDiffsAcrossTime(cOnsDiffAll,CPP);
 plotTimecourse(eegLayout,[teal;coral],... % layout and colours
