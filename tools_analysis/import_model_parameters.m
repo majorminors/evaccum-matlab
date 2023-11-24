@@ -14,7 +14,11 @@ mns = readtable(fullfile(dmcdir,'meanParams.csv'));
 % plot([subs.v1_ecer subs.v1_echr subs.v1_hcer subs.v1_hchr]','linestyle','-','marker','o')
 
 % Load data from the subs table
-b_columns = subs(:, {'Var1' 'b_ecer', 'b_echr', 'b_hcer', 'b_hchr'});
+subs.b_ec = mean(subs{:, {'b_ecer', 'b_echr'}}, 2);
+subs.b_hc = mean(subs{:, {'b_hcer', 'b_hchr'}}, 2);
+subs.b_er = mean(subs{:, {'b_ecer', 'b_hcer'}}, 2);
+subs.b_hr = mean(subs{:, {'b_echr', 'b_hchr'}}, 2);
+b_columns = subs(:, {'Var1' 'b_ecer', 'b_echr', 'b_hcer', 'b_hchr', 'b_ec', 'b_hc', 'b_er', 'b_hr'});
 b_vals = stack(b_columns,b_columns.Properties.VariableNames(2:end));
 b_vals.Properties.VariableNames{1} = 'Subject';
 b_vals.Properties.VariableNames{2} = 'Param';
@@ -22,7 +26,11 @@ b_vals.Properties.VariableNames{3} = 'Value';
 
 writetable(b_columns,fullfile(dmcdir,'b_for_jasp.csv'))
 
-v1_columns = subs(:, {'Var1' 'v1_ecer', 'v1_echr', 'v1_hcer', 'v1_hchr'});
+subs.v1_ec = mean(subs{:, {'v1_ecer', 'v1_echr'}}, 2);
+subs.v1_hc = mean(subs{:, {'v1_hcer', 'v1_hchr'}}, 2);
+subs.v1_er = mean(subs{:, {'v1_ecer', 'v1_hcer'}}, 2);
+subs.v1_hr = mean(subs{:, {'v1_echr', 'v1_hchr'}}, 2);
+v1_columns = subs(:, {'Var1' 'v1_ecer', 'v1_echr', 'v1_hcer', 'v1_hchr', 'v1_ec', 'v1_hc', 'v1_er', 'v1_hr'});
 v1_vals = stack(v1_columns,v1_columns.Properties.VariableNames(2:end));
 v1_vals.Properties.VariableNames{1} = 'Subject';
 v1_vals.Properties.VariableNames{2} = 'Param';
