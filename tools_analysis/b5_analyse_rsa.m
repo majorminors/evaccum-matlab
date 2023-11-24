@@ -348,6 +348,8 @@ for h = {'response' 'coherence'}
                 tmp = 'Cat Diff';
             elseif strcmp(type,'coh')
                 tmp = 'Coh Diff';
+            elseif strcmp(type,'int')
+                tmp = 'Cat Interaction';
             end
             title([tmp ' in ' modelNames{j}]);
             colormap(colours)
