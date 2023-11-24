@@ -28,11 +28,21 @@ end
 
 % ft_singleplotER(cfg, averageDataStructs{:});
 for i = 1:numel(averageDataStructs)
+
+    %% to plot normally
     if size(averageDataStructs{i}.avg(find(ismember(averageDataStructs{i}.label,channels)),:),1) > 1 % if there is more than one channel
         thisData = mean(averageDataStructs{i}.avg(find(ismember(averageDataStructs{i}.label,channels)),:)); % average across them
     else
         thisData = averageDataStructs{i}.avg(find(ismember(averageDataStructs{i}.label,channels)),:);
     end
+
+%% to plot for high vs low subject curves
+% thisData = [];
+% for j = 1:numel(subjectDataStructs{i})
+%     thisData = [thisData;mean(subjectDataStructs{i}{j}.avg(find(ismember(subjectDataStructs{i}{j}.label,channels)),:))];
+% end
+% thisData = mean(thisData);
+
     plot(averageDataStructs{i}.time, thisData,...
         'Color',colours(i,:))
     hold on
