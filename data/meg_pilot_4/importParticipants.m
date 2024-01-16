@@ -10,6 +10,8 @@ subjects = {};
 
 thisSubject.id  = 'S01';
 thisSubject.num  = 1;
+thisSubject.age  = 27;
+thisSubject.sex  = 'm';
 
 thisSubject.meg_fld  = 'meg22_018';
 thisSubject.date_meg= '220201';
@@ -37,6 +39,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S02';
 thisSubject.num  = 2;
+thisSubject.age  = 23;
+thisSubject.sex  = 'f';
 
 thisSubject.meg_fld  = 'meg22_032';
 thisSubject.date_meg= '220215';
@@ -64,6 +68,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S03';
 thisSubject.num  = 3;
+thisSubject.age  = 22;
+thisSubject.sex  = 'f';
 
 thisSubject.meg_fld  = 'meg22_042';
 thisSubject.date_meg= '220223';
@@ -91,6 +97,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S04';
 thisSubject.num  = 4;
+thisSubject.age  = 23;
+thisSubject.sex  = 'm';
 
 thisSubject.meg_fld  = 'meg22_049';
 thisSubject.date_meg= '220228';
@@ -118,6 +126,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S05';
 thisSubject.num  = 5;
+thisSubject.age  = 20;
+thisSubject.sex  = 'm';
 
 thisSubject.meg_fld  = 'meg22_050';
 thisSubject.date_meg= '220301';
@@ -155,6 +165,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S07';
 thisSubject.num  = 7;
+thisSubject.age  = 23;
+thisSubject.sex  = 'm';
 
 thisSubject.meg_fld  = 'meg22_054';
 thisSubject.date_meg= '220304';
@@ -182,6 +194,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S08';
 thisSubject.num  = 8;
+thisSubject.age  = 23;
+thisSubject.sex  = 'f';
 
 thisSubject.meg_fld  = 'meg22_059';
 thisSubject.date_meg= '220308';
@@ -209,6 +223,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S09';
 thisSubject.num  = 9;
+thisSubject.age  = 28;
+thisSubject.sex  = 'f';
 
 thisSubject.meg_fld  = 'meg22_060';
 thisSubject.date_meg= '220308';
@@ -236,6 +252,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S10';
 thisSubject.num  = 10;
+thisSubject.age  = 25;
+thisSubject.sex  = 'm';
 
 thisSubject.meg_fld  = 'meg22_61';
 thisSubject.date_meg= '220309';
@@ -263,6 +281,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S11';
 thisSubject.num  = 11;
+thisSubject.age  = 22;
+thisSubject.sex  = 'f';
 
 thisSubject.meg_fld  = 'meg22_061';
 thisSubject.date_meg= '220309';
@@ -290,6 +310,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S12';
 thisSubject.num  = 12;
+thisSubject.age  = 23;
+thisSubject.sex  = 'm';
 
 thisSubject.meg_fld  = 'meg22_062';
 thisSubject.date_meg= '220309';
@@ -318,6 +340,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S13';
 thisSubject.num  = 13;
+thisSubject.age  = 26;
+thisSubject.sex  = 'f';
 
 thisSubject.meg_fld  = 'meg22_063';
 thisSubject.date_meg= '220310';
@@ -346,6 +370,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S14';
 thisSubject.num  = 14;
+thisSubject.age  = 36;
+thisSubject.sex  = 'f';
 
 thisSubject.meg_fld  = 'meg22_064';
 thisSubject.date_meg= '220310';
@@ -374,6 +400,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S15';
 thisSubject.num  = 15;
+thisSubject.age  = 27;
+thisSubject.sex  = 'm';
 
 thisSubject.meg_fld  = 'meg22_066';
 thisSubject.date_meg= '220311';
@@ -413,6 +441,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S17';
 thisSubject.num  = 17;
+thisSubject.age  = 23;
+thisSubject.sex  = 'm';
 
 thisSubject.meg_fld  = 'meg22_068';
 thisSubject.date_meg= '220314';
@@ -452,6 +482,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S19';
 thisSubject.num  = 19;
+thisSubject.age  = 21;
+thisSubject.sex  = 'm';
 
 thisSubject.meg_fld  = 'meg22_071';
 thisSubject.date_meg= '220315';
@@ -479,6 +511,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S20';
 thisSubject.num  = 20;
+thisSubject.age  = 20;
+thisSubject.sex  = 'f';
 
 thisSubject.meg_fld  = 'meg22_072';
 thisSubject.date_meg= '220315';
@@ -506,6 +540,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S21';
 thisSubject.num  = 21;
+thisSubject.age  = 27;
+thisSubject.sex  = 'm';
 
 thisSubject.meg_fld  = 'meg22_073';
 thisSubject.date_meg= '220316';
@@ -533,6 +569,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S22';
 thisSubject.num  = 22;
+thisSubject.age  = 25;
+thisSubject.sex  = 'm';
 
 thisSubject.meg_fld  = 'meg22_074';
 thisSubject.date_meg= '220316';
@@ -560,6 +598,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S23';
 thisSubject.num  = 23;
+thisSubject.age  = 26;
+thisSubject.sex  = 'f';
 
 thisSubject.meg_fld  = 'meg22_077';
 thisSubject.date_meg= '220318';
@@ -587,6 +627,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S24';
 thisSubject.num  = 24;
+thisSubject.age  = 38;
+thisSubject.sex  = 'm';
 
 thisSubject.meg_fld  = 'meg22_078';
 thisSubject.date_meg= '220318';
@@ -614,6 +656,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S25';
 thisSubject.num  = 25;
+thisSubject.age  = 23;
+thisSubject.sex  = 'f';
 
 thisSubject.meg_fld  = 'meg22_079';
 thisSubject.date_meg= '220321';
@@ -641,6 +685,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S26';
 thisSubject.num  = 26;
+thisSubject.age  = 35;
+thisSubject.sex  = 'f';
 
 thisSubject.meg_fld  = 'meg22_080';
 thisSubject.date_meg= '220322';
@@ -671,6 +717,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S28';
 thisSubject.num  = 28;
+thisSubject.age  = 19;
+thisSubject.sex  = 'f';
 
 thisSubject.meg_fld  = 'meg22_081';
 thisSubject.date_meg= '220323';
@@ -698,6 +746,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S29';
 thisSubject.num  = 29;
+thisSubject.age  = 25;
+thisSubject.sex  = 'm';
 
 thisSubject.meg_fld  = 'meg22_083';
 thisSubject.date_meg= '220324';
@@ -725,6 +775,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S30';
 thisSubject.num  = 30;
+thisSubject.age  = 28;
+thisSubject.sex  = 'f';
 
 thisSubject.meg_fld  = 'meg22_084';
 thisSubject.date_meg= '220324';
@@ -765,6 +817,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S32';
 thisSubject.num  = 32;
+thisSubject.age  = 40;
+thisSubject.sex  = 'm';
 
 thisSubject.meg_fld  = 'meg22_086';
 thisSubject.date_meg= '220328';
@@ -792,6 +846,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S34';
 thisSubject.num  = 34;
+thisSubject.age  = 33;
+thisSubject.sex  = 'm';
 
 thisSubject.meg_fld  = 'meg22_088';
 thisSubject.date_meg= '220329';
@@ -819,6 +875,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S35';
 thisSubject.num  = 35;
+thisSubject.age  = 23;
+thisSubject.sex  = 'f';
 
 thisSubject.meg_fld  = 'meg22_089';
 thisSubject.date_meg= '220330';
@@ -846,6 +904,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S36';
 thisSubject.num  = 36;
+thisSubject.age  = 28;
+thisSubject.sex  = 'm';
 
 thisSubject.meg_fld  = 'meg22_090';
 thisSubject.date_meg= '220331';
@@ -876,6 +936,8 @@ thisSubject.num  = 37;
 
 thisSubject.meg_fld  = 'meg22_091';
 thisSubject.date_meg= '220401';
+thisSubject.age  = 28;
+thisSubject.sex  = 'f';
 
 thisSubject.meg_runs = {'run1_raw' 'run2_raw' 'run3_raw' 'run4_raw'};
 thisSubject.meg_labs = {'Run1' 'Run2' 'Run3' 'Run4'};
@@ -900,6 +962,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S38';
 thisSubject.num  = 38;
+thisSubject.age  = 24;
+thisSubject.sex  = 'f';
 
 thisSubject.meg_fld  = 'meg22_092';
 thisSubject.date_meg= '220406';
@@ -927,6 +991,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S40';
 thisSubject.num  = 40;
+thisSubject.age  = 37;
+thisSubject.sex  = 'm';
 
 thisSubject.meg_fld  = 'meg22_093';
 thisSubject.date_meg= '220406';
@@ -954,6 +1020,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S41';
 thisSubject.num  = 41;
+thisSubject.age  = 19;
+thisSubject.sex  = 'm';
 
 thisSubject.meg_fld  = 'meg22_201';
 thisSubject.date_meg= '221018';
@@ -981,6 +1049,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S42';
 thisSubject.num  = 42;
+thisSubject.age  = 35;
+thisSubject.sex  = 'f';
 
 thisSubject.meg_fld  = 'meg22_205';
 thisSubject.date_meg= '221021';
@@ -1008,6 +1078,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S43';
 thisSubject.num  = 43;
+thisSubject.age  = 26;
+thisSubject.sex  = 'f';
 
 thisSubject.meg_fld  = 'meg22_211';
 thisSubject.date_meg= '221102';
@@ -1036,6 +1108,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S45';
 thisSubject.num  = 45;
+thisSubject.age  = 25;
+thisSubject.sex  = 'm';
 
 thisSubject.meg_fld  = 'meg22_212';
 thisSubject.date_meg= '221103';
@@ -1063,6 +1137,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S46';
 thisSubject.num  = 46;
+thisSubject.age  = 19;
+thisSubject.sex  = 'f';
 
 thisSubject.meg_fld  = 'meg22_215';
 thisSubject.date_meg= '221107';
@@ -1086,10 +1162,12 @@ thisSubject.movement = [-5.4 16.5 -40; -4.7 14.5 -40; -5.6 14.5 -40.1; -5.8 14.2
 thisSubject = doExtras(thisSubject);
 subjects = [subjects,thisSubject]; clear thisSubject;
 
-%% --- S47 Georgie --- %%
+%% --- S47 Georgia --- %%
 
 thisSubject.id  = 'S47';
 thisSubject.num  = 47;
+thisSubject.age  = 23;
+thisSubject.sex  = 'f';
 
 thisSubject.meg_fld  = 'meg22_216';
 thisSubject.date_meg= '221107';
@@ -1117,6 +1195,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S48';
 thisSubject.num  = 48;
+thisSubject.age  = 28;
+thisSubject.sex  = 'm';
 
 thisSubject.meg_fld  = 'meg22_218';
 thisSubject.date_meg= '221109';
@@ -1144,6 +1224,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S49';
 thisSubject.num  = 49;
+thisSubject.age  = 25;
+thisSubject.sex  = 'f';
 
 thisSubject.meg_fld  = 'meg22_219';
 thisSubject.date_meg= '221109';
@@ -1171,6 +1253,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S50';
 thisSubject.num  = 50;
+thisSubject.age  = 29;
+thisSubject.sex  = 'm';
 
 thisSubject.meg_fld  = 'meg22_224';
 thisSubject.date_meg= '221115';
@@ -1199,6 +1283,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S51';
 thisSubject.num  = 51;
+thisSubject.age  = 29;
+thisSubject.sex  = 'f';
 
 thisSubject.meg_fld  = 'meg22_227'; % 227 is the same for Kiah and Rion (different files/same name)
 thisSubject.date_meg= '221117';
@@ -1226,6 +1312,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thisSubject.id  = 'S52';
 thisSubject.num  = 52;
+thisSubject.age  = 25;
+thisSubject.sex  = 'm';
 
 thisSubject.meg_fld  = 'meg22_227'; % 227 is shared by Kiah and Rion (different files/same name)
 thisSubject.date_meg= '221117';
@@ -1253,6 +1341,8 @@ subjects = [subjects,thisSubject]; clear thisSubject;
 
 thissubject.id  = 'S53';
 thissubject.num  = 53;
+thisSubject.age  = 25;
+thisSubject.sex  = 'f';
 
 thissubject.meg_fld  = 'meg22_234';
 thissubject.date_meg= '221124';
@@ -1280,6 +1370,8 @@ subjects = [subjects,thissubject]; clear thissubject;
 
 thissubject.id  = 'S54';
 thissubject.num  = 54;
+thisSubject.age  = 24;
+thisSubject.sex  = 'm';
 
 thissubject.meg_fld  = 'meg22_236';
 thissubject.date_meg= '221125';
